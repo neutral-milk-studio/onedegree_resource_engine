@@ -1,0 +1,20 @@
+# gitleaks configuration for The Resource Engine.
+# Extends the default ruleset and allowlists known non-secret placeholders so the
+# secret-scan gate only fails on real credentials. Spec: Requirement 44.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Non-secret placeholders and generated files"
+paths = [
+  # Example env file ships intentionally-fake local-dev values, never real creds.
+  '''\.env\.example''',
+  # Lockfile: hashes/URLs, no secrets.
+  '''uv\.lock''',
+]
+# Belt-and-suspenders: allow the specific fake values used in docs/examples.
+regexes = [
+  '''local-dev-token''',
+  '''local-dev-password''',
+]
