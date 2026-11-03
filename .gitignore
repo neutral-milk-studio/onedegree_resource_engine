@@ -218,3 +218,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Full ODRS dumps (too large for git; later S3)
+data/raw/odrs/full/

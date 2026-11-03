@@ -1,0 +1,25 @@
+{
+  "source": "odrs",
+  "resources": {
+    "opportunities": {
+      "pages": 5,
+      "records_saved": 500,
+      "total_count_reported": 24129,
+      "per_page_reported": 100,
+      "truncated": true,
+      "next_page": "https://rbg.1degree.org:3002/v1/opportunities?api_key=REDACTED&page=6&per_page=100",
+      "fetched_at": "20261103T225819Z"
+    },
+    "organizations": {
+      "pages": 2,
+      "records_saved": 200,
+      "total_count_reported": 6774,
+      "per_page_reported": 100,
+      "truncated": true,
+      "next_page": "https://rbg.1degree.org:3002/v1/organizations?api_key=REDACTED&page=3&per_page=100",
+      "fetched_at": "20261103T225903Z"
+    }
+  },
+  "host": "https://rbg.1degree.org:3002",
+  "fetched_at": "20261103T225903Z"
+}
