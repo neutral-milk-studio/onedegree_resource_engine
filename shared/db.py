@@ -10,8 +10,8 @@ Spec: Requirements 11.4, 24.1.
 from __future__ import annotations
 
 import os
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Iterator
 
 # Logical schema names. The HSDS objects live in the default/`public`-style
 # schema; everything operational (findings, evidence, review state, model logs,
@@ -36,7 +36,7 @@ def database_url() -> str:
 
 
 @contextmanager
-def connection() -> Iterator["object"]:
+def connection() -> Iterator[object]:
     """Yield a psycopg connection, committing on success and rolling back on error.
 
     psycopg is imported lazily so the contract/shared package imports cleanly in
@@ -47,8 +47,7 @@ def connection() -> Iterator["object"]:
         import psycopg  # type: ignore
     except ImportError as exc:  # pragma: no cover - environment dependent
         raise RuntimeError(
-            "psycopg is required for database access; add it to the service "
-            "dependencies."
+            "psycopg is required for database access; add it to the service dependencies."
         ) from exc
 
     conn = psycopg.connect(database_url())

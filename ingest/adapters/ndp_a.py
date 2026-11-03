@@ -5,7 +5,7 @@ Implements the SourceAdapter contract. Spec: Requirements 8.1, 8.2, 8.4, 13.1.
 
 from __future__ import annotations
 
-from typing import Iterator
+from collections.abc import Iterator
 
 from contracts.adapter import HsdsObjects, RawPayload
 

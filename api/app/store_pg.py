@@ -24,8 +24,14 @@ class PgHsdsStore:
     def upsert_record(self, hsds_objects: dict[str, Any], source: str, native_id: str) -> str:
         raise NotImplementedError("task 14.1: idempotent upsert by uuid5 id")
 
-    def write_metadata(self, service_id: str, field_name: str, previous_value: str,
-                       replacement_value: str, updated_by: str) -> None:
+    def write_metadata(
+        self,
+        service_id: str,
+        field_name: str,
+        previous_value: str,
+        replacement_value: str,
+        updated_by: str,
+    ) -> None:
         raise NotImplementedError("task 14.3: append HSDS metadata history row")
 
     def quarantine(self, source: str, native_id: str, raw_ref: str, reason: str) -> None:

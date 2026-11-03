@@ -21,14 +21,13 @@ class WebsiteResult:
     ``actively_bad`` / ``check_failed`` categories — never a silent skip.
     """
 
-    content: str | None     # page text, or None on failure
-    status: int | None      # HTTP status, or None if the request never completed
-    error: str | None       # non-None on failure (timeout, DNS, TLS, etc.)
+    content: str | None  # page text, or None on failure
+    status: int | None  # HTTP status, or None if the request never completed
+    error: str | None  # non-None on failure (timeout, DNS, TLS, etc.)
 
 
 @runtime_checkable
 class WebsiteSource(Protocol):
     """Given a URL, return its content, HTTP status, and any error."""
 
-    def get(self, url: str) -> WebsiteResult:
-        ...
+    def get(self, url: str) -> WebsiteResult: ...

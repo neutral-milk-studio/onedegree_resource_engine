@@ -35,8 +35,8 @@ class ServiceFilter:
     organization_id: str | None = None
     taxonomy_term_id: str | None = None
     taxonomy_id: str | None = None
-    source: str | None = None   # per-source key scoping (Req 33.3)
-    search: str | None = None   # resolved against the OpenSearch index (Req 30.8, P5)
+    source: str | None = None  # per-source key scoping (Req 33.3)
+    search: str | None = None  # resolved against the OpenSearch index (Req 30.8, P5)
 
 
 @dataclass

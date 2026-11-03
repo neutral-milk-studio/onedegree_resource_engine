@@ -8,7 +8,8 @@ Spec: Requirements 1.1, 8.1, 8.2, 13.1 (section 5.4 adapter contract).
 
 from __future__ import annotations
 
-from typing import Any, Iterator, Protocol, runtime_checkable
+from collections.abc import Iterator
+from typing import Any, Protocol, runtime_checkable
 
 # A raw payload is opaque to the pipeline. It is written to the raw store exactly
 # as received before anything else happens.

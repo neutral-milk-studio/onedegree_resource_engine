@@ -46,7 +46,8 @@ def load_into_store(store: Any, dataset: dict[str, Any] | None = None) -> int:
         source = src.get("system", "seed")
         native_id = src.get("record_id", record["id"])
         # Group the record under its HSDS object type for upsert.
-        object_type = "organization" if "description" in record and "status" not in record else "service"
+        is_org = "description" in record and "status" not in record
+        object_type = "organization" if is_org else "service"
         store.upsert_record({object_type: [record]}, source=source, native_id=native_id)
         count += 1
     return count
@@ -62,7 +63,9 @@ def main() -> None:
     if args.dry_run:
         orgs = len(dataset.get("organizations", []))
         svcs = len(dataset.get("services", []))
-        print(f"seed dataset OK: {orgs} organizations, {svcs} services, {len(records)} records total")
+        print(
+            f"seed dataset OK: {orgs} organizations, {svcs} services, {len(records)} records total"
+        )
         return
 
     from shared.db import connection  # noqa: F401  (import check only here)

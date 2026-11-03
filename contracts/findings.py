@@ -12,17 +12,17 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 
-class Category(str, Enum):
+class Category(str, Enum):  # noqa: UP042 - str+Enum is intentional for JSON serialization (py3.9+)
     """The one category assigned to a record per completed check (Req 22.1)."""
 
     VERIFIED = "verified"
     DISCREPANCY = "discrepancy"
-    ACTIVELY_BAD = "actively_bad"          # dead site / closed org / expired cert — most critical
-    CHECK_FAILED = "check_failed"          # could not access / check errored — never a silent skip
+    ACTIVELY_BAD = "actively_bad"  # dead site / closed org / expired cert — most critical
+    CHECK_FAILED = "check_failed"  # could not access / check errored — never a silent skip
     MISSING_INFORMATION = "missing_information"
 
 
-class ReviewState(str, Enum):
+class ReviewState(str, Enum):  # noqa: UP042 - str+Enum is intentional for JSON serialization (py3.9+)
     """Where a finding's proposal sits in the human review flow."""
 
     PENDING = "pending"
@@ -40,8 +40,8 @@ class Evidence:
     """
 
     url: str
-    snippet: str   # supporting text; MUST be non-empty for a stored finding
-    model: str     # model identifier that produced the proposal
+    snippet: str  # supporting text; MUST be non-empty for a stored finding
+    model: str  # model identifier that produced the proposal
 
 
 @dataclass
@@ -49,14 +49,14 @@ class Finding:
     """A comparison result for one stored record."""
 
     id: str
-    service_id: str                     # ref to the HSDS record checked
-    field: str                          # e.g. "eligibility_description"
+    service_id: str  # ref to the HSDS record checked
+    field: str  # e.g. "eligibility_description"
     current_value: str | None
     proposed_value: str | None
     category: Category
     confidence: float
     model_id: str
-    checked_at: str                     # ISO 8601
+    checked_at: str  # ISO 8601
     evidence: list[Evidence] = field(default_factory=list)
     review_state: ReviewState = ReviewState.PENDING
 

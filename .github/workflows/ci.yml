@@ -1,7 +1,8 @@
 name: CI
 
 # Guardrail gates. All four must pass before a PR can merge into protected main.
-# Spec: Requirements 3.1, 3.2, 3.3, 44.1.
+# Uses the uv + pyproject.toml toolchain established in the repo (see Makefile:
+# `make setup/test/lint`). Spec: Requirements 3.1, 3.2, 3.3, 44.1.
 
 on:
   pull_request:
@@ -18,25 +19,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Install validation deps
-        run: pip install jsonschema
-      - name: Validate seed + generated records against pinned HSDS v3.2.3 schema
+      - uses: astral-sh/setup-uv@v5
+      - name: Install dependencies
+        run: uv sync
+      - name: Validate seed records against pinned HSDS v3.2.3 schema
         run: |
-          python - <<'PY'
+          uv run python - <<'PY'
           # Validates the seeded HSDS dataset against the vendored schema.
-          # Skips gracefully (non-blocking) until the schema files are vendored,
-          # so Phase 0 is not blocked before contracts/hsds/schema is populated.
-          import sys, pathlib
+          # Skips gracefully (non-blocking) only if the schema has not been
+          # vendored yet; once vendored, a validation error fails the gate.
+          import sys, pathlib, json
           sys.path.insert(0, ".")
           schema_dir = pathlib.Path("contracts/hsds/schema")
           if not any(schema_dir.glob("*.json")):
               print("::warning::HSDS schema files not vendored yet; skipping validation gate.")
               sys.exit(0)
           from shared.hsds_validation import validate
-          import json
           data = json.loads(pathlib.Path("seed/hsds_dataset.json").read_text())
           errors = []
           for org in data.get("organizations", []):
@@ -66,23 +64,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Install test deps
-        run: pip install pytest hypothesis jsonschema
+      - uses: astral-sh/setup-uv@v5
+      - name: Install dependencies (from pyproject.toml / uv.lock)
+        run: uv sync
       - name: Run tests
-        run: pytest -q
+        run: uv run pytest
 
   lint:
     name: Gate 4 — Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Install linter
-        run: pip install ruff
-      - name: Lint
-        run: ruff check .
+      - uses: astral-sh/setup-uv@v5
+      - name: Install dependencies
+        run: uv sync
+      - name: Ruff check
+        run: uv run ruff check .
+      - name: Ruff format check
+        run: uv run ruff format --check .

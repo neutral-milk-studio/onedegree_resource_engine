@@ -10,7 +10,7 @@ Spec: Requirements 11.2, 43.1, 43.2.
 from __future__ import annotations
 
 import json
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 from typing import Any
 
@@ -25,7 +25,7 @@ class SchemaNotAvailable(RuntimeError):
     """Raised when the pinned schema files have not been vendored yet."""
 
 
-@lru_cache(maxsize=None)
+@cache
 def _load_schema(object_type: str) -> dict[str, Any]:
     """Load the JSON Schema for one HSDS object type (e.g. 'service').
 
@@ -63,8 +63,7 @@ def validate(obj: dict[str, Any], object_type: str) -> list[str]:
         import jsonschema  # type: ignore
     except ImportError as exc:  # pragma: no cover - environment dependent
         raise RuntimeError(
-            "jsonschema is required for HSDS validation; add it to the service "
-            "dependencies."
+            "jsonschema is required for HSDS validation; add it to the service dependencies."
         ) from exc
 
     validator = jsonschema.Draft7Validator(schema)
@@ -84,6 +83,5 @@ def assert_valid(obj: dict[str, Any], object_type: str) -> None:
     errors = validate(obj, object_type)
     if errors:
         raise ValueError(
-            f"HSDS v{HSDS_VERSION} validation failed for {object_type}: "
-            + "; ".join(errors)
+            f"HSDS v{HSDS_VERSION} validation failed for {object_type}: " + "; ".join(errors)
         )
