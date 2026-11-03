@@ -1,0 +1,72 @@
+{
+  "_comment": "Shared seeded HSDS v3.2.3 dataset for the AI Maintenance team and demos. Records are intentionally schema-valid. The AI maintenance layer checks these against seed/website_content/ (see manifest.json) so the team is never blocked on Data Ingest. Spec: Requirement 27.1.",
+  "organizations": [
+    {
+      "id": "7c9e6a2b-0d14-5f3a-8b21-1a2b3c4d5e6f",
+      "name": "Bayview Community Food Pantry",
+      "description": "Provides free groceries and hot meals to residents of the Bayview neighborhood.",
+      "url": "https://bayview-foodpantry.example.org",
+      "x_resource_engine": {
+        "source": { "system": "ndp_a", "record_id": "1001", "fetched_at": "2026-10-20T15:04:05Z" }
+      }
+    },
+    {
+      "id": "a1b2c3d4-e5f6-5a7b-8c9d-0e1f2a3b4c5d",
+      "name": "Eastside Legal Aid",
+      "description": "Free civil legal help for low-income residents, including housing and benefits cases.",
+      "url": "https://eastside-legal.example.org",
+      "x_resource_engine": {
+        "source": { "system": "ndp_a", "record_id": "1002", "fetched_at": "2026-10-20T15:04:05Z" }
+      }
+    },
+    {
+      "id": "f0e1d2c3-b4a5-5968-8778-6a5b4c3d2e1f",
+      "name": "Harbor Youth Shelter",
+      "description": "Emergency overnight shelter and case management for unaccompanied youth.",
+      "url": "https://harbor-youth.example.org",
+      "x_resource_engine": {
+        "source": { "system": "ndp_b", "record_id": "B-55", "fetched_at": "2026-10-20T15:04:05Z" }
+      }
+    }
+  ],
+  "services": [
+    {
+      "id": "2d4f6a8c-0b1d-5e3f-9a7c-1b3d5f7a9c0e",
+      "organization_id": "7c9e6a2b-0d14-5f3a-8b21-1a2b3c4d5e6f",
+      "name": "Grocery Distribution",
+      "status": "active",
+      "description": "Weekly free grocery distribution. No appointment required.",
+      "eligibility_description": "Open to residents of San Francisco County.",
+      "url": "https://bayview-foodpantry.example.org/grocery",
+      "x_resource_engine": {
+        "source": { "system": "ndp_a", "record_id": "1001", "fetched_at": "2026-10-20T15:04:05Z" }
+      }
+    },
+    {
+      "id": "3e5a7c9d-1f2b-5a4c-8d6e-2c4e6a8b0d1f",
+      "organization_id": "a1b2c3d4-e5f6-5a7b-8c9d-0e1f2a3b4c5d",
+      "name": "Housing Legal Clinic",
+      "status": "active",
+      "description": "Walk-in legal clinic for tenants facing eviction.",
+      "eligibility_description": "Household income at or below 200% of the federal poverty level.",
+      "url": "https://eastside-legal.example.org/housing",
+      "x_resource_engine": {
+        "source": { "system": "ndp_a", "record_id": "1002", "fetched_at": "2026-10-20T15:04:05Z" }
+      }
+    },
+    {
+      "id": "4f6b8d0e-2a3c-5b5d-9e7f-3d5f7a9b1c2e",
+      "organization_id": "f0e1d2c3-b4a5-5968-8778-6a5b4c3d2e1f",
+      "name": "Overnight Shelter Beds",
+      "status": "active",
+      "description": "Overnight beds for youth ages 12 to 17.",
+      "eligibility_description": "Youth ages 12 to 17.",
+      "minimum_age": 12,
+      "maximum_age": 17,
+      "url": "https://harbor-youth.example.org/shelter",
+      "x_resource_engine": {
+        "source": { "system": "ndp_b", "record_id": "B-55", "fetched_at": "2026-10-20T15:04:05Z" }
+      }
+    }
+  ]
+}

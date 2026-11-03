@@ -1,86 +1,102 @@
 # The Resource Engine
 
-A data platform for One Degree that collects community resource data from multiple sources, converts it to [Open Referral HSDS](https://docs.openreferral.org/) v3.2.3, and serves it through a REST API. An AI maintenance layer checks records against public websites and proposes changes for resource specialists to review.
+A resource data platform for One Degree. It ingests community resource data from
+multiple sources, keeps each raw payload exactly as received, converts every
+record to **Open Referral HSDS v3.2.3**, and serves it through a REST API. An AI
+maintenance layer checks stored records against each organization's website,
+flags problems with evidence, and surfaces them to resource specialists in a
+unified internal admin app for human review. It replaces the legacy ODRS over
+time and does not sync back into it.
 
-## Project status
+This repository is a whole-team monorepo. Three teams build in parallel against
+shared, committed contracts: **Data Ingest**, **AI Maintenance**, and **Search**.
 
-This repository is in early setup. The development environment is ready, and application code is being added.
+> Full requirements, design, and the task plan live in the spec at
+> `.kiro/specs/resource-engine/`.
 
-## Quick start
+## Pinned HSDS version
 
-You need [uv](https://docs.astral.sh/uv/getting-started/installation/) and `make`. uv installs Python 3.12 and all dependencies for you.
+**HSDS v3.2.3.** The vendored JSON Schema files and the exact Open Referral
+release tag are under [`contracts/hsds/`](contracts/hsds/README.md).
 
-```bash
-git clone https://github.com/neutral-milk-studio/onedegree_resource_engine.git
-cd onedegree_resource_engine
-make setup
-make test
-```
+## Repository layout
 
-If the tests pass, your environment is ready.
+| Path | Owner | Contents |
+|------|-------|----------|
+| `contracts/` | whole team (protected) | the five shared contracts: HSDS data, adapter, store, API, findings + website source |
+| `shared/` | whole team | HSDS validation, deterministic uuid5, DB helpers |
+| `seed/` | whole team | seeded HSDS dataset + sample website content (seeded discrepancies/failures) |
+| `ingest/` | Data Ingest | adapters, raw store, transformer/validator, pipeline |
+| `maintenance/` | AI Maintenance | worker, website source, extractor, comparator, findings store, scheduler, eval |
+| `api/` | Search | FastAPI app serving HSDS JSON |
+| `search/` | Search | OpenSearch indexer + query (P5 stretch) |
+| `ui/` | shell owner + each team | one React admin app (Records & Review, Search, Ingest) |
+| `infra/` | whole team (protected) | Terraform for the optional ECS deploy |
+| `.github/` | whole team (protected) | CI gates, CODEOWNERS, PR/task-brief/reviewer templates |
+| `docs/` | whole team | guardrails + decisions |
 
-To set local configuration, copy the example file and fill in what you need:
+## Run it locally
 
-```bash
-cp .env.example .env
-```
-
-## Common commands
-
-| Command | Purpose |
-|---|---|
-| `make setup` | Install Python and the locked dependencies |
-| `make test` | Run the tests |
-| `make lint` | Check linting and formatting, as CI does |
-| `make format` | Fix linting and formatting |
-| `uv add <package>` | Add a dependency and update `uv.lock` |
-| `docker compose up postgres` | Start PostgreSQL (requires Docker) |
-| `docker compose --profile search up opensearch` | Start OpenSearch (requires Docker) |
-
-## How we work together
-
-1. Update `main`, then create a branch named `<area>/<short-description>`, such as `ingest/ndp-adapter`.
-2. Keep changes small, and merge at least every half day.
-3. Run `make lint` and `make test` before you push.
-4. Open a pull request into `main`, and get one teammate's review.
-5. Merge once CI passes.
+Local Docker Compose is the default, acceptable target (AWS deployment is
+optional — see `infra/`).
 
 ```bash
-git switch main
-git pull
-git switch -c ingest/ndp-adapter
-# Make your changes
-make lint test
-git add <files>
-git commit -m "Add NDP adapter"
-git push -u origin ingest/ndp-adapter
+docker compose up --build
 ```
 
-If you add a dependency, commit both `pyproject.toml` and `uv.lock`.
+Services: API on `http://localhost:8000`, admin UI on `http://localhost:5173`,
+Postgres on `5432`, OpenSearch on `9200`, S3 (LocalStack) on `4566`. The AI
+maintenance worker defaults to the **sample** website source (no network).
 
-## Workstreams
+Load the shared seed dataset (dry-run validates without a database):
 
-| Area | Owns | Done when |
-|---|---|---|
-| **Ingest** | Source adapters, raw storage, HSDS mapping, quarantine | Received records equal stored plus quarantined, and re-runs create no duplicates |
-| **Data core** | Database, field history, merge rules, HSDS API | Conflicts are surfaced, and every API response validates |
-| **Maintenance** | Website checks, extraction, findings, evaluation | Seeded errors are caught, and every proposal has evidence |
-| **Review** | Review queue, evidence view, editing | A specialist can go from a flagged record to a saved fix in a few steps |
+```bash
+python -m seed.load_seed --dry-run
+```
 
-Each area works mainly in its own top-level folder. Only the data core area changes the database schema. Tell the affected areas before you change anything they depend on.
+## Run the tests
 
-## Project rules
+```bash
+pip install pytest hypothesis jsonschema ruff
+pytest -q          # unit, integration, and property tests (Hypothesis)
+ruff check .       # lint
+```
 
-- **HSDS:** Anything the system shares or serves must validate against HSDS v3.2.3. Internal storage can differ.
-- **AI changes:** The AI proposes changes, and a person applies them. A proposal without evidence isn't a finding.
-- **Secrets:** Never commit credentials or a `.env` file. Use environment variables or AWS Secrets Manager.
-- **Data:** This repository is public, so don't add new data files without checking with the team. Use only sample, mock, or synthetic data, never production data.
-- **Client data:** Resource data shouldn't contain personal client information. If you find any, stop and tell One Degree.
+CI (`.github/workflows/ci.yml`) runs four gates on every PR — HSDS schema
+validation, secret scanning, tests, and lint — all of which must pass to merge
+into protected `main`.
 
-## Documentation
+## Team decisions
 
-Project requirements and HSDS guidance are in [`docs/`](docs/).
+Recorded in [`docs/decisions.md`](docs/decisions.md). Highlights:
 
-## License
+- **Organization-description gap:** store a fallback note and flag the record as
+  *missing information* (AI can later supply a real description from the website).
+- **Schedule time-zone offsets:** interpret bare local times as
+  `America/Los_Angeles` and attach the offset in effect on the schedule's date
+  (DST handled by the zone); a midday closure becomes two intervals.
+- **Datastores:** PostgreSQL for HSDS; a separate `ops` schema for operational
+  data; S3 for the raw store; OpenSearch for the search index.
 
-[MIT](LICENSE)
+## Documented HSDS extensions
+
+The single `x_resource_engine` extension, documented in
+[`contracts/hsds/extensions.md`](contracts/hsds/extensions.md).
+
+## AWS services used
+
+- **Amazon S3** — raw store (payloads as received).
+- **Amazon Bedrock** (Anthropic models) — fact extraction and, for the search
+  stretch, embeddings.
+- **Amazon OpenSearch Service** — search index (P5 stretch).
+- **Amazon EventBridge Scheduler** — recurring AI maintenance checks (never
+  ingest; ingest is on demand).
+- **Amazon Textract** — optional PDF extraction (spreadsheet/PDF stretch).
+- **Amazon RDS for PostgreSQL** / **ECS Fargate** / **AWS Secrets Manager** —
+  the optional deploy path (`infra/`).
+
+## Governance
+
+Branch per task → PR into protected `main` → four CI gates + impartial reviewer
+verdict → human approval on protected surfaces (via `.github/CODEOWNERS`).
+Non-negotiable rules: [`docs/agents-guardrails.md`](docs/agents-guardrails.md).
