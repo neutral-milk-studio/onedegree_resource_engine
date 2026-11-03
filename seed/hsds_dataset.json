@@ -61,8 +61,8 @@
       "status": "active",
       "description": "Overnight beds for youth ages 12 to 17.",
       "eligibility_description": "Youth ages 12 to 17.",
-      "minimum_age": "12",
-      "maximum_age": "17",
+      "minimum_age": 12,
+      "maximum_age": 17,
       "url": "https://harbor-youth.example.org/shelter",
       "x_resource_engine": {
         "source": { "system": "ndp_b", "record_id": "B-55", "fetched_at": "2026-10-20T15:04:05Z" }
