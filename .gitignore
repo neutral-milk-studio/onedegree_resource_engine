@@ -218,3 +218,32 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- Resource Engine additions ---
+
+# Node / UI (ui/)
+node_modules/
+ui/dist/
+ui/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Terraform (infra/)
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+!*.tfvars.example
+.terraform.lock.hcl
+
+# Local / LocalStack / Docker volumes
+.localstack/
+pgdata/
+opensearch-data/
+
+# Secrets (never commit — enforced by CI secret-scan gate and CODEOWNERS)
+*.secret
+secrets.*
+*.pem

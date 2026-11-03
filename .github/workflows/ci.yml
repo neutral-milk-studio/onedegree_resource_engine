@@ -1,0 +1,88 @@
+name: CI
+
+# Guardrail gates. All four must pass before a PR can merge into protected main.
+# Spec: Requirements 3.1, 3.2, 3.3, 44.1.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  hsds-schema-validation:
+    name: Gate 1 — HSDS schema validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install validation deps
+        run: pip install jsonschema
+      - name: Validate seed + generated records against pinned HSDS v3.2.3 schema
+        run: |
+          python - <<'PY'
+          # Validates the seeded HSDS dataset against the vendored schema.
+          # Skips gracefully (non-blocking) until the schema files are vendored,
+          # so Phase 0 is not blocked before contracts/hsds/schema is populated.
+          import sys, pathlib
+          sys.path.insert(0, ".")
+          schema_dir = pathlib.Path("contracts/hsds/schema")
+          if not any(schema_dir.glob("*.json")):
+              print("::warning::HSDS schema files not vendored yet; skipping validation gate.")
+              sys.exit(0)
+          from shared.hsds_validation import validate
+          import json
+          data = json.loads(pathlib.Path("seed/hsds_dataset.json").read_text())
+          errors = []
+          for org in data.get("organizations", []):
+              errors += [f"organization {org['id']}: {e}" for e in validate(org, "organization")]
+          for svc in data.get("services", []):
+              errors += [f"service {svc['id']}: {e}" for e in validate(svc, "service")]
+          if errors:
+              print("\n".join(errors))
+              sys.exit(1)
+          print("HSDS schema validation passed.")
+          PY
+
+  secret-scan:
+    name: Gate 2 — Secret scanning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan for committed secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  tests:
+    name: Gate 3 — Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test deps
+        run: pip install pytest hypothesis jsonschema
+      - name: Run tests
+        run: pytest -q
+
+  lint:
+    name: Gate 4 — Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install linter
+        run: pip install ruff
+      - name: Lint
+        run: ruff check .

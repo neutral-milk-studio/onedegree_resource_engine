@@ -1,0 +1,33 @@
+{
+  "_comment": "Known-truth manifest for the sample website content. Maps each service to its sample page and declares the seeded condition so the evaluation harness can score catch rate and false-flag rate by category and field type. Spec: Requirements 19.3, 28.1.",
+  "entries": [
+    {
+      "service_id": "2d4f6a8c-0b1d-5e3f-9a7c-1b3d5f7a9c0e",
+      "url": "https://bayview-foodpantry.example.org/grocery",
+      "page": "bayview_grocery.html",
+      "seeded_condition": "discrepancy",
+      "field": "eligibility_description",
+      "truth": "Open to residents of San Francisco and San Mateo Counties.",
+      "stored_value": "Open to residents of San Francisco County.",
+      "note": "Website lists two counties; stored record lists one. Expected category: discrepancy."
+    },
+    {
+      "service_id": "3e5a7c9d-1f2b-5a4c-8d6e-2c4e6a8b0d1f",
+      "url": "https://eastside-legal.example.org/housing",
+      "page": "eastside_housing.html",
+      "seeded_condition": "verified",
+      "field": null,
+      "truth": "Household income at or below 200% of the federal poverty level.",
+      "note": "Website matches the stored record. Expected category: verified (no flag)."
+    },
+    {
+      "service_id": "4f6b8d0e-2a3c-5b5d-9e7f-3d5f7a9b1c2e",
+      "url": "https://harbor-youth.example.org/shelter",
+      "page": null,
+      "seeded_condition": "actively_bad",
+      "field": null,
+      "truth": null,
+      "note": "Site is unreachable (simulated). Expected category: actively_bad or check_failed."
+    }
+  ]
+}
