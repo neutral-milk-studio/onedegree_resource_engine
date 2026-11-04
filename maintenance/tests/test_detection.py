@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import copy
 import json
+import math
 import os
 import re
 import socket
 import string
 import subprocess
 import sys
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -16,7 +19,8 @@ from botocore.exceptions import ClientError, ConnectionClosedError
 from hypothesis import given
 from hypothesis import strategies as st
 
-from contracts.findings import Category, Finding, finding_problems
+from contracts.findings import Category, Finding, FindingRejected, finding_problems
+from contracts.store import Page
 from contracts.website_source import WebsiteResult, WebsiteSource
 from maintenance.comparator import compare as compare_module
 from maintenance.comparator.compare import (
@@ -60,7 +64,19 @@ from maintenance.extractor.extract import (
 )
 from maintenance.findings_store.memory import InMemoryFindingsStore
 from maintenance.website_source.sample import SampleWebsiteSource, normalize_url, strip_comments
-from maintenance.worker.run_check import ConfigError, WorkerConfig, website_source_for
+from maintenance.worker import run_check as worker_module
+from maintenance.worker.run_check import (
+    CheckLogEntry,
+    ConfigError,
+    InMemoryCheckLog,
+    WorkerConfig,
+    WorkerSetupError,
+    due_records,
+    iso,
+    parse_iso,
+    run_checks,
+    website_source_for,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -2851,7 +2867,7 @@ def test_the_worker_stops_at_startup_with_a_clean_message(env, message):
 def test_the_worker_starts_with_the_default_settings():
     result = run_worker()
     assert "invalid worker setting" not in result.stderr
-    assert "check loop is implemented in a later task" in result.stderr
+    assert "no HSDS store or findings store is wired yet" in result.stderr
 
 
 def test_the_sample_website_source_is_the_default():
@@ -2892,3 +2908,482 @@ def test_env_example_documents_the_extractor_settings():
 
 def test_env_example_works_as_a_complete_worker_environment():
     assert WorkerConfig.from_env(env_example()) == DEFAULTS
+
+
+# --------------------------------------------------------------------------- #
+# Task 6: the sweep (select due -> fetch -> extract -> compare -> save -> log)
+# --------------------------------------------------------------------------- #
+
+NOW = datetime(2026, 11, 4, 16, 0, tzinfo=UTC)
+
+
+class FakeHsdsStore:
+    """An HSDS store over a list of services. Detection may read it, never write it."""
+
+    def __init__(self, services, missing=()):
+        self.services = {service["id"]: copy.deepcopy(service) for service in services}
+        self.missing = set(missing)  # listed, but gone by the time the worker reads it
+
+    def get_service(self, service_id, source=None):
+        if service_id in self.missing or service_id not in self.services:
+            return None
+        return copy.deepcopy(self.services[service_id])
+
+    def list_services(self, filt, page, per_page):
+        items = list(self.services.values())
+        total_pages = max(1, math.ceil(len(items) / per_page))
+        contents = items[(page - 1) * per_page : page * per_page]
+        return Page(
+            total_items=len(items),
+            total_pages=total_pages,
+            page_number=page,
+            size=len(contents),
+            first_page=page == 1,
+            last_page=page >= total_pages,
+            empty=not contents,
+            contents=copy.deepcopy(contents),
+        )
+
+    def upsert_record(self, *args, **kwargs):
+        raise AssertionError("detection must never write an HSDS record")
+
+    def write_metadata(self, *args, **kwargs):
+        raise AssertionError("detection must never write record history")
+
+
+EASTSIDE_REPLY = json.dumps(
+    {"eligibility_income": fact("at or below 200% of the federal poverty level", EASTSIDE_INCOME)}
+)
+
+
+class SeedInvoker:
+    """A model that answers for whichever seed page it is shown."""
+
+    def __init__(self):
+        self.pages = []
+
+    def __call__(self, system, user):
+        if "San Mateo Counties" in user:
+            self.pages.append("bayview")
+            return ModelReply(BAYVIEW_REPLY, "fake-model", 120, 40)
+        if "200%" in user:
+            self.pages.append("eastside")
+            return ModelReply(EASTSIDE_REPLY, "fake-model", 90, 20)
+        self.pages.append("other")
+        return ModelReply("{}", "fake-model", 10, 2)
+
+
+class Clock:
+    def __init__(self, moment=NOW):
+        self.moment = moment
+
+    def __call__(self):
+        return self.moment
+
+
+def seed_store(*ids):
+    return FakeHsdsStore([SEED_SERVICES[service_id] for service_id in ids or SEED_SERVICES])
+
+
+def sweep(store=None, *, sink=None, log=None, invoke=None, clock=None, source=None, **kwargs):
+    """Run one sweep and return (summary, sink, log)."""
+    sink = sink if sink is not None else InMemoryFindingsStore()
+    log = log if log is not None else InMemoryCheckLog()
+    summary = run_checks(
+        store if store is not None else seed_store(),
+        source or SampleWebsiteSource(),
+        sink=sink,
+        check_log=log,
+        invoke=invoke if invoke is not None else SeedInvoker(),
+        now=clock or Clock(),
+        **kwargs,
+    )
+    return summary, sink, log
+
+
+def findings_for(sink, service_id):
+    return [f for f in sink.findings.values() if f.service_id == service_id]
+
+
+def test_the_seed_sweep_checks_every_record_and_saves_evidence_backed_findings():
+    summary, sink, log = sweep()
+    assert summary.due == summary.checked == 3
+    assert summary.categories == {"discrepancy": 1, "verified": 1, "check_failed": 1}
+    assert summary.findings_saved == len(sink.findings)
+    assert not (summary.findings_rejected or summary.errors or summary.no_website)
+
+    bayview = {f.field: f for f in findings_for(sink, BAYVIEW_ID)}
+    assert bayview["eligibility_description"].category is Category.DISCREPANCY
+    assert "San Mateo" in bayview["eligibility_description"].proposed_value
+    (eastside,) = findings_for(sink, EASTSIDE_ID)
+    assert eastside.category is Category.VERIFIED
+    (harbor,) = findings_for(sink, HARBOR_ID)
+    assert harbor.category is Category.CHECK_FAILED  # one failed fetch isn't a dead site
+    assert all(finding_problems(f) == [] for f in sink.findings.values())
+
+
+def test_each_check_is_logged_with_its_result_and_the_model_log():
+    _, sink, log = sweep()
+    assert [entry.service_id for entry in log.entries] == [BAYVIEW_ID, EASTSIDE_ID, HARBOR_ID]
+    bayview = log.last(BAYVIEW_ID)
+    assert bayview.category is Category.DISCREPANCY
+    assert bayview.checked_at == "2026-11-04T16:00:00Z"
+    assert bayview.url == BAYVIEW_URL
+    assert bayview.model_id == "fake-model"
+    assert bayview.usage == {"input_tokens": 120, "output_tokens": 40}
+    assert bayview.raw_response == BAYVIEW_REPLY
+    assert bayview.content_sha256 and len(bayview.content_sha256) == 64
+    assert sorted(bayview.finding_ids) == sorted(f.id for f in findings_for(sink, BAYVIEW_ID))
+    harbor = log.last(HARBOR_ID)
+    assert harbor.fetch_failed and harbor.model_id == "" and harbor.raw_response is None
+
+
+def test_the_model_is_not_called_for_a_page_that_did_not_load():
+    invoker = SeedInvoker()
+    sweep(invoke=invoker)
+    assert invoker.pages == ["bayview", "eastside"]
+
+
+def test_a_site_that_fails_twice_in_a_row_becomes_actively_bad():
+    sink, log, clock = InMemoryFindingsStore(), InMemoryCheckLog(), Clock()
+    sweep(sink=sink, log=log, clock=clock)
+    clock.moment = NOW + timedelta(days=30)
+    summary, _, _ = sweep(sink=sink, log=log, clock=clock)
+    assert summary.checked == 3
+    assert log.last(HARBOR_ID).category is Category.ACTIVELY_BAD
+
+
+def test_the_sweep_never_changes_a_record():
+    store = seed_store()
+    before = copy.deepcopy(store.services)
+    sweep(store)  # the fake store fails the test on any write
+    assert store.services == before
+
+
+@pytest.mark.parametrize(
+    ("age_days", "due"),
+    [(0, False), (29, False), (30, True), (45, True)],
+)
+def test_a_record_is_due_once_its_last_check_is_the_interval_old(age_days, due):
+    log = InMemoryCheckLog()
+    log.record(
+        CheckLogEntry(
+            EASTSIDE_ID, iso(NOW - timedelta(days=age_days)), Category.VERIFIED, "u", False
+        )
+    )
+    assert (EASTSIDE_ID in due_records(seed_store(), log, now=NOW, interval_days=30)) is due
+
+
+def test_never_checked_records_come_first_then_the_oldest_checks():
+    log = InMemoryCheckLog()
+    log.record(
+        CheckLogEntry(BAYVIEW_ID, iso(NOW - timedelta(days=40)), Category.VERIFIED, "u", False)
+    )
+    log.record(
+        CheckLogEntry(EASTSIDE_ID, iso(NOW - timedelta(days=90)), Category.VERIFIED, "u", False)
+    )
+    assert due_records(seed_store(), log, now=NOW, interval_days=30) == [
+        HARBOR_ID,
+        EASTSIDE_ID,
+        BAYVIEW_ID,
+    ]
+
+
+def test_the_check_interval_comes_from_the_config():
+    log = InMemoryCheckLog()
+    sweep(log=log)
+    later = Clock(NOW + timedelta(days=10))
+    summary, _, _ = sweep(log=log, clock=later, config=WorkerConfig(check_interval_days=10))
+    assert summary.due == 3
+    summary, _, _ = sweep(log=log, clock=later)  # default 30 days: nothing is due
+    assert summary.due == 0
+
+
+def test_a_second_sweep_right_away_checks_nothing_and_calls_no_model():
+    log, invoker = InMemoryCheckLog(), SeedInvoker()
+    sweep(log=log)
+    summary, sink, _ = sweep(log=log, invoke=invoker)
+    assert (summary.due, summary.checked, len(sink.findings), invoker.pages) == (0, 0, 0, [])
+
+
+def test_limit_caps_a_run_and_leaves_the_rest_due():
+    log = InMemoryCheckLog()
+    summary, _, _ = sweep(log=log, limit=2)
+    assert (summary.due, summary.checked) == (2, 2)
+    summary, _, _ = sweep(log=log)
+    assert (summary.due, summary.checked) == (1, 1)
+    assert log.entries[-1].service_id == HARBOR_ID
+    assert sweep(limit=0)[0].due == 0
+
+
+def test_every_page_of_the_store_is_read(monkeypatch):
+    monkeypatch.setattr(worker_module, "PER_PAGE", 1)
+    assert sweep()[0].checked == 3
+
+
+def test_a_store_that_never_reports_its_last_page_still_stops():
+    class EndlessStore(FakeHsdsStore):
+        def list_services(self, filt, page, per_page):
+            result = super().list_services(filt, page, per_page)
+            result.last_page, result.total_pages = False, 10**6
+            return result
+
+    assert sweep(EndlessStore([SEED_SERVICES[EASTSIDE_ID]]))[0].checked == 1
+
+
+def test_an_unusable_model_answer_is_a_failed_check_and_the_run_continues():
+    class BadAnswer(SeedInvoker):
+        def __call__(self, system, user):
+            if "San Mateo Counties" in user:
+                return ModelReply("this is not json", "fake-model")
+            return super().__call__(system, user)
+
+    summary, sink, log = sweep(invoke=BadAnswer())
+    (bayview,) = findings_for(sink, BAYVIEW_ID)
+    assert bayview.category is Category.CHECK_FAILED
+    assert bayview.evidence[0].snippet.startswith("fact extraction failed:")
+    assert log.last(BAYVIEW_ID).note.startswith("fact extraction failed:")
+    assert summary.checked == 3
+
+
+@pytest.mark.parametrize(
+    "error",
+    [ModelNotConfigured("set BEDROCK_MODEL_ID"), client_error("AccessDeniedException")],
+)
+def test_a_setup_error_stops_the_run_and_keeps_what_was_checked(error):
+    class Broken:
+        def __call__(self, system, user):
+            raise error
+
+    store = seed_store(HARBOR_ID, BAYVIEW_ID, EASTSIDE_ID)  # Harbor needs no model
+    sink, log = InMemoryFindingsStore(), InMemoryCheckLog()
+    with pytest.raises(WorkerSetupError, match="stopped the run") as raised:
+        sweep(store, sink=sink, log=log, invoke=Broken())
+    assert raised.value.summary.checked == 1
+    assert raised.value.summary.stopped_at == BAYVIEW_ID
+    assert [entry.service_id for entry in log.entries] == [HARBOR_ID]
+    assert {f.service_id for f in sink.findings.values()} == {HARBOR_ID}
+    assert log.last(BAYVIEW_ID) is None  # still due next run
+
+
+def test_a_missing_model_id_stops_the_run_with_the_default_bedrock_invoker(monkeypatch):
+    monkeypatch.delenv("BEDROCK_MODEL_ID", raising=False)
+    store = seed_store(BAYVIEW_ID)
+    with pytest.raises(WorkerSetupError, match="BEDROCK_MODEL_ID"):
+        run_checks(
+            store,
+            SampleWebsiteSource(),
+            sink=InMemoryFindingsStore(),
+            check_log=InMemoryCheckLog(),
+            now=Clock(),
+        )
+
+
+def test_a_website_source_that_raises_is_a_failed_check():
+    class Exploding:
+        def get(self, url):
+            raise ConnectionResetError("connection reset by peer")
+
+    summary, sink, log = sweep(seed_store(EASTSIDE_ID), source=Exploding())
+    (finding,) = sink.findings.values()
+    assert finding.category is Category.CHECK_FAILED
+    assert "ConnectionResetError" in finding.evidence[0].snippet
+    assert "by peer" not in finding.evidence[0].snippet  # the message stays in the log
+    entry = log.last(EASTSIDE_ID)
+    assert entry.fetch_failed and "connection reset by peer" in entry.note
+    assert summary.categories == {"check_failed": 1}
+
+
+def test_a_bug_hit_by_one_record_is_a_failed_check_and_the_run_continues(monkeypatch):
+    real_check_page = worker_module.check_page
+
+    def check_page(record, *args, **kwargs):
+        if record["id"] == BAYVIEW_ID:
+            raise TypeError("unexpected value in page quote 'secret text'")
+        return real_check_page(record, *args, **kwargs)
+
+    monkeypatch.setattr(worker_module, "check_page", check_page)
+    summary, sink, log = sweep()
+    (bayview,) = findings_for(sink, BAYVIEW_ID)
+    assert bayview.category is Category.CHECK_FAILED
+    assert bayview.evidence[0].snippet == "the check errored (TypeError)"  # no page text
+    assert summary.errors == [f"{BAYVIEW_ID}: TypeError"]
+    assert "secret text" in log.last(BAYVIEW_ID).note  # operators still see the detail
+    assert summary.checked == 3
+
+
+@pytest.mark.parametrize("url", [None, "", "   ", 42])
+def test_a_record_without_a_website_is_logged_and_reported_not_skipped(url):
+    record = {**SEED_SERVICES[EASTSIDE_ID], "url": url}
+    invoker = SeedInvoker()
+    summary, sink, log = sweep(FakeHsdsStore([record]), invoke=invoker)
+    assert summary.no_website == [EASTSIDE_ID]
+    assert (summary.checked, len(sink.findings), invoker.pages) == (0, 0, [])
+    entry = log.last(EASTSIDE_ID)
+    assert entry.category is None and entry.note == "the record has no website url to check"
+
+
+def test_a_record_removed_during_the_run_is_reported():
+    summary, sink, log = sweep(FakeHsdsStore(SEED["services"], missing={EASTSIDE_ID}))
+    assert summary.not_found == [EASTSIDE_ID]
+    assert summary.checked == 2 and log.last(EASTSIDE_ID) is None
+
+
+def test_a_finding_the_sink_refuses_is_reported_and_the_check_still_logged():
+    class Refusing:
+        def save(self, finding):
+            raise FindingRejected("evidence needs a non-empty snippet")
+
+    summary, _, log = sweep(seed_store(EASTSIDE_ID), sink=Refusing())
+    assert summary.findings_saved == 0
+    assert summary.findings_rejected == [f"{EASTSIDE_ID}: evidence needs a non-empty snippet"]
+    entry = log.last(EASTSIDE_ID)
+    assert entry.category is Category.VERIFIED and entry.finding_ids == []
+    assert entry.rejected_findings and entry.rejected_findings[0].endswith("non-empty snippet")
+
+
+def test_bad_run_arguments_are_refused():
+    with pytest.raises(NotImplementedError, match="RE_WORKER_MODE=reports"):
+        sweep(config=WorkerConfig(mode="reports"))
+    with pytest.raises(ValueError, match="limit"):
+        sweep(limit=-1)
+    with pytest.raises(ValueError, match="timezone-aware"):
+        sweep(clock=Clock(datetime(2026, 11, 4, 16, 0)))
+
+
+def test_timestamps_are_utc_with_a_z():
+    assert iso(datetime(2026, 11, 4, 8, 0, tzinfo=timezone(timedelta(hours=-8)))) == (
+        "2026-11-04T16:00:00Z"
+    )
+    assert parse_iso("2026-11-04T16:00:00Z") == NOW
+    assert parse_iso("2026-11-04T16:00:00") == NOW  # a naive stored time is read as UTC
+
+
+PAGE_OUTCOMES = {
+    "loads": WebsiteResult("<p>Open weekdays for everyone.</p>", 200, None),
+    "gone": WebsiteResult(None, 404, "HTTP 404"),
+    "timeout": WebsiteResult(None, None, "Timeout"),
+    "empty": WebsiteResult("<script>x()</script>", 200, None),
+}
+
+
+# Feature: resource-engine, Detection D6: every record due is accounted for, none silently
+@given(
+    outcomes=st.lists(
+        st.sampled_from([*PAGE_OUTCOMES, "raises", "no url", "removed"]), min_size=1, max_size=8
+    )
+)
+def test_every_due_record_ends_as_a_logged_check_with_a_finding_or_is_reported(outcomes):
+    records, missing, pages = [], set(), {}
+    for index, outcome in enumerate(outcomes):
+        url = f"https://site-{index}.example.org/"
+        record = service(id=f"svc-{index}", url=None if outcome == "no url" else url)
+        records.append(record)
+        if outcome == "removed":
+            missing.add(record["id"])
+        pages[url] = outcome
+
+    class Pages:
+        def get(self, url):
+            if pages[url] == "raises":
+                raise OSError("network down")
+            return PAGE_OUTCOMES.get(pages[url], PAGE_OUTCOMES["loads"])
+
+    summary, sink, log = sweep(
+        FakeHsdsStore(records, missing=missing), source=Pages(), invoke=FakeInvoker("{}")
+    )
+    assert summary.due == len(records)
+    assert summary.due == summary.checked + len(summary.no_website) + len(summary.not_found)
+    assert sum(summary.categories.values()) == summary.checked
+    for record in records:
+        entry = log.last(record["id"])
+        if record["id"] in missing:
+            assert entry is None
+        elif record["url"] is None:
+            assert entry.category is None
+        else:
+            assert entry.category is not None and entry.finding_ids  # never a silent skip
+            saved = [sink.findings[finding_id] for finding_id in entry.finding_ids]
+            assert all(finding_problems(f) == [] for f in saved)
+
+
+def test_a_service_listed_twice_is_checked_once():
+    store = FakeHsdsStore([SEED_SERVICES[EASTSIDE_ID]])
+    real_list = store.list_services
+
+    def list_twice(filt, page, per_page):
+        result = real_list(filt, page, per_page)
+        result.contents = result.contents * 2
+        return result
+
+    store.list_services = list_twice
+    summary, sink, log = sweep(store)
+    assert (summary.due, summary.checked, len(log.entries)) == (1, 1, 1)
+
+
+def test_a_listed_service_without_an_id_is_counted_not_crashing_the_sweep():
+    store = seed_store(EASTSIDE_ID)
+    real_list = store.list_services
+
+    def with_bad_entries(filt, page, per_page):
+        result = real_list(filt, page, per_page)
+        result.contents = [*result.contents, {"name": "no id"}, {"id": ""}, "not a dict"]
+        return result
+
+    store.list_services = with_bad_entries
+    summary, _, _ = sweep(store)
+    assert (summary.unlisted, summary.checked) == (3, 1)
+
+
+@pytest.mark.parametrize("stored", ["yesterday", "", None])
+def test_a_log_time_that_cant_be_read_makes_the_record_due(stored):
+    log = InMemoryCheckLog()
+    log.record(CheckLogEntry(EASTSIDE_ID, stored, Category.VERIFIED, "u", False))
+    assert due_records(seed_store(EASTSIDE_ID), log, now=NOW, interval_days=30) == [EASTSIDE_ID]
+
+
+class FailingWrites:
+    """A store whose writes fail from the given call on, as a database outage would."""
+
+    def __init__(self, fail_on=1):
+        self.calls, self.fail_on, self.findings = 0, fail_on, {}
+
+    def _write(self, item):
+        self.calls += 1
+        if self.calls >= self.fail_on:
+            raise ConnectionError("database is down")
+
+    def save(self, finding):
+        self._write(finding)
+        self.findings[finding.id] = finding
+        return finding.id
+
+    def record(self, entry):
+        self._write(entry)
+
+    def last(self, service_id):
+        return None
+
+
+def test_a_findings_store_outage_stops_the_run_with_the_partial_summary():
+    sink = FailingWrites(fail_on=2)  # Eastside's one finding saves; Harbor's fails
+    log = InMemoryCheckLog()
+    with pytest.raises(WorkerSetupError, match="could not write a finding") as raised:
+        sweep(seed_store(EASTSIDE_ID, HARBOR_ID), sink=sink, log=log)
+    summary = raised.value.summary
+    assert (summary.checked, summary.findings_saved, summary.stopped_at) == (1, 1, HARBOR_ID)
+    assert [entry.service_id for entry in log.entries] == [EASTSIDE_ID]
+    assert log.last(HARBOR_ID) is None  # Harbor stays due
+
+
+def test_a_check_log_outage_stops_the_run_and_the_record_stays_due():
+    with pytest.raises(WorkerSetupError, match="could not write the check log") as raised:
+        sweep(seed_store(EASTSIDE_ID), log=FailingWrites())
+    summary = raised.value.summary
+    assert (summary.checked, summary.findings_saved, summary.stopped_at) == (0, 1, EASTSIDE_ID)
+
+
+def test_a_check_log_outage_on_a_record_without_a_website_stops_the_run_too():
+    record = {**SEED_SERVICES[EASTSIDE_ID], "url": None}
+    with pytest.raises(WorkerSetupError, match="could not write the check log"):
+        sweep(FakeHsdsStore([record]), log=FailingWrites())
