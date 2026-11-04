@@ -14,7 +14,10 @@ paths = [
   '''uv\.lock''',
 ]
 # Belt-and-suspenders: allow the specific fake values used in docs/examples.
+# .env.example's actual default (RE_BEARER_TOKEN) uses underscores, not hyphens;
+# the README's curl examples quote it verbatim, which is what the entry below allows.
 regexes = [
   '''local-dev-token''',
   '''local-dev-password''',
+  '''local_dev_token''',
 ]
