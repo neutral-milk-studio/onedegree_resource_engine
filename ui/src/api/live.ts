@@ -22,7 +22,7 @@ interface ListResponse<T> {
  * Replace this when real accounts exist.
  */
 export async function liveSignIn(email: string, password: string): Promise<Session> {
-  const response = await fetch(`${API_BASE}/review/records`, { headers: { Authorization: `Bearer ${password}` } });
+  const response = await fetch(`${API_BASE}/services?per_page=1`, { headers: { Authorization: `Bearer ${password}` } });
   if (!response.ok) throw new ApiError(401, "That email or password isn't right.");
   return { email, name: email.split("@")[0], token: password };
 }

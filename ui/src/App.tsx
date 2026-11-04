@@ -2,8 +2,13 @@ import { useMemo, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { createApi, type Session } from "./api/client";
+import { createDashboardApi } from "./api/dashboard";
 import { Login } from "./Login";
+import { ComingSoon } from "./pages/ComingSoon";
+import { Overview } from "./pages/Overview";
+import { useRoute } from "./router";
 import { RecordsReview } from "./sections/RecordsReview";
+import { Shell } from "./Shell";
 
 const SESSION_KEY = "resource-refresh-session";
 
@@ -27,31 +32,39 @@ function saveSession(session: Session | null): void {
 
 function Workspace({ session, onSignOut }: { session: Session; onSignOut(): void }) {
   const api = useMemo(() => createApi(session), [session]);
+  const dashboard = useMemo(() => createDashboardApi(session), [session]);
   const queryClient = useMemo(
     () => new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } }),
     [],
   );
+  const page = useRoute();
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="app">
-        <header className="app-header">
-          <h1>Resource Refresh</h1>
-          {api.isDemo && (
-            <p className="demo-note" role="status">
-              <strong>Demo data:</strong> findings and clashes are simulated, not claims about real organizations.
-            </p>
-          )}
-          <div className="user">
-            <span>{session.name}</span>
-            <button type="button" onClick={onSignOut}>
-              Sign out
-            </button>
-          </div>
-        </header>
-        <main className="app-main">
-          <RecordsReview api={api} />
-        </main>
-      </div>
+      <Shell page={page} userName={session.name} isDemo={dashboard.isDemo} onSignOut={onSignOut}>
+        {page === "overview" && <Overview api={dashboard} />}
+        {page === "review" && <RecordsReview api={api} />}
+        {page === "conflicts" && (
+          <ComingSoon
+            title="Conflicts"
+            step={4}
+            description="The same organization from two sources with different values, side by side."
+          />
+        )}
+        {page === "partners" && (
+          <ComingSoon
+            title="Add a partner"
+            step={5}
+            description="Upload a spreadsheet, confirm the suggested column mapping, and see live counts."
+          />
+        )}
+        {page === "search" && (
+          <ComingSoon
+            title="Search"
+            step={6}
+            description="Search in plain language, such as “I just lost my job and can't pay rent”."
+          />
+        )}
+      </Shell>
     </QueryClientProvider>
   );
 }

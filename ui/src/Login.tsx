@@ -27,9 +27,9 @@ export function Login({ onSignedIn }: { onSignedIn(session: Session): void }) {
     <main className="login">
       <div className="login-card">
         <p className="login-mark" aria-hidden="true">
-          RR
+          RE
         </p>
-        <h1>Resource Refresh</h1>
+        <h1>Resource Engine</h1>
         <p className="muted">Sign in to review community resource records.</p>
         <form onSubmit={(event) => void submit(event)}>
           <label htmlFor="email">Email</label>

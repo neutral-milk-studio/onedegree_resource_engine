@@ -1,5 +1,6 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
+  --series-1: #2a78d6; /* chart bars; validated against --surface (dataviz validator) */
   --bg: #f4f5f7;
   --surface: #ffffff;
   --surface-2: #f8f9fb;
@@ -33,45 +34,47 @@
   line-height: 1.5;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #101317;
-    --surface: #191d23;
-    --surface-2: #20252c;
-    --text: #e9ecef;
-    --muted: #a4aeb8;
-    --border: #333a43;
-    --primary: #76aaf7;
-    --primary-hover: #93bdfa;
-    --primary-text: #0b1a30;
-    --selected: #1d2c42;
-    --urgent: #f26a62;
-    --urgent-soft: #46201e;
-    --urgent-text: #ffbdb8;
-    --high: #f09a51;
-    --high-soft: #43290f;
-    --high-text: #fbcf9f;
-    --medium: #dfbc3f;
-    --medium-soft: #3c3210;
-    --medium-text: #f2dd8d;
-    --low: #8c97a3;
-    --low-soft: #2a3038;
-    --low-text: #cbd2d9;
-    --del-bg: #5b2320;
-    --del-text: #ffc9c4;
-    --ins-bg: #1b4a2a;
-    --ins-text: #b6efc4;
-    --good: #93dea7;
-    --good-soft: #1b3a24;
-  }
-  .ag-theme-quartz {
-    --ag-background-color: var(--surface);
-    --ag-foreground-color: var(--text);
-    --ag-header-background-color: var(--surface-2);
-    --ag-header-foreground-color: var(--text);
-    --ag-border-color: var(--border);
-    --ag-row-hover-color: var(--surface-2);
-  }
+/* Dark mode: set by src/theme.ts (and the inline script in index.html) from the viewer's
+   choice or the OS setting. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --series-1: #3987e5;
+  --bg: #101317;
+  --surface: #191d23;
+  --surface-2: #20252c;
+  --text: #e9ecef;
+  --muted: #a4aeb8;
+  --border: #333a43;
+  --primary: #76aaf7;
+  --primary-hover: #93bdfa;
+  --primary-text: #0b1a30;
+  --selected: #1d2c42;
+  --urgent: #f26a62;
+  --urgent-soft: #46201e;
+  --urgent-text: #ffbdb8;
+  --high: #f09a51;
+  --high-soft: #43290f;
+  --high-text: #fbcf9f;
+  --medium: #dfbc3f;
+  --medium-soft: #3c3210;
+  --medium-text: #f2dd8d;
+  --low: #8c97a3;
+  --low-soft: #2a3038;
+  --low-text: #cbd2d9;
+  --del-bg: #5b2320;
+  --del-text: #ffc9c4;
+  --ins-bg: #1b4a2a;
+  --ins-text: #b6efc4;
+  --good: #93dea7;
+  --good-soft: #1b3a24;
+}
+:root[data-theme="dark"] .ag-theme-quartz {
+  --ag-background-color: var(--surface);
+  --ag-foreground-color: var(--text);
+  --ag-header-background-color: var(--surface-2);
+  --ag-header-foreground-color: var(--text);
+  --ag-border-color: var(--border);
+  --ag-row-hover-color: var(--surface-2);
 }
 
 * { box-sizing: border-box; }

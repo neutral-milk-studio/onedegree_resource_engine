@@ -73,7 +73,8 @@ flowchart LR
 | Adapters | `ingest/adapters/` + `config/sources.yaml` | One mapper module per source (`odrs.py`, `ndp.py`). Adding a source = one module + one config entry. |
 | Pipeline | `ingest/pipeline/run.py` | fetch → raw save → map → validate (each object, then the nested service as served) → store or quarantine. Deterministic UUIDv5 ids, so re-runs update. |
 | Store | `shared/models.py`, `api/app/store_pg.py` | `hsds.objects` (every HSDS object), `hsds.services` (nested HSDS document + key columns), `hsds.id_map`; `ops.ingest_runs`, `ops.quarantine`, `ops.audit_log`. |
-| API | `api/app/` | `GET /services`, `GET /services/{id}`, `POST /ingest/{source}`, `GET /ingest/runs`, `GET /ingest/runs/{id}/quarantine`. |
+| API | `api/app/` | `GET /services`, `GET /services/{id}`, `POST /ingest/{source}`, `GET /ingest/runs`, `GET /ingest/runs/{id}/quarantine`, `GET /metrics`, `GET /audit`. |
+| Admin UI | `ui/` | React + Vite + TypeScript + Tailwind. Overview (live metrics, findings chart, sources, recent activity), plus the review screen. Light/dark/device theme. |
 
 ## Run it locally
 
@@ -93,7 +94,8 @@ curl -H "Authorization: Bearer local_dev_token" -X POST http://localhost:8000/in
 curl -H "Authorization: Bearer local_dev_token" http://localhost:8000/ingest/runs
 ```
 
-API docs: `http://localhost:8000/docs`. Admin UI: `http://localhost:5173`. LocalStack,
+API docs: `http://localhost:8000/docs`. Admin UI: `http://localhost:5173`. Sign in with any
+email and the bearer token as the password (`local_dev_token` locally). LocalStack,
 OpenSearch and the worker are behind a profile: `docker compose --profile full up`.
 
 Without Docker, against any Postgres:
@@ -104,6 +106,15 @@ export RE_DATABASE_URL=postgresql://resource_engine:local_dev_only@localhost:543
 export RE_BEARER_TOKEN=local_dev_token
 uv run python -m ingest.pipeline.run --all
 make api
+```
+
+The admin UI on the host:
+
+```bash
+cd ui && npm install
+VITE_API_MODE=live npm run dev    # against the API on :8000 (proxied by Vite)
+npm run dev                       # demo mode: simulated data, labelled as such
+npm test                          # UI tests (vitest)
 ```
 
 The review API contract mock still runs on its own with `make mock`.

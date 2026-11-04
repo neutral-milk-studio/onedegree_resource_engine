@@ -5,6 +5,7 @@ import "ag-grid-community/styles/ag-theme-quartz.css";
 
 import App from "./App";
 import "./styles.css";
+import "./index.css";
 
 createRoot(document.getElementById("root") as HTMLElement).render(
   <StrictMode>

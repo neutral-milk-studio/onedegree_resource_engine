@@ -36,6 +36,8 @@ def loaded(client):
         ("get", "/services/00000000-0000-0000-0000-000000000000"),
         ("post", "/ingest/odrs"),
         ("get", "/ingest/runs"),
+        ("get", "/metrics"),
+        ("get", "/audit"),
     ],
 )
 @pytest.mark.parametrize(
@@ -105,3 +107,39 @@ def test_ingest_runs_report_counts(loaded):
 def test_unknown_source_is_404(client):
     response = client.post("/ingest/nope", headers=AUTH)
     assert response.status_code == 404 and "configured sources" in response.json()["detail"]
+
+
+def test_metrics_on_empty_store(client):
+    body = client.get("/metrics", headers=AUTH).json()
+    assert body["total_records"] == 0 and body["records_by_source"] == []
+    assert body["findings"]["open_total"] == 0
+    assert list(body["findings"]["open_by_category"])[0] == "actively_bad"  # harm order
+    assert body["avg_trust_score"] is None and body["conflicts_open"] is None
+
+
+def test_metrics_reflect_ingest(loaded):
+    loaded.post("/ingest/ndp", headers=AUTH)
+    body = loaded.get("/metrics", headers=AUTH).json()
+    assert body["total_records"] == 86
+    assert body["records_by_source"] == [
+        {"source": "ndp", "records": 36},
+        {"source": "odrs", "records": 50},
+    ]
+    assert body["quarantined_records"] == 0 and body["quarantined_objects"] == 7
+    assert body["records_missing_information"] == 50  # every ODRS org lacks a description
+    assert sum(body["records_by_status"].values()) == 86
+    assert {r["source"] for r in body["last_ingest"]} == {"odrs", "ndp"}
+
+
+def test_metrics_use_latest_run_per_source(loaded):
+    loaded.post("/ingest/odrs", headers=AUTH)  # second run of the same source
+    body = loaded.get("/metrics", headers=AUTH).json()
+    assert len(body["last_ingest"]) == 1 and body["last_ingest"][0]["received"] == 50
+
+
+def test_audit_lists_ingest_runs_newest_first(loaded):
+    loaded.post("/ingest/ndp", headers=AUTH)
+    entries = loaded.get("/audit?limit=5", headers=AUTH).json()
+    assert [e["entity_id"] for e in entries[:2]] == ["ndp", "odrs"]
+    assert entries[0]["action"] == "ingest_run" and entries[0]["actor"] == "dev-reviewer"
+    assert "20 received" in entries[0]["summary"]
