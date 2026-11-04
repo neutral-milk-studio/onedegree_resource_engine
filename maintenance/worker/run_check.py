@@ -1,18 +1,25 @@
 """Maintenance worker: settings, and the sweep that checks the records that are due.
 
-select-due -> fetch (website source) -> extract (Bedrock) -> compare -> save findings.
+select-due -> fetch (website source) -> review need -> extract (Bedrock) -> compare -> save.
 Each check is also written to the check log (last-checked time, result, model log).
+
+Review need: a page and record that are both unchanged since the last completed AI review
+skip the model and carry that result forward. Anything else gets the standard AI review,
+including a record whose page has never been reviewed: records come from agency databases
+that vet their organizations, so a first review needs no extra human sign-off.
 Spec: Requirements 18.1, 18.4, 19.5, 20, 21, 22, 23.
 """
 
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 from collections import Counter
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, fields
 from datetime import UTC, datetime, timedelta
+from enum import Enum
 from typing import Any, Protocol
 
 from contracts.findings import Category, FindingRejected, FindingsSink
@@ -20,6 +27,7 @@ from contracts.store import HsdsStore, ServiceFilter
 from contracts.website_source import WebsiteResult, WebsiteSource
 from maintenance.comparator.compare import Comparison, check_page, failure, site_loaded
 from maintenance.extractor.extract import (
+    MODEL_ID_ENV,
     ExtractionError,
     Invoker,
     ModelNotConfigured,
@@ -127,12 +135,25 @@ def website_source_for(config: WorkerConfig) -> WebsiteSource:
 
 
 # --------------------------------------------------------------------------- #
-# Check log
+# Check log and review flags
 #
-# PROVISIONAL: the check log has no shared contract yet. These types move to contracts/
-# in the separate contract PR (both owners approve), and the Postgres version is an
-# ``ops`` table, never part of an HSDS record.
+# PROPOSED FOR CONTRACTS: these types have no shared contract yet. They move to contracts/
+# in the separate contract PR (both owners approve); until then nothing outside detection
+# should import them. The Postgres check log is an ``ops`` table, never part of HSDS.
 # --------------------------------------------------------------------------- #
+
+
+class ReviewFlag(str, Enum):  # noqa: UP042 - str+Enum matches contracts/findings.py
+    """Asks a person to look at a record, whatever its category. Detection only raises
+    flags; a person resolves them (they are sticky in the review layer)."""
+
+    LEGITIMACY_REVIEW = "legitimacy_review"  # severe user reports (unavailable, deletion)
+    REPORTS_ON_UNCHANGED_PAGE = "reports_on_unchanged_page"  # inaccuracy reports, same page
+
+
+# Part of the record hash. Change it when extraction or comparison changes enough that
+# earlier results shouldn't be carried forward, and every record is reviewed again.
+REVIEW_VERSION = "1"
 
 
 @dataclass
@@ -146,7 +167,16 @@ class CheckLogEntry:
     fetch_failed: bool  # the page didn't load; two in a row make a site actively bad
     finding_ids: list[str] = field(default_factory=list)
     note: str = ""  # why the check ended the way it did, for operators
-    content_sha256: str | None = None  # of the fetched page, so a later run can skip a re-read
+    flags: list[ReviewFlag] = field(default_factory=list)
+    skipped_unchanged: bool = False  # no model call: page and record unchanged since review
+    model_called: bool = False  # fact extraction was attempted
+    # The last completed AI review, carried from check to check until a new one completes.
+    # A failed fetch or a failed model call keeps them, so a passing outage doesn't cost a
+    # later skip. A skip is only allowed when both hashes match them.
+    content_hash: str | None = None  # of the reviewed page's visible text
+    record_hash: str | None = None  # of the record as it was reviewed
+    reviewed_category: Category | None = None  # the review's category, carried by a skip
+    reviewed_at: str | None = None  # when that review ran
     model_id: str = ""
     usage: dict[str, int] = field(default_factory=dict)
     raw_response: str | None = None  # the model's reply as received
@@ -202,6 +232,44 @@ class WorkerSetupError(RuntimeError):
         self.summary = summary
 
 
+def page_hash(content: str) -> str:
+    """Hash of a page's visible text with whitespace collapsed, so layout-only edits match.
+
+    Markup, scripts and comments don't count; a dynamic page (a date, a counter) just means
+    an extra model call, never a wrong skip.
+    """
+    text = " ".join(visible_text(content).split())
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def record_hash(record: dict[str, Any]) -> str:
+    """Hash of the whole stored record, the review version and the configured model.
+
+    Any change to the record (such as a person applying a finding), to ``REVIEW_VERSION``
+    or to ``BEDROCK_MODEL_ID`` means the record is reviewed again rather than carried
+    forward. Values JSON can't hold are hashed by their text, which at worst costs an
+    extra review.
+    """
+    canonical = json.dumps(record, sort_keys=True, default=str, ensure_ascii=False)
+    model = os.environ.get(MODEL_ID_ENV, "").strip()
+    return hashlib.sha256(f"{REVIEW_VERSION}\n{model}\n{canonical}".encode()).hexdigest()
+
+
+def _new_entry(
+    service_id: str, checked_at: str, url: str | None, previous: CheckLogEntry | None
+) -> CheckLogEntry:
+    """A log entry that carries the last completed review forward from ``previous``."""
+    entry = CheckLogEntry(
+        service_id=service_id, checked_at=checked_at, category=None, url=url, fetch_failed=False
+    )
+    if previous is not None:
+        entry.content_hash = previous.content_hash
+        entry.record_hash = previous.record_hash
+        entry.reviewed_category = previous.reviewed_category
+        entry.reviewed_at = previous.reviewed_at
+    return entry
+
+
 @dataclass
 class RunSummary:
     """What one sweep did. Nothing in it is silent: every record due is accounted for."""
@@ -215,6 +283,9 @@ class RunSummary:
     not_found: list[str] = field(default_factory=list)  # listed, then gone before the check
     errors: list[str] = field(default_factory=list)  # "service id: error type", as check_failed
     unlisted: int = 0  # listed services with no id, which can't be checked or logged
+    model_calls: int = 0  # fact extractions attempted
+    skipped_unchanged: int = 0  # checks that carried the last review forward, no model call
+    flags: Counter[str] = field(default_factory=Counter)  # review flags raised
     stopped_at: str | None = None  # the record being checked when a setup error stopped the run
 
 
@@ -319,25 +390,36 @@ def check_record(
     invoke: Invoker | None,
     previous: CheckLogEntry | None,
     checked_at: str,
-) -> tuple[Comparison, CheckLogEntry]:
-    """Check one record: fetch, extract when the page loaded, compare.
+) -> tuple[Comparison | None, CheckLogEntry]:
+    """Check one record: fetch, decide whether it needs an AI review, extract, compare.
 
-    Always returns a result with at least one finding. Raises only for setup errors.
+    Returns the comparison, or None when the page and record are unchanged since the last
+    completed review: then nothing new is found, and ``entry.category`` carries that
+    review's result forward. Raises only for setup errors.
     """
     site, note = _fetch(website_source, url)
-    entry = CheckLogEntry(
-        service_id=record["id"],
-        checked_at=checked_at,
-        category=None,
-        url=url,
-        fetch_failed=not site_loaded(site),
-        note=note,
-    )
-    if site.content:
-        entry.content_sha256 = hashlib.sha256(site.content.encode("utf-8")).hexdigest()
+    entry = _new_entry(record["id"], checked_at, url, previous)
+    entry.fetch_failed = not site_loaded(site)
+    entry.note = note
+    readable = not entry.fetch_failed and bool(visible_text(site.content or "").strip())
+
+    if readable:
+        page = page_hash(site.content or "")
+        stored = record_hash(record)
+        if (
+            entry.content_hash is not None
+            and entry.content_hash == page
+            and entry.record_hash == stored
+            and entry.reviewed_category is not None
+        ):
+            entry.skipped_unchanged = True
+            entry.category = entry.reviewed_category
+            entry.note = f"page and record unchanged since the review at {entry.reviewed_at}"
+            return None, entry
 
     extraction = None
-    if not entry.fetch_failed and visible_text(site.content or "").strip():
+    if readable:
+        entry.model_called = True
         try:
             extraction = extract_facts(site.content or "", invoke=invoke)
         except ExtractionError as exc:
@@ -362,6 +444,12 @@ def check_record(
         unreachable_before=bool(previous and previous.fetch_failed),
     )
     entry.dropped_findings = list(comparison.dropped)
+    if extraction is not None and comparison.category is not Category.CHECK_FAILED:
+        # A completed review: later checks can carry it forward while nothing changes.
+        entry.content_hash = page
+        entry.record_hash = stored
+        entry.reviewed_category = comparison.category
+        entry.reviewed_at = checked_at
     return comparison, entry
 
 
@@ -415,14 +503,8 @@ def run_checks(
             # A finding needs a url for its evidence, so a record with no website can't get
             # one. It is logged and reported instead, never skipped silently.
             summary.no_website.append(service_id)
-            entry = CheckLogEntry(
-                service_id=service_id,
-                checked_at=checked_at,
-                category=None,
-                url=None,
-                fetch_failed=False,
-                note="the record has no website url to check",
-            )
+            entry = _new_entry(service_id, checked_at, None, check_log.last(service_id))
+            entry.note = "the record has no website url to check"
             _persist(check_log.record, entry, summary=summary, service_id=service_id)
             continue
 
@@ -443,14 +525,8 @@ def run_checks(
             # One record broke the check. Report it as a failed check and carry on; the
             # error type (not the message, which may quote the page) goes on the finding.
             summary.errors.append(f"{service_id}: {type(exc).__name__}")
-            entry = CheckLogEntry(
-                service_id=service_id,
-                checked_at=checked_at,
-                category=None,
-                url=url,
-                fetch_failed=False,
-                note=f"the check errored: {type(exc).__name__}: {exc}",
-            )
+            entry = _new_entry(service_id, checked_at, url, previous)
+            entry.note = f"the check errored: {type(exc).__name__}: {exc}"
             comparison = failure(
                 record,
                 Category.CHECK_FAILED,
@@ -458,6 +534,17 @@ def run_checks(
                 url=url,
                 checked_at=checked_at,
             )
+
+        if entry.model_called:
+            summary.model_calls += 1
+        for flag in entry.flags:
+            summary.flags[flag.value] += 1
+        if comparison is None:  # unchanged since the last review: carried forward
+            _persist(check_log.record, entry, summary=summary, service_id=service_id)
+            summary.checked += 1
+            summary.skipped_unchanged += 1
+            summary.categories[entry.category.value] += 1
+            continue
 
         # Findings are saved before the log entry. If the log can't be written the record
         # stays due, so a failure here repeats findings rather than losing them.
@@ -470,6 +557,13 @@ def run_checks(
                 continue
             entry.finding_ids.append(saved_id)
             summary.findings_saved += 1
+        if entry.rejected_findings and entry.reviewed_at == checked_at:
+            # The review found something that couldn't be stored. Don't let a later check
+            # carry it forward: keep the previous review so this one is redone next time.
+            carried = _new_entry(service_id, checked_at, url, previous)
+            entry.content_hash, entry.record_hash = carried.content_hash, carried.record_hash
+            entry.reviewed_category = carried.reviewed_category
+            entry.reviewed_at = carried.reviewed_at
         entry.category = comparison.category
         _persist(check_log.record, entry, summary=summary, service_id=service_id)
         summary.checked += 1

@@ -73,7 +73,9 @@ from maintenance.worker.run_check import (
     WorkerSetupError,
     due_records,
     iso,
+    page_hash,
     parse_iso,
+    record_hash,
     run_checks,
     website_source_for,
 )
@@ -3032,7 +3034,8 @@ def test_each_check_is_logged_with_its_result_and_the_model_log():
     assert bayview.model_id == "fake-model"
     assert bayview.usage == {"input_tokens": 120, "output_tokens": 40}
     assert bayview.raw_response == BAYVIEW_REPLY
-    assert bayview.content_sha256 and len(bayview.content_sha256) == 64
+    assert bayview.content_hash == page_hash(bayview_page())
+    assert bayview.reviewed_category is Category.DISCREPANCY
     assert sorted(bayview.finding_ids) == sorted(f.id for f in findings_for(sink, BAYVIEW_ID))
     harbor = log.last(HARBOR_ID)
     assert harbor.fetch_failed and harbor.model_id == "" and harbor.raw_response is None
@@ -3387,3 +3390,360 @@ def test_a_check_log_outage_on_a_record_without_a_website_stops_the_run_too():
     record = {**SEED_SERVICES[EASTSIDE_ID], "url": None}
     with pytest.raises(WorkerSetupError, match="could not write the check log"):
         sweep(FakeHsdsStore([record]), log=FailingWrites())
+
+
+# --------------------------------------------------------------------------- #
+# Task 7: review need (hash-skip, first seen, review flags)
+# --------------------------------------------------------------------------- #
+
+MONTH = timedelta(days=30)
+
+
+class Pages:
+    """A website source over a url -> WebsiteResult map that tests can change between runs."""
+
+    def __init__(self, pages):
+        self.pages = dict(pages)
+
+    def get(self, url):
+        result = self.pages[url]
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+
+def ok(html):
+    return WebsiteResult(html, 200, None)
+
+
+DOWN = WebsiteResult(None, None, "Timeout")
+
+
+def eastside_pages(html=None):
+    return Pages({EASTSIDE_URL: ok(html or eastside_page())})
+
+
+def runs(count, *, source, store=None, invoke=None, log=None, sink=None, between=None):
+    """Run ``count`` sweeps a month apart; ``between(run_index)`` may change things first."""
+    log = log or InMemoryCheckLog()
+    sink = sink or InMemoryFindingsStore()
+    clock = Clock()
+    store = store or seed_store(EASTSIDE_ID)
+    summaries = []
+    for index in range(count):
+        if between:
+            between(index)
+        summaries.append(
+            sweep(store, sink=sink, log=log, invoke=invoke, clock=clock, source=source)[0]
+        )
+        clock.moment += MONTH
+    return summaries, log, sink
+
+
+def test_an_unchanged_page_and_record_skip_the_model_and_carry_the_result():
+    invoker = SeedInvoker()
+    (first, second), log, sink = runs(2, source=eastside_pages(), invoke=invoker)
+    assert (first.model_calls, first.skipped_unchanged) == (1, 0)
+    assert (second.model_calls, second.skipped_unchanged) == (0, 1)
+    assert invoker.pages == ["eastside"]  # the model ran once
+    assert second.categories == {"verified": 1} and second.findings_saved == 0
+    first_entry, second_entry = log.entries
+    assert second_entry.skipped_unchanged and second_entry.category is Category.VERIFIED
+    assert second_entry.finding_ids == [] and second_entry.reviewed_at == first_entry.checked_at
+    assert second_entry.note.startswith("page and record unchanged since the review at")
+
+
+def test_a_skip_carries_a_discrepancy_forward_too():
+    pages = Pages({BAYVIEW_URL: ok(bayview_page())})
+    (_, second), log, _ = runs(2, source=pages, store=seed_store(BAYVIEW_ID), invoke=SeedInvoker())
+    assert second.skipped_unchanged == 1 and log.entries[-1].category is Category.DISCREPANCY
+
+
+def test_a_changed_page_is_reviewed_again():
+    pages = eastside_pages()
+
+    def change(index):
+        if index == 1:
+            pages.pages[EASTSIDE_URL] = ok(eastside_page().replace("</body>", "<p>New.</p></body>"))
+
+    (_, second), _, _ = runs(2, source=pages, invoke=SeedInvoker(), between=change)
+    assert (second.model_calls, second.skipped_unchanged) == (1, 0)
+
+
+def test_a_layout_or_whitespace_only_change_still_skips():
+    pages = eastside_pages()
+
+    def reformat(index):
+        if index == 1:
+            html = eastside_page().replace("<p>", "<p class='new'>\n   ").replace(" ", "  ")
+            pages.pages[EASTSIDE_URL] = ok(html + "<!-- edited -->")
+
+    (_, second), _, _ = runs(2, source=pages, invoke=SeedInvoker(), between=reformat)
+    assert second.skipped_unchanged == 1
+
+
+def test_a_changed_record_is_reviewed_again_even_on_an_unchanged_page():
+    store = seed_store(EASTSIDE_ID)
+
+    def person_applies_a_change(index):
+        if index == 1:
+            store.services[EASTSIDE_ID]["description"] += " Updated by a specialist."
+
+    (_, second), _, _ = runs(
+        2,
+        source=eastside_pages(),
+        store=store,
+        invoke=SeedInvoker(),
+        between=person_applies_a_change,
+    )
+    assert (second.model_calls, second.skipped_unchanged) == (1, 0)
+
+
+def test_changing_the_review_version_reviews_everything_again(monkeypatch):
+    def bump(index):
+        if index == 1:
+            monkeypatch.setattr(worker_module, "REVIEW_VERSION", "2")
+
+    (_, second), _, _ = runs(2, source=eastside_pages(), invoke=SeedInvoker(), between=bump)
+    assert second.model_calls == 1
+
+
+def test_a_first_seen_record_gets_a_standard_review_and_no_flag():
+    # Records come from vetted agency databases, so no legitimacy check on first sight.
+    (first,), log, _ = runs(1, source=eastside_pages(), invoke=SeedInvoker())
+    entry = log.entries[0]
+    assert entry.category is Category.VERIFIED and entry.flags == []
+    assert first.model_calls == 1 and first.flags == {}
+
+
+def test_a_failed_fetch_neither_skips_nor_changes_the_stored_hash():
+    pages = eastside_pages()
+    good = pages.pages[EASTSIDE_URL]
+
+    def outage(index):
+        pages.pages[EASTSIDE_URL] = DOWN if index == 1 else good
+
+    invoker = SeedInvoker()
+    (_, down, back), log, _ = runs(3, source=pages, invoke=invoker, between=outage)
+    reviewed, failed, after = log.entries
+    assert failed.category is Category.CHECK_FAILED and not failed.skipped_unchanged
+    assert failed.content_hash == reviewed.content_hash  # kept through the outage
+    assert after.skipped_unchanged  # the outage didn't cost the skip
+    assert invoker.pages == ["eastside"] and down.model_calls == 0
+
+
+def test_a_record_whose_page_never_loaded_is_reviewed_when_it_does():
+    pages = Pages({EASTSIDE_URL: DOWN})
+
+    def comes_up(index):
+        if index == 1:
+            pages.pages[EASTSIDE_URL] = ok(eastside_page())
+
+    (first, second), log, _ = runs(2, source=pages, invoke=SeedInvoker(), between=comes_up)
+    assert log.entries[0].content_hash is None and first.model_calls == 0
+    assert (second.model_calls, second.skipped_unchanged) == (1, 0)
+    assert log.entries[1].flags == []
+
+
+def test_a_failed_model_call_is_retried_next_time_not_carried_forward():
+    class FailsOnce(SeedInvoker):
+        def __call__(self, system, user):
+            if not self.pages:
+                self.pages.append("bad")
+                return ModelReply("not json", "fake-model")
+            return super().__call__(system, user)
+
+    invoker = FailsOnce()
+    (first, second), log, _ = runs(2, source=eastside_pages(), invoke=invoker)
+    assert log.entries[0].category is Category.CHECK_FAILED and log.entries[0].content_hash is None
+    assert (second.model_calls, second.skipped_unchanged) == (1, 0)
+    assert log.entries[1].category is Category.VERIFIED
+    assert first.model_calls == 1  # a failed attempt still counts as a call
+
+
+def test_a_review_that_fails_its_quote_check_is_not_carried_forward(monkeypatch):
+    real_check_page = worker_module.check_page
+    calls = []
+
+    def quote_check_fails_first(record, site, extraction, **kwargs):
+        calls.append(1)
+        if len(calls) == 1:
+            return failure(
+                record,
+                Category.CHECK_FAILED,
+                "quote not in page",
+                url=kwargs["url"],
+                checked_at=kwargs["checked_at"],
+            )
+        return real_check_page(record, site, extraction, **kwargs)
+
+    monkeypatch.setattr(worker_module, "check_page", quote_check_fails_first)
+    (_, second), log, _ = runs(2, source=eastside_pages(), invoke=SeedInvoker())
+    assert log.entries[0].content_hash is None
+    assert second.model_calls == 1 and log.entries[1].category is Category.VERIFIED
+
+
+def test_a_page_with_no_readable_text_is_not_hashed():
+    pages = Pages({EASTSIDE_URL: ok("<script>app()</script>")})
+    (first,), log, _ = runs(1, source=pages, invoke=SeedInvoker())
+    entry = log.entries[0]
+    assert entry.category is Category.CHECK_FAILED
+    assert entry.content_hash is None and first.model_calls == 0
+
+
+def test_the_last_review_is_carried_through_a_no_website_check():
+    store = seed_store(EASTSIDE_ID)
+
+    def url_removed_then_restored(index):
+        store.services[EASTSIDE_ID]["url"] = None if index == 1 else EASTSIDE_URL
+
+    (_, _, third), log, _ = runs(
+        3,
+        source=eastside_pages(),
+        store=store,
+        invoke=SeedInvoker(),
+        between=url_removed_then_restored,
+    )
+    assert log.entries[1].content_hash == log.entries[0].content_hash
+    # The record changed and changed back, so its hash matches again: a skip is correct.
+    assert third.skipped_unchanged == 1
+
+
+def test_page_hash_ignores_markup_and_whitespace_but_not_words():
+    assert page_hash("<p>Open  Monday</p>") == page_hash("<div>Open\nMonday</div><!-- x -->")
+    assert page_hash("<p>Open Monday</p>") != page_hash("<p>Open Tuesday</p>")
+
+
+# Feature: resource-engine, Detection D1: a skip never happens without a stored matching hash
+@given(
+    plan=st.lists(
+        st.tuples(
+            st.sampled_from(["page a", "page a spaced", "page b", "down", "raises", "empty"]),
+            st.sampled_from(["good", "bad answer"]),
+            st.booleans(),  # whether a person edits the record before this run
+        ),
+        min_size=1,
+        max_size=6,
+    )
+)
+def test_a_skip_never_happens_without_a_stored_matching_hash(plan):
+    contents = {
+        "page a": ok("<p>Open to everyone in Alameda County.</p>"),
+        "page a spaced": ok("<div>Open to everyone   in Alameda County.</div>"),
+        "page b": ok("<p>Open to everyone in Marin County.</p>"),
+        "down": DOWN,
+        "raises": OSError("network down"),
+        "empty": ok("<script>x()</script>"),
+    }
+    url = "https://site.example.org/"
+    store = FakeHsdsStore([service(id="svc", url=url)])
+    pages = Pages({url: DOWN})
+
+    class Answers:
+        reply = "{}"
+
+        def __call__(self, system, user):
+            return ModelReply(self.reply, "fake-model")
+
+    answers = Answers()
+
+    record_at_run = []
+
+    def before(index):
+        page, answer, edited = plan[index]
+        pages.pages[url] = contents[page]
+        answers.reply = "{}" if answer == "good" else "not json"
+        if edited:
+            store.services["svc"]["description"] = f"edited before run {index}"
+        record_at_run.append(record_hash(store.services["svc"]))
+
+    _, log, _ = runs(len(plan), source=pages, store=store, invoke=answers, between=before)
+    for index, entry in enumerate(log.entries):
+        previous = log.entries[index - 1] if index else None
+        if entry.skipped_unchanged:
+            page = contents[plan[index][0]]
+            assert previous is not None and previous.reviewed_category is not None
+            assert previous.content_hash == page_hash(page.content)
+            assert previous.record_hash == record_at_run[index]
+            assert entry.model_called is False
+        if entry.model_called and entry.category is not Category.CHECK_FAILED:
+            assert entry.content_hash == page_hash(contents[plan[index][0]].content)
+            assert entry.record_hash == record_at_run[index]
+        assert entry.flags == []  # no reports here, so no flags
+
+
+def test_a_review_whose_findings_were_refused_is_redone_not_carried_forward():
+    class RefusesFirstRun:
+        def __init__(self):
+            self.refusing, self.findings = True, {}
+
+        def save(self, finding):
+            if self.refusing:
+                raise FindingRejected("evidence needs a non-empty snippet")
+            self.findings[finding.id] = finding
+            return finding.id
+
+    sink = RefusesFirstRun()
+
+    def stop_refusing(index):
+        sink.refusing = index == 0
+
+    (first, second), log, _ = runs(
+        2, source=eastside_pages(), invoke=SeedInvoker(), sink=sink, between=stop_refusing
+    )
+    assert first.findings_rejected and log.entries[0].content_hash is None
+    assert (second.model_calls, second.skipped_unchanged, second.findings_saved) == (1, 0, 1)
+
+
+def test_an_unexpected_error_keeps_the_last_review(monkeypatch):
+    real_check_page = worker_module.check_page
+
+    def breaks_second_time(record, *args, **kwargs):
+        if len(log.entries) == 1:
+            raise TypeError("odd record")
+        return real_check_page(record, *args, **kwargs)
+
+    log = InMemoryCheckLog()
+    monkeypatch.setattr(worker_module, "check_page", breaks_second_time)
+    pages = eastside_pages()
+
+    def change_page_once(index):
+        # A changed page on run 2 forces a review there, which the error interrupts.
+        html = eastside_page() + ("<p>Changed.</p>" if index == 1 else "")
+        pages.pages[EASTSIDE_URL] = ok(html)
+
+    runs(2, source=pages, invoke=SeedInvoker(), log=log, between=change_page_once)
+    reviewed, errored = log.entries
+    assert errored.category is Category.CHECK_FAILED
+    assert (errored.content_hash, errored.reviewed_at) == (
+        reviewed.content_hash,
+        reviewed.checked_at,
+    )
+
+
+def test_changing_the_model_reviews_everything_again(monkeypatch):
+    monkeypatch.setenv("BEDROCK_MODEL_ID", "model-one")
+
+    def switch_model(index):
+        if index == 1:
+            monkeypatch.setenv("BEDROCK_MODEL_ID", "model-two")
+
+    (_, second), _, _ = runs(2, source=eastside_pages(), invoke=SeedInvoker(), between=switch_model)
+    assert (second.model_calls, second.skipped_unchanged) == (1, 0)
+
+
+def test_record_hash_ignores_key_order_and_accepts_values_json_cant_hold():
+    first = {"id": "s", "name": "n", "tags": {"b"}}
+    second = {"tags": {"b"}, "name": "n", "id": "s"}
+    assert record_hash(first) == record_hash(second)
+    assert record_hash(first) != record_hash({**first, "name": "other"})
+
+
+def test_hashes_without_a_reviewed_category_never_skip():
+    record = SEED_SERVICES[EASTSIDE_ID]
+    log = InMemoryCheckLog()
+    stale = CheckLogEntry(EASTSIDE_ID, iso(NOW - MONTH), Category.VERIFIED, EASTSIDE_URL, False)
+    stale.content_hash, stale.record_hash = page_hash(eastside_page()), record_hash(record)
+    log.record(stale)
+    summary, _, _ = sweep(seed_store(EASTSIDE_ID), log=log)
+    assert (summary.model_calls, summary.skipped_unchanged) == (1, 0)
