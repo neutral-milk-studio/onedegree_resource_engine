@@ -1,0 +1,20 @@
+[project]
+name = "resource-engine"
+version = "0.1.0"
+description = "The Resource Engine: ingest and transform resource data into Open Referral HSDS v3.2.3"
+requires-python = ">=3.12"
+dependencies = [
+    "jsonschema>=4.23",
+    "referencing>=0.35",
+    "rfc3339-validator>=0.1.4",
+    "rfc3987>=1.3.8",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
