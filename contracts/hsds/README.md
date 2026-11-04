@@ -12,11 +12,9 @@ _Spec: Requirements 1.1, 1.2, 1.3._
   authoritative source for validation. Field names in documentation are checked
   against these files, not the other way around.
 
-> Vendoring step (run once by a maintainer, committed into the repo):
-> download the `schema/*.json` files from the `v3.2.3` tag into
-> `contracts/hsds/schema/`. The canonical OpenAPI file for API comparison is
-> `raw.githubusercontent.com/openreferral/specification/3.2/schema/openapi.json`
-> (see `contracts/api/openapi.md`).
+The vendored files come from commit `74fcf85` of that tag, including
+`service_capacity.json`, which `service.json` references. They are licensed under
+CC BY-SA 4.0; see [`LICENSE`](LICENSE). Do not edit them.
 
 ## Boundary rule
 

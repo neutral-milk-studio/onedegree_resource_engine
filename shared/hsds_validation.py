@@ -1,81 +1,118 @@
 """HSDS validation against the pinned v3.2.3 JSON Schema.
 
-Used at every boundary: transformer output before storage, API responses (in
-tests), any export, and every admin-UI save. A record that fails is quarantined
-with the reported reason.
+Used at every boundary: transformer output before storage, API responses, exports,
+and every review save. A record that fails is quarantined or rejected with the
+reported reason.
 
-Spec: Requirements 11.2, 43.1, 43.2.
+On top of the schema, this module enforces rules the schema allows through: empty
+strings, and opening hours without a UTC offset.
 """
 
 from __future__ import annotations
 
 import json
+import re
+from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
 from typing import Any
 
-# Directory holding the vendored Open Referral JSON Schema files for the pinned
-# HSDS version (see contracts/hsds/README.md).
-SCHEMA_DIR = Path(__file__).resolve().parent.parent / "contracts" / "hsds" / "schema"
+from jsonschema import Draft202012Validator
+from referencing import Registry, Resource
+from referencing.jsonschema import DRAFT202012
 
+SCHEMA_DIR = Path(__file__).resolve().parent.parent / "contracts" / "hsds" / "schema"
 HSDS_VERSION = "3.2.3"
+EXTENSION_KEY = "x_resource_engine"
+
+_TIME_WITH_OFFSET = re.compile(r"^([01]\d|2[0-3]):[0-5]\d(Z|[+-]([01]\d|2[0-3]):[0-5]\d)$")
 
 
 class SchemaNotAvailable(RuntimeError):
-    """Raised when the pinned schema files have not been vendored yet."""
+    """Raised when the pinned schema files are missing."""
+
+
+@dataclass(frozen=True)
+class Issue:
+    """One validation problem. ``path`` uses ``/`` between keys and list indexes."""
+
+    path: str
+    message: str
+
+    def __str__(self) -> str:
+        return f"{self.path or '<root>'}: {self.message}"
 
 
 @cache
-def _load_schema(object_type: str) -> dict[str, Any]:
-    """Load the JSON Schema for one HSDS object type (e.g. 'service').
+def _registry() -> Registry:
+    """Register every vendored schema so references like ``organization.json`` resolve."""
+    paths = sorted(SCHEMA_DIR.glob("*.json"))
+    if not paths:
+        raise SchemaNotAvailable(f"No HSDS schema files found in {SCHEMA_DIR}.")
+    resources = [
+        (
+            path.name,
+            Resource.from_contents(
+                json.loads(path.read_text(encoding="utf-8")), default_specification=DRAFT202012
+            ),
+        )
+        for path in paths
+    ]
+    return Registry().with_resources(resources)
 
-    The schema files are the authoritative source. They are vendored under
-    ``contracts/hsds/schema/`` from the pinned specification tag.
-    """
+
+@cache
+def _validator(object_type: str) -> Draft202012Validator:
     path = SCHEMA_DIR / f"{object_type}.json"
     if not path.exists():
-        raise SchemaNotAvailable(
-            f"HSDS schema for {object_type!r} not found at {path}. "
-            "Vendor the v3.2.3 schema files into contracts/hsds/schema/ "
-            "(see contracts/hsds/README.md)."
-        )
-    return json.loads(path.read_text(encoding="utf-8"))
+        raise SchemaNotAvailable(f"HSDS schema for {object_type!r} not found at {path}.")
+    return Draft202012Validator(
+        json.loads(path.read_text(encoding="utf-8")),
+        registry=_registry(),
+        # Format checks are off by default, which would let non-UUID ids through.
+        format_checker=Draft202012Validator.FORMAT_CHECKER,
+    )
+
+
+def _strict_issues(value: Any, path: str = "") -> list[Issue]:
+    issues: list[Issue] = []
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if key == EXTENSION_KEY:
+                continue
+            child_path = f"{path}/{key}" if path else key
+            if key in {"opens_at", "closes_at"} and isinstance(child, str):
+                if not _TIME_WITH_OFFSET.fullmatch(child):
+                    issues.append(Issue(child_path, f"{child!r} needs HH:MM and a UTC offset"))
+            issues.extend(_strict_issues(child, child_path))
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            issues.extend(_strict_issues(child, f"{path}/{index}"))
+    elif value == "":
+        issues.append(Issue(path, "omit empty values instead of sending an empty string"))
+    return issues
+
+
+def find_issues(obj: dict[str, Any], object_type: str) -> list[Issue]:
+    """Return every problem with ``obj``. An empty list means it is valid."""
+    errors = sorted(
+        _validator(object_type).iter_errors(obj), key=lambda error: list(map(str, error.path))
+    )
+    schema_issues = [
+        Issue("/".join(str(part) for part in error.absolute_path), error.message)
+        for error in errors
+    ]
+    return schema_issues + _strict_issues(obj)
 
 
 def validate(obj: dict[str, Any], object_type: str) -> list[str]:
-    """Validate one HSDS object against the pinned schema.
-
-    Returns a list of human-readable error messages; an empty list means valid.
-    Uses ``jsonschema`` if available; raises :class:`SchemaNotAvailable` if the
-    schema files have not been vendored.
-
-    Parameters
-    ----------
-    obj:
-        The HSDS object to validate.
-    object_type:
-        The HSDS object type name, matching a vendored schema file
-        (e.g. "organization", "service", "location").
-    """
-    schema = _load_schema(object_type)
-
-    try:
-        import jsonschema  # type: ignore
-    except ImportError as exc:  # pragma: no cover - environment dependent
-        raise RuntimeError(
-            "jsonschema is required for HSDS validation; add it to the service dependencies."
-        ) from exc
-
-    validator = jsonschema.Draft7Validator(schema)
-    return [
-        f"{'/'.join(str(p) for p in err.absolute_path) or '<root>'}: {err.message}"
-        for err in sorted(validator.iter_errors(obj), key=lambda e: list(e.absolute_path))
-    ]
+    """Return readable error messages. An empty list means ``obj`` is valid."""
+    return [str(issue) for issue in find_issues(obj, object_type)]
 
 
 def is_valid(obj: dict[str, Any], object_type: str) -> bool:
-    """True iff ``obj`` is valid HSDS for the pinned version."""
-    return not validate(obj, object_type)
+    """Return True if ``obj`` is valid HSDS for the pinned version."""
+    return not find_issues(obj, object_type)
 
 
 def assert_valid(obj: dict[str, Any], object_type: str) -> None:

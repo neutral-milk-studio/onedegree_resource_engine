@@ -1,25 +1,31 @@
-"""FastAPI app — STUB (filled by the Search team, tasks 26-28).
-
-Serves HSDS v3.2.3 JSON. Mounts the root, services, and optional routers; bearer
-auth + per-source scoping. Spec: Requirements 29, 30, 31, 32, 33.
-"""
+"""FastAPI app. Serves HSDS v3.2.3 JSON, with routers added by each workstream."""
 
 from __future__ import annotations
 
-try:
-    from fastapi import FastAPI
-except ImportError:  # pragma: no cover - fastapi added by the API stream
-    FastAPI = None  # type: ignore
+from fastapi import Depends, FastAPI
+
+from api.app.auth import require_token
+from shared.hsds_validation import HSDS_VERSION
 
 
-def create_app():
-    """Create the FastAPI app with routers mounted."""
-    if FastAPI is None:
-        raise RuntimeError("fastapi is not installed; add it to api/requirements.txt (task 26)")
-    app = FastAPI(title="The Resource Engine API", version="0.0.0")
-    # Routers (root, services, optional) are mounted by task 26.
+def create_app() -> FastAPI:
+    """Create the app. Every endpoint except the health check requires a bearer token."""
+    app = FastAPI(title="The Resource Engine API", version="0.1.0")
+
+    @app.get("/health", include_in_schema=False)
+    def health() -> dict[str, str]:
+        return {"status": "ok"}
+
+    @app.get("/", dependencies=[Depends(require_token)])
+    def api_info() -> dict[str, str]:
+        return {
+            "version": HSDS_VERSION,
+            "profile": "https://docs.openreferral.org/en/latest/hsds/",
+            "openapi_url": "/openapi.json",
+            "description": "The Resource Engine HSDS API",
+        }
+
     return app
 
 
-# Uvicorn entrypoint referenced by the Dockerfile / compose.
-app = None  # set by create_app() once FastAPI is available (task 26)
+app = create_app()

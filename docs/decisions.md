@@ -78,11 +78,12 @@ HSDS `opens_at`/`closes_at` should carry a UTC offset; source data often has
 local Pacific times with no offset, and the correct offset shifts with daylight
 saving.
 
-**Decision:** interpret bare local times as **America/Los_Angeles** and attach
-the offset that applies on the schedule's effective date (so DST transitions are
-handled by the zone, not a fixed `-08:00`/`-07:00` constant). A midday closure in
-free text is converted to **two** schedule intervals, never one spanning the gap.
-_(Req 15.1, 15.2, 15.3)_
+**Decision:** store local time plus an IANA time zone (default
+**America/Los_Angeles**) in `x_resource_engine.timezone`. Calculate the offset when a
+record leaves the system, using the date of the response or the schedule's
+`valid_from`, with `shared/hsds_time.py`. A stored offset would become wrong at the
+next daylight saving change. A midday closure in free text becomes **two** schedule
+intervals, never one spanning the gap. _(Req 15.1, 15.2, 15.3)_
 
 ## 7. `unavailable_at` → `service.status` mapping
 
@@ -95,3 +96,10 @@ _(Req 15.1, 15.2, 15.3)_
 - **Local Docker Compose is the default and acceptable target.** Terraform under
   `infra/` describes the optional ECS Fargate path; deploying to AWS is optional
   and never required. _(Technical Document §3.3)_
+
+## 9. Validation
+
+`shared/hsds_validation.py` resolves references between all vendored schema files, so
+nested objects are checked. Format checks are on, so a bad UUID, URL, email, or
+timestamp fails. It also rejects empty strings and opening hours without a UTC offset.
+

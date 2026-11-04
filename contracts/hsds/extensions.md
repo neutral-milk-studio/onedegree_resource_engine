@@ -33,6 +33,7 @@ with the record:
 | `last_check` | category + timestamp of the most recent AI maintenance check |
 | `evidence` | supporting evidence entries (url, snippet, model) for proposals |
 | `ai_generated_fields` | HSDS field paths whose value was AI-generated |
+| `timezone` (on `schedule`) | IANA time zone of the schedule's local hours |
 
 Operational data (findings not yet applied, model logs, review state) does **not**
 live here — it lives in the findings store (`ops.*` tables).
