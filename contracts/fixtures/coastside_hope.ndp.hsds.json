@@ -1,0 +1,219 @@
+{
+  "id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+  "organization_id": "bb5e39fd-0fb2-5695-b477-46a5f93be890",
+  "name": "Rent Utility Assistance",
+  "description": "Distributes financial assistance when funding is available. Provides rent payment and security deposit assistance. Offers utility assistance for gas, electric, and water services.",
+  "url": "http://www.coastsidehope.org",
+  "email": "admin@coastsidehope.org",
+  "status": "active",
+  "application_process": "Call for appointment",
+  "fees_description": "No fee",
+  "eligibility_description": "El Granda, Half Moon Bay, Montara, and Moss Beach income eligible residents",
+  "assured_date": "2025-08-01",
+  "last_modified": "2025-08-01T00:00:00Z",
+  "organization": {
+    "id": "bb5e39fd-0fb2-5695-b477-46a5f93be890",
+    "name": "Coastside Hope",
+    "alternate_name": "COASTSIDE OPPORTUNITY CENTER",
+    "description": "Nonprofit organization providing food distribution, housing resources, and immigration services.",
+    "website": "http://www.coastsidehope.org",
+    "year_incorporated": 1976,
+    "tax_status": "non_profit",
+    "legal_status": "non_profit",
+    "phones": [
+      {
+        "id": "9689cf02-d77b-5d19-95a1-1bf0f5927049",
+        "organization_id": "bb5e39fd-0fb2-5695-b477-46a5f93be890",
+        "number": "(650) 726-9071",
+        "type": "voice",
+        "description": "Main Number"
+      },
+      {
+        "id": "397eb465-6d95-5948-b035-bb009551ae53",
+        "organization_id": "bb5e39fd-0fb2-5695-b477-46a5f93be890",
+        "number": "(650) 726-9076",
+        "type": "fax"
+      }
+    ]
+  },
+  "phones": [
+    {
+      "id": "92526fb6-92f6-5466-86ab-27d38c03457a",
+      "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "number": "(650) 726-9071",
+      "type": "voice",
+      "description": "Main Number"
+    }
+  ],
+  "schedules": [
+    {
+      "id": "87b604ae-f501-58f0-9af8-7e7b6eb88c0a",
+      "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "freq": "WEEKLY",
+      "wkst": "MO",
+      "byday": "MO,TU,TH,FR",
+      "opens_at": "08:30-08:00",
+      "closes_at": "17:00-08:00",
+      "x_resource_engine": {
+        "timezone": "America/Los_Angeles"
+      }
+    },
+    {
+      "id": "82e59df7-b4ce-50e5-8876-3674fb262c8e",
+      "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "freq": "WEEKLY",
+      "wkst": "MO",
+      "byday": "WE",
+      "opens_at": "13:00-08:00",
+      "closes_at": "17:00-08:00",
+      "x_resource_engine": {
+        "timezone": "America/Los_Angeles"
+      }
+    }
+  ],
+  "service_areas": [
+    {
+      "id": "f192ea93-1706-5863-9564-c0a21c624427",
+      "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "name": "El Granada"
+    },
+    {
+      "id": "349f5377-2d95-5425-b763-625fb57949ea",
+      "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "name": "Moss Beach"
+    },
+    {
+      "id": "8da16649-5e98-5aaa-b98c-9a4d935e670f",
+      "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "name": "Montara"
+    },
+    {
+      "id": "c63e03a3-84bd-5d1b-807f-aa257c8e5893",
+      "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "name": "Half Moon Bay"
+    }
+  ],
+  "languages": [
+    {
+      "id": "d64de5ce-c305-54b8-9755-79287b3f5d11",
+      "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "name": "English",
+      "code": "en"
+    },
+    {
+      "id": "eed247e8-e81e-58a0-a026-ef46ef8f9ad6",
+      "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "name": "Spanish",
+      "code": "es"
+    }
+  ],
+  "required_documents": [
+    {
+      "id": "414b47e5-604b-56ce-94d5-fb17813ba0f0",
+      "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "document": "Photo identification"
+    },
+    {
+      "id": "f7910080-3ae4-5e6b-a601-b5e94a90f977",
+      "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "document": "proof of address"
+    },
+    {
+      "id": "1f9fc22b-8a72-57e2-81f6-91fde38042ec",
+      "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "document": "income information"
+    }
+  ],
+  "attributes": [
+    {
+      "id": "1a8ef6ce-0228-554e-a6f0-cac1b09dd1df",
+      "link_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "link_entity": "service",
+      "taxonomy_term_id": "298f65db-44fd-5490-ae0e-69b31b688c0c",
+      "taxonomy_term": {
+        "id": "298f65db-44fd-5490-ae0e-69b31b688c0c",
+        "name": "Rental Deposit Assistance",
+        "description": "Basic Needs > Housing/Shelter > Housing Expense Assistance > Rental Deposit Assistance",
+        "taxonomy_id": "945522ff-98dc-5807-8f72-5c44e85fb971",
+        "taxonomy_detail": {
+          "id": "945522ff-98dc-5807-8f72-5c44e85fb971",
+          "name": "211 Taxonomy",
+          "description": "Service taxonomy terms supplied by the 211 National Data Platform."
+        },
+        "code": "BH-3800.7250"
+      }
+    },
+    {
+      "id": "8896e150-461a-53de-b98d-e962c60f01a0",
+      "link_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "link_entity": "service",
+      "taxonomy_term_id": "09848a17-984d-552b-ac33-b83f9f8e3af5",
+      "taxonomy_term": {
+        "id": "09848a17-984d-552b-ac33-b83f9f8e3af5",
+        "name": "Rent Payment Assistance",
+        "description": "Basic Needs > Housing/Shelter > Housing Expense Assistance > Rent Payment Assistance",
+        "taxonomy_id": "945522ff-98dc-5807-8f72-5c44e85fb971",
+        "taxonomy_detail": {
+          "id": "945522ff-98dc-5807-8f72-5c44e85fb971",
+          "name": "211 Taxonomy",
+          "description": "Service taxonomy terms supplied by the 211 National Data Platform."
+        },
+        "code": "BH-3800.7000"
+      }
+    }
+  ],
+  "service_at_locations": [
+    {
+      "id": "26ac9287-a251-514a-80d9-f642d666b6a0",
+      "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "location_id": "2e4746dd-0db0-52fc-8860-0067308ac7cf",
+      "location": {
+        "id": "2e4746dd-0db0-52fc-8860-0067308ac7cf",
+        "location_type": "physical",
+        "organization_id": "bb5e39fd-0fb2-5695-b477-46a5f93be890",
+        "name": "Main Office",
+        "latitude": 37.46706,
+        "longitude": -122.4298,
+        "addresses": [
+          {
+            "id": "876781ff-9b92-51dd-b147-24fe46b3fcc7",
+            "location_id": "2e4746dd-0db0-52fc-8860-0067308ac7cf",
+            "address_1": "248 Main Street, Suite 200",
+            "city": "Half Moon Bay",
+            "state_province": "CA",
+            "postal_code": "94019",
+            "country": "US",
+            "address_type": "physical"
+          },
+          {
+            "id": "f587421a-49d4-5167-b228-675fee9e2f3a",
+            "location_id": "2e4746dd-0db0-52fc-8860-0067308ac7cf",
+            "address_1": "PO Box 1089",
+            "city": "El Granada",
+            "state_province": "CA",
+            "postal_code": "94018",
+            "country": "US",
+            "address_type": "postal"
+          }
+        ],
+        "accessibility": [
+          {
+            "id": "72540159-fbd6-5166-94f6-092aa6a40db3",
+            "location_id": "2e4746dd-0db0-52fc-8860-0067308ac7cf",
+            "description": "Fully accessible to individuals using mobility aids."
+          }
+        ]
+      }
+    }
+  ],
+  "x_resource_engine": {
+    "source": {
+      "system": "ndp",
+      "record_id": "211bayarea-10613258",
+      "parent_record_id": "211bayarea-10595293",
+      "data_owner": "211bayarea",
+      "access": "public",
+      "fetched_at": "2026-11-03T15:00:00Z"
+    }
+  }
+}

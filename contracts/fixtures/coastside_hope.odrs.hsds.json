@@ -1,0 +1,312 @@
+{
+  "id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+  "organization_id": "0d9be3e0-8bdc-589e-9558-7561bb64f1ae",
+  "name": "Get rent and utility assistance",
+  "description": "As one of the Core Service Agencies of San Mateo County, Coastside Hope provides emergency rent and utility assistance for people living in Montara, Moss Beach, El Granada, and Half Moon Bay.",
+  "url": "https://coastsidehope.org/our-services/",
+  "email": "assistance@coastsidehope.org",
+  "status": "active",
+  "application_process": "Call or text 650-523-3536 for more information and to begin the application process. Or email assistance@coastsidehope.org for more information.",
+  "fees_description": "Free",
+  "eligibility_description": "Income limits apply.",
+  "assured_date": "2025-05-06",
+  "last_modified": "2025-05-06T18:08:17.000Z",
+  "organization": {
+    "id": "0d9be3e0-8bdc-589e-9558-7561bb64f1ae",
+    "name": "Coastside Hope",
+    "description": "No description available for Coastside Hope.",
+    "website": "https://coastsidehope.org",
+    "x_resource_engine": {
+      "description_status": "placeholder"
+    }
+  },
+  "phones": [
+    {
+      "id": "d9b458d9-04bf-5b2b-b7fb-a6da1616a3a9",
+      "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "number": "650-523-3536",
+      "type": "voice",
+      "description": "Help with Food, Housing, CalFresh, Medi-Cal"
+    }
+  ],
+  "service_areas": [
+    {
+      "id": "d4d7d04b-ef66-5d78-8ce8-756b1e8f4d21",
+      "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "name": "San Mateo County"
+    },
+    {
+      "id": "7d1cc2e6-d6ef-5c4d-a2c6-40574a079b67",
+      "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "name": "Montara"
+    },
+    {
+      "id": "39a64ace-08b8-56d1-8479-38464de731c3",
+      "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "name": "Moss Beach"
+    },
+    {
+      "id": "f83f04c6-1e6b-5357-aeeb-470459116dec",
+      "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "name": "El Granada"
+    },
+    {
+      "id": "a75db465-6025-59fd-9a09-fa7c3e0acd28",
+      "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "name": "Half Moon Bay"
+    },
+    {
+      "id": "ae2aad44-fdd8-5742-a0e1-7a3e227de4c5",
+      "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "name": "La Honda"
+    }
+  ],
+  "languages": [
+    {
+      "id": "7bc2cea2-e359-5fe7-b430-0f82371e0def",
+      "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "name": "Spanish",
+      "code": "es"
+    }
+  ],
+  "attributes": [
+    {
+      "id": "eb7a2d64-8093-58f0-8d31-8a918357fe21",
+      "link_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "link_entity": "service",
+      "taxonomy_term_id": "9c1a2819-1259-57b0-8898-a12ebd692936",
+      "taxonomy_term": {
+        "id": "9c1a2819-1259-57b0-8898-a12ebd692936",
+        "name": "Deposit & rent assistance",
+        "description": "One Degree tag: Deposit & rent assistance",
+        "taxonomy_id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+        "taxonomy_detail": {
+          "id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+          "name": "One Degree",
+          "description": "Tags, categories, areas, and eligibility flags from One Degree."
+        }
+      }
+    },
+    {
+      "id": "50ab5a60-7c64-5b00-bbcb-99218acad17d",
+      "link_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "link_entity": "service",
+      "taxonomy_term_id": "4ed88bf4-92a0-5509-8d56-58eb0450a04f",
+      "taxonomy_term": {
+        "id": "4ed88bf4-92a0-5509-8d56-58eb0450a04f",
+        "name": "Paying for utilities",
+        "description": "One Degree tag: Paying for utilities",
+        "taxonomy_id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+        "taxonomy_detail": {
+          "id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+          "name": "One Degree",
+          "description": "Tags, categories, areas, and eligibility flags from One Degree."
+        }
+      }
+    },
+    {
+      "id": "0156b884-3121-5bf5-a3d1-77be4cbc8971",
+      "link_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "link_entity": "service",
+      "taxonomy_term_id": "de017124-3a80-54e8-b83a-f009f9771155",
+      "taxonomy_term": {
+        "id": "de017124-3a80-54e8-b83a-f009f9771155",
+        "name": "Tenant resources",
+        "description": "One Degree category: Tenant resources",
+        "taxonomy_id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+        "taxonomy_detail": {
+          "id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+          "name": "One Degree",
+          "description": "Tags, categories, areas, and eligibility flags from One Degree."
+        }
+      }
+    },
+    {
+      "id": "e808691f-6972-54e7-b180-02f43bcab909",
+      "link_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "link_entity": "service",
+      "taxonomy_term_id": "8b278a2f-5741-5e6e-8f88-2e9979b63f62",
+      "taxonomy_term": {
+        "id": "8b278a2f-5741-5e6e-8f88-2e9979b63f62",
+        "name": "Household needs",
+        "description": "One Degree category: Household needs",
+        "taxonomy_id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+        "taxonomy_detail": {
+          "id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+          "name": "One Degree",
+          "description": "Tags, categories, areas, and eligibility flags from One Degree."
+        }
+      }
+    },
+    {
+      "id": "3859b128-ce0f-56f8-873f-38c827c4c78c",
+      "link_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "link_entity": "service",
+      "taxonomy_term_id": "e58a2218-96de-5529-8a26-88a99027affd",
+      "taxonomy_term": {
+        "id": "e58a2218-96de-5529-8a26-88a99027affd",
+        "name": "Housing",
+        "description": "One Degree area: Housing",
+        "taxonomy_id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+        "taxonomy_detail": {
+          "id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+          "name": "One Degree",
+          "description": "Tags, categories, areas, and eligibility flags from One Degree."
+        }
+      }
+    },
+    {
+      "id": "bee40a19-ad4c-55d6-ab40-4a4863aad7f5",
+      "link_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "link_entity": "service",
+      "taxonomy_term_id": "29411ad9-58de-54bb-8afc-50c827f250d0",
+      "taxonomy_term": {
+        "id": "29411ad9-58de-54bb-8afc-50c827f250d0",
+        "name": "Family & Household",
+        "description": "One Degree area: Family & Household",
+        "taxonomy_id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+        "taxonomy_detail": {
+          "id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+          "name": "One Degree",
+          "description": "Tags, categories, areas, and eligibility flags from One Degree."
+        }
+      }
+    },
+    {
+      "id": "15dcbcc1-e9ab-5a4b-b6bb-42a7c54d4b20",
+      "link_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "link_entity": "service",
+      "taxonomy_term_id": "6a654c6a-30b6-553b-921e-32d288b57b41",
+      "taxonomy_term": {
+        "id": "6a654c6a-30b6-553b-921e-32d288b57b41",
+        "name": "community-available-everyone",
+        "description": "One Degree flag: community-available-everyone",
+        "taxonomy_id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+        "taxonomy_detail": {
+          "id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+          "name": "One Degree",
+          "description": "Tags, categories, areas, and eligibility flags from One Degree."
+        }
+      }
+    },
+    {
+      "id": "2071f011-5a69-5599-acc7-8cf6f6bef56c",
+      "link_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "link_entity": "service",
+      "taxonomy_term_id": "f0333006-4b57-5058-9322-e2f5c3ba4c04",
+      "taxonomy_term": {
+        "id": "f0333006-4b57-5058-9322-e2f5c3ba4c04",
+        "name": "citizenship-available-everyone",
+        "description": "One Degree flag: citizenship-available-everyone",
+        "taxonomy_id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+        "taxonomy_detail": {
+          "id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+          "name": "One Degree",
+          "description": "Tags, categories, areas, and eligibility flags from One Degree."
+        }
+      }
+    },
+    {
+      "id": "d5043937-703e-5213-91c2-c497c526835a",
+      "link_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "link_entity": "service",
+      "taxonomy_term_id": "00b6af24-8db7-5bac-bc83-c2e858641d1d",
+      "taxonomy_term": {
+        "id": "00b6af24-8db7-5bac-bc83-c2e858641d1d",
+        "name": "coordinated-entry-site",
+        "description": "One Degree flag: coordinated-entry-site",
+        "taxonomy_id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+        "taxonomy_detail": {
+          "id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+          "name": "One Degree",
+          "description": "Tags, categories, areas, and eligibility flags from One Degree."
+        }
+      }
+    }
+  ],
+  "service_at_locations": [
+    {
+      "id": "4a840e68-79bd-5bae-b7a7-e81dc69ade66",
+      "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "location_id": "015686d5-4e46-53f5-8bcb-5c91cf9d3c6d",
+      "location": {
+        "id": "015686d5-4e46-53f5-8bcb-5c91cf9d3c6d",
+        "location_type": "physical",
+        "organization_id": "0d9be3e0-8bdc-589e-9558-7561bb64f1ae",
+        "name": "Coastside Hope",
+        "latitude": 37.4671,
+        "longitude": -122.43,
+        "addresses": [
+          {
+            "id": "d3afdb5e-7760-594b-a72f-fe3945a92d80",
+            "location_id": "015686d5-4e46-53f5-8bcb-5c91cf9d3c6d",
+            "address_1": "248 Main Street",
+            "address_2": "Suite 200 (Second Floor)",
+            "city": "Half Moon Bay",
+            "state_province": "CA",
+            "postal_code": "94019",
+            "country": "US",
+            "address_type": "physical"
+          }
+        ],
+        "phones": [
+          {
+            "id": "5a5fe2b3-47aa-5efa-97cf-dd8461187542",
+            "location_id": "015686d5-4e46-53f5-8bcb-5c91cf9d3c6d",
+            "number": "650-726-9071",
+            "type": "voice",
+            "description": "Coastside Hope"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "739931eb-c16f-5ebc-ad7e-1dc77894f0c2",
+            "location_id": "015686d5-4e46-53f5-8bcb-5c91cf9d3c6d",
+            "freq": "WEEKLY",
+            "wkst": "MO",
+            "byday": "MO,TU,TH,FR",
+            "opens_at": "08:30-08:00",
+            "closes_at": "12:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            },
+            "notes": "Office is closed daily during lunch from 12:00 PM - 1:00 PM."
+          },
+          {
+            "id": "712b639b-99c2-5987-8a83-0848bec664c4",
+            "location_id": "015686d5-4e46-53f5-8bcb-5c91cf9d3c6d",
+            "freq": "WEEKLY",
+            "wkst": "MO",
+            "byday": "MO,TU,TH,FR",
+            "opens_at": "13:00-08:00",
+            "closes_at": "17:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            },
+            "notes": "Office is closed daily during lunch from 12:00 PM - 1:00 PM."
+          },
+          {
+            "id": "6963cee9-3c2c-5a40-9cee-94d51292d42b",
+            "location_id": "015686d5-4e46-53f5-8bcb-5c91cf9d3c6d",
+            "freq": "WEEKLY",
+            "wkst": "MO",
+            "byday": "WE",
+            "opens_at": "13:00-08:00",
+            "closes_at": "17:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            },
+            "notes": "Office is closed daily during lunch from 12:00 PM - 1:00 PM."
+          }
+        ]
+      }
+    }
+  ],
+  "x_resource_engine": {
+    "source": {
+      "system": "odrs",
+      "record_id": "6126",
+      "fetched_at": "2026-11-03T15:00:00Z"
+    }
+  }
+}
