@@ -16,7 +16,32 @@ from botocore.exceptions import ClientError, ConnectionClosedError
 from hypothesis import given
 from hypothesis import strategies as st
 
-from contracts.website_source import WebsiteSource
+from contracts.findings import Category, Finding, finding_problems
+from contracts.website_source import WebsiteResult, WebsiteSource
+from maintenance.comparator import compare as compare_module
+from maintenance.comparator.compare import (
+    CONFIDENCE_ADDITION,
+    CONFIDENCE_ADDITIONAL_CONTACT,
+    CONFIDENCE_CHECK_FAILED,
+    CONFIDENCE_CLOSURE_TEXT,
+    CONFIDENCE_CONTRADICTION,
+    CONFIDENCE_NOTHING_TO_COMPARE,
+    CONFIDENCE_PHONE_MISMATCH,
+    CONFIDENCE_REPEATED_FAILURE,
+    CONFIDENCE_VERIFIED,
+    PRECEDENCE,
+    categorize,
+    check_page,
+    compare,
+    counties_in,
+    facts_from_record,
+    failure,
+    finding_id,
+    income_limits,
+    phone_digits,
+    same_county,
+    same_phone,
+)
 from maintenance.extractor import extract as extract_module
 from maintenance.extractor.extract import (
     MAX_PAGE_CHARS,
@@ -29,6 +54,7 @@ from maintenance.extractor.extract import (
     squash,
     visible_text,
 )
+from maintenance.findings_store.memory import InMemoryFindingsStore
 from maintenance.website_source.sample import SampleWebsiteSource, normalize_url, strip_comments
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -1361,3 +1387,1181 @@ def test_an_empty_model_answer_is_a_failed_check(configured_model):
 def test_importing_the_extractor_does_not_load_boto3():
     code = "import sys, maintenance.extractor.extract; assert 'boto3' not in sys.modules"
     subprocess.run([sys.executable, "-c", code], cwd=REPO_ROOT, check=True)
+
+
+# --------------------------------------------------------------------------- #
+# Task 3: comparator and categorization
+# --------------------------------------------------------------------------- #
+
+SEED = json.loads((REPO_ROOT / "seed" / "hsds_dataset.json").read_text(encoding="utf-8"))
+SEED_SERVICES = {service["id"]: service for service in SEED["services"]}
+BAYVIEW_ID = "2d4f6a8c-0b1d-5e3f-9a7c-1b3d5f7a9c0e"
+EASTSIDE_ID = "3e5a7c9d-1f2b-5a4c-8d6e-2c4e6a8b0d1f"
+HARBOR_ID = "4f6b8d0e-2a3c-5b5d-9e7f-3d5f7a9b1c2e"
+CHECKED_AT = "2026-11-04T16:00:00Z"
+
+
+def service(**overrides):
+    """A minimal stored HSDS service, with only what a test needs."""
+    record = {"id": "11111111-1111-5111-8111-111111111111", "name": "Pantry", "status": "active"}
+    return {**record, **overrides}
+
+
+def run_compare(record, page_html, **facts):
+    """Extract ``facts`` from ``page_html`` through the real checks, then compare."""
+    extraction = extract(page_html, **facts)
+    return compare(
+        record,
+        extraction["facts"],
+        url="https://example.org/service",
+        model_id=extraction["model_id"],
+        checked_at=CHECKED_AT,
+        page_text=visible_text(page_html),
+    )
+
+
+def by_field(comparison):
+    return {finding.field: finding for finding in comparison.findings}
+
+
+def assert_storable(comparison):
+    store = InMemoryFindingsStore()
+    for finding in comparison.findings:
+        assert finding_problems(finding) == []
+        store.save(finding)
+
+
+# ---- values from text ---- #
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Open to residents of San Francisco County.", {"san francisco"}),
+        (
+            "Open to residents of San Francisco and San Mateo Counties.",
+            {"san francisco", "san mateo"},
+        ),
+        (
+            "Serving Alameda, Contra Costa, and Marin Counties.",
+            {"alameda", "contra costa", "marin"},
+        ),
+        ("Residents of the City and County of San Francisco.", {"san francisco"}),
+        ("Santa Clara & San Benito Counties only.", {"santa clara", "san benito"}),
+        ("Open to everyone in the county.", set()),
+        ("No location rule.", set()),
+    ],
+)
+def test_counties_in_reads_county_names(text, expected):
+    assert counties_in(text) == expected
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("At or below 200% of the federal poverty level.", {"percent": {"200%"}, "dollars": set()}),
+        ("Below 200 percent of poverty.", {"percent": {"200%"}, "dollars": set()}),
+        ("Under $30,000 a year, or 60% AMI.", {"percent": {"60%"}, "dollars": {"$30000"}}),
+        ("Low-income households.", {"percent": set(), "dollars": set()}),
+    ],
+)
+def test_income_limits_reads_percentages_and_dollars(text, expected):
+    assert income_limits(text) == expected
+
+
+def test_phone_digits_ignore_formatting_and_country_code():
+    assert phone_digits("+1 (415) 555-0101") == phone_digits("415.555.0101") == "4155550101"
+
+
+def test_facts_from_the_bayview_seed_record():
+    stored = facts_from_record(SEED_SERVICES[BAYVIEW_ID])
+    assert stored["eligibility_counties"] == {"san francisco"}
+    assert stored["phones"] == []
+    assert stored["has_hours"] is False
+
+
+# ---- the seeded cases ---- #
+
+
+def test_bayview_flags_the_county_discrepancy_with_the_page_sentence():
+    comparison = run_compare(SEED_SERVICES[BAYVIEW_ID], bayview_page(), **json.loads(BAYVIEW_REPLY))
+    assert comparison.category is Category.DISCREPANCY
+    finding = by_field(comparison)["eligibility_description"]
+    assert finding.category is Category.DISCREPANCY
+    assert finding.current_value == "Open to residents of San Francisco County."
+    assert finding.proposed_value == "Open to residents of San Francisco and San Mateo Counties."
+    assert finding.evidence[0].snippet == finding.proposed_value
+    assert finding.evidence[0].url == "https://example.org/service"
+    assert finding.model_id == "fake-model"
+    assert_storable(comparison)
+
+
+def test_bayview_also_reports_the_facts_the_record_lacks():
+    # The seed record has no phones or schedules; the page states both (Requirement 22.6).
+    comparison = run_compare(SEED_SERVICES[BAYVIEW_ID], bayview_page(), **json.loads(BAYVIEW_REPLY))
+    fields = by_field(comparison)
+    assert fields["phones"].category is Category.MISSING_INFORMATION
+    assert fields["phones"].proposed_value == "(415) 555-0101"
+    assert fields["schedules"].category is Category.MISSING_INFORMATION
+    assert comparison.category is Category.DISCREPANCY  # the highest precedence wins
+
+
+EASTSIDE_INCOME = "Household income at or below 200% of the federal poverty level."
+
+
+def eastside_page():
+    return SampleWebsiteSource().get(EASTSIDE_URL).content
+
+
+def test_eastside_is_verified_when_the_income_rule_matches():
+    comparison = run_compare(
+        SEED_SERVICES[EASTSIDE_ID],
+        eastside_page(),
+        eligibility_income=fact("at or below 200% of the federal poverty level", EASTSIDE_INCOME),
+    )
+    assert comparison.category is Category.VERIFIED
+    (finding,) = comparison.findings
+    assert finding.category is Category.VERIFIED
+    assert finding.proposed_value is None
+    assert finding.confidence == CONFIDENCE_VERIFIED
+    assert finding.evidence[0].snippet == EASTSIDE_INCOME
+    assert_storable(comparison)
+
+
+def test_eastside_reports_hours_and_phone_the_seed_record_lacks():
+    comparison = run_compare(
+        SEED_SERVICES[EASTSIDE_ID],
+        eastside_page(),
+        eligibility_income=fact("at or below 200% of the federal poverty level", EASTSIDE_INCOME),
+        hours=fact(["Mondays, 10:00 AM to 4:00 PM"], "Mondays, 10:00 AM to 4:00 PM."),
+        phones=fact(["(510) 555-0199"], "Phone: (510) 555-0199"),
+    )
+    assert comparison.category is Category.MISSING_INFORMATION
+    assert set(by_field(comparison)) == {"schedules", "phones"}
+
+
+def test_harbor_unreachable_is_a_failed_check_the_first_time():
+    site = SampleWebsiteSource().get(HARBOR_URL)
+    comparison = check_page(
+        SEED_SERVICES[HARBOR_ID], site, None, url=HARBOR_URL, checked_at=CHECKED_AT
+    )
+    assert comparison.category is Category.CHECK_FAILED
+    (finding,) = comparison.findings
+    assert finding.field is None
+    assert finding.evidence[0].snippet == "unreachable"
+    assert finding.model_id == ""
+    assert_storable(comparison)
+
+
+def test_harbor_unreachable_again_is_actively_bad():
+    site = SampleWebsiteSource().get(HARBOR_URL)
+    comparison = check_page(
+        SEED_SERVICES[HARBOR_ID],
+        site,
+        None,
+        url=HARBOR_URL,
+        checked_at=CHECKED_AT,
+        unreachable_before=True,
+    )
+    assert comparison.category is Category.ACTIVELY_BAD
+    (finding,) = comparison.findings
+    assert finding.evidence[0].snippet == "unreachable (also failed on the previous check)"
+    assert finding.confidence == CONFIDENCE_REPEATED_FAILURE
+    assert_storable(comparison)
+
+
+# ---- fetch failures ---- #
+
+
+@pytest.mark.parametrize(
+    ("site", "category", "snippet"),
+    [
+        (WebsiteResult(None, 404, "not found"), Category.ACTIVELY_BAD, "HTTP 404: not found"),
+        (WebsiteResult(None, 410, None), Category.ACTIVELY_BAD, "HTTP 410"),
+        (
+            WebsiteResult(None, None, "certificate has expired"),
+            Category.ACTIVELY_BAD,
+            "certificate has expired",
+        ),
+        (
+            WebsiteResult(None, None, "[Errno -2] Name or service not known"),
+            Category.ACTIVELY_BAD,
+            "[Errno -2] Name or service not known",
+        ),
+        (
+            WebsiteResult(None, None, "Temporary failure in name resolution"),
+            Category.CHECK_FAILED,
+            "Temporary failure in name resolution",
+        ),
+        (WebsiteResult(None, None, "timed out"), Category.CHECK_FAILED, "timed out"),
+        (WebsiteResult("<p>busy</p>", 503, None), Category.CHECK_FAILED, "HTTP 503"),
+        (WebsiteResult("", 200, None), Category.CHECK_FAILED, "the page had no content"),
+        (WebsiteResult(None, 403, "forbidden"), Category.CHECK_FAILED, "HTTP 403: forbidden"),
+    ],
+)
+def test_fetch_failures_are_categorized_and_described(site, category, snippet):
+    comparison = check_page(service(), site, None, url="https://x.org", checked_at=CHECKED_AT)
+    assert comparison.category is category
+    (finding,) = comparison.findings
+    assert finding.category is category
+    assert finding.evidence[0].snippet == snippet
+    assert_storable(comparison)
+
+
+def test_a_loaded_page_needs_an_extraction():
+    site = WebsiteResult("<p>Hello there.</p>", 200, None)
+    with pytest.raises(ValueError, match="extraction"):
+        check_page(service(), site, None, url="https://x.org", checked_at=CHECKED_AT)
+
+
+def test_a_failure_from_the_extractor_is_a_failed_check():
+    comparison = failure(
+        service(),
+        Category.CHECK_FAILED,
+        "extraction failed: model unavailable: ThrottlingException",
+        url="https://x.org",
+        checked_at=CHECKED_AT,
+    )
+    assert comparison.category is Category.CHECK_FAILED
+    assert comparison.findings[0].confidence == CONFIDENCE_CHECK_FAILED
+    assert_storable(comparison)
+
+
+# ---- eligibility ---- #
+
+COUNTY_PAGE = "<p>Open to residents of San Mateo County.</p>"
+COUNTY_QUOTE = "Open to residents of San Mateo County."
+
+
+def test_a_rephrased_rule_with_the_same_counties_does_not_flag():
+    record = service(eligibility_description="San Mateo County residents only.")
+    comparison = run_compare(
+        record, COUNTY_PAGE, area_served=fact(["San Mateo County"], COUNTY_QUOTE)
+    )
+    assert comparison.category is Category.VERIFIED
+
+
+def test_a_different_county_is_a_contradiction():
+    record = service(eligibility_description="Open to residents of Santa Clara County.")
+    comparison = run_compare(
+        record, COUNTY_PAGE, area_served=fact(["San Mateo County"], COUNTY_QUOTE)
+    )
+    finding = by_field(comparison)["eligibility_description"]
+    assert finding.confidence == CONFIDENCE_CONTRADICTION
+    assert finding.proposed_value == COUNTY_QUOTE
+
+
+def test_an_additional_county_is_a_lower_confidence_discrepancy():
+    record = service(eligibility_description="Open to residents of San Mateo County.")
+    page = "<p>Open to residents of San Mateo and Santa Clara Counties.</p>"
+    quote = "Open to residents of San Mateo and Santa Clara Counties."
+    comparison = run_compare(
+        record, page, area_served=fact(["San Mateo County", "Santa Clara County"], quote)
+    )
+    assert by_field(comparison)["eligibility_description"].confidence == CONFIDENCE_ADDITION
+
+
+def test_counties_in_service_areas_are_compared_on_that_field():
+    record = service(service_areas=[{"id": "a", "name": "Santa Clara County"}])
+    comparison = run_compare(
+        record, COUNTY_PAGE, area_served=fact(["San Mateo County"], COUNTY_QUOTE)
+    )
+    finding = by_field(comparison)["service_areas"]
+    assert (finding.current_value, finding.proposed_value) == (
+        "Santa Clara County",
+        "San Mateo County",
+    )
+
+
+def test_a_residence_rule_the_record_lacks_is_an_addition():
+    record = service(eligibility_description="Open to families with children.")
+    comparison = run_compare(
+        record, COUNTY_PAGE, area_served=fact(["San Mateo County"], COUNTY_QUOTE)
+    )
+    finding = by_field(comparison)["eligibility_description"]
+    assert finding.category is Category.DISCREPANCY
+    assert finding.confidence == CONFIDENCE_ADDITION
+
+
+INCOME_PAGE = "<p>Households below 60% of area median income.</p>"
+INCOME_QUOTE = "Households below 60% of area median income."
+
+
+def test_a_different_income_limit_is_a_contradiction():
+    record = service(eligibility_description="Households below 80% of area median income.")
+    comparison = run_compare(
+        record,
+        INCOME_PAGE,
+        eligibility_income=fact("Below 60% of area median income", INCOME_QUOTE),
+    )
+    finding = by_field(comparison)["eligibility_description"]
+    assert finding.confidence == CONFIDENCE_CONTRADICTION
+    assert finding.proposed_value == INCOME_QUOTE
+
+
+def test_the_same_income_limit_in_other_words_does_not_flag():
+    record = service(eligibility_description="Income must be under 60 percent of AMI.")
+    comparison = run_compare(
+        record,
+        INCOME_PAGE,
+        eligibility_income=fact("Below 60% of area median income", INCOME_QUOTE),
+    )
+    assert comparison.category is Category.VERIFIED
+
+
+def test_county_and_income_changes_make_one_finding_for_the_field():
+    record = service(
+        eligibility_description="Santa Clara County households below 80% of area median income."
+    )
+    page = f"{COUNTY_PAGE}{INCOME_PAGE}"
+    comparison = run_compare(
+        record,
+        page,
+        area_served=fact(["San Mateo County"], COUNTY_QUOTE),
+        eligibility_income=fact("Below 60% of area median income", INCOME_QUOTE),
+    )
+    eligibility = [f for f in comparison.findings if f.field == "eligibility_description"]
+    assert len(eligibility) == 1
+    assert eligibility[0].proposed_value == f"{COUNTY_QUOTE} {INCOME_QUOTE}"
+    assert [e.snippet for e in eligibility[0].evidence] == [COUNTY_QUOTE, INCOME_QUOTE]
+
+
+def test_a_record_without_eligibility_gets_missing_information():
+    comparison = run_compare(
+        service(), COUNTY_PAGE, area_served=fact(["San Mateo County"], COUNTY_QUOTE)
+    )
+    finding = by_field(comparison)["eligibility_description"]
+    assert finding.category is Category.MISSING_INFORMATION
+    assert finding.proposed_value == COUNTY_QUOTE
+
+
+# ---- ages ---- #
+
+AGE_PAGE = "<p>Youth ages 12 to 17.</p>"
+AGE_QUOTE = "Youth ages 12 to 17."
+
+
+def test_matching_ages_do_not_flag():
+    record = service(minimum_age=12, maximum_age=17.0)
+    comparison = run_compare(
+        record, AGE_PAGE, eligibility_age=fact({"min": 12, "max": 17}, AGE_QUOTE)
+    )
+    assert comparison.category is Category.VERIFIED
+
+
+def test_a_different_age_bound_is_a_discrepancy_on_that_field():
+    record = service(minimum_age=12, maximum_age=18)
+    comparison = run_compare(
+        record, AGE_PAGE, eligibility_age=fact({"min": 12, "max": 17}, AGE_QUOTE)
+    )
+    finding = by_field(comparison)["maximum_age"]
+    assert (finding.current_value, finding.proposed_value) == ("18", "17")
+    assert "minimum_age" not in by_field(comparison)
+
+
+def test_a_missing_age_bound_is_missing_information():
+    comparison = run_compare(
+        service(maximum_age=17), AGE_PAGE, eligibility_age=fact({"min": 12, "max": 17}, AGE_QUOTE)
+    )
+    finding = by_field(comparison)["minimum_age"]
+    assert finding.category is Category.MISSING_INFORMATION
+    assert finding.proposed_value == "12"
+
+
+# ---- contacts and languages ---- #
+
+PHONE_PAGE = "<p>Call (415) 555-0101 or 415-555-0123 for help.</p>"
+PHONE_QUOTE = "Call (415) 555-0101 or 415-555-0123 for help."
+
+
+def test_the_same_phone_in_another_format_does_not_flag():
+    record = service(phones=[{"id": "p", "number": "415.555.0101"}])
+    comparison = run_compare(
+        record,
+        "<p>Call (415) 555-0101 for help today.</p>",
+        phones=fact(["(415) 555-0101"], "Call (415) 555-0101 for help today."),
+    )
+    assert comparison.category is Category.VERIFIED
+
+
+def test_a_page_with_only_other_phones_contradicts_the_record():
+    record = service(phones=[{"id": "p", "number": "650-555-0000"}])
+    comparison = run_compare(
+        record, PHONE_PAGE, phones=fact(["(415) 555-0101", "415-555-0123"], PHONE_QUOTE)
+    )
+    finding = by_field(comparison)["phones"]
+    assert finding.confidence == CONFIDENCE_PHONE_MISMATCH  # may be a fax or another line
+    assert finding.proposed_value == "(415) 555-0101, 415-555-0123"
+
+
+def test_an_extra_phone_is_a_low_confidence_addition():
+    record = service(phones=[{"id": "p", "number": "415-555-0101"}])
+    comparison = run_compare(
+        record, PHONE_PAGE, phones=fact(["(415) 555-0101", "415-555-0123"], PHONE_QUOTE)
+    )
+    finding = by_field(comparison)["phones"]
+    assert finding.confidence == CONFIDENCE_ADDITIONAL_CONTACT
+    assert finding.proposed_value == "415-555-0101, 415-555-0123"
+
+
+EMAIL_PAGE = "<p>Email help@example.org for questions.</p>"
+EMAIL_QUOTE = "Email help@example.org for questions."
+
+
+@pytest.mark.parametrize(
+    ("stored", "category", "proposed"),
+    [
+        ("HELP@example.org", None, None),  # case doesn't matter
+        ("old@example.org", Category.DISCREPANCY, "help@example.org"),
+        ("", Category.MISSING_INFORMATION, "help@example.org"),
+    ],
+)
+def test_emails_are_compared_as_addresses(stored, category, proposed):
+    comparison = run_compare(
+        service(email=stored), EMAIL_PAGE, emails=fact(["help@example.org"], EMAIL_QUOTE)
+    )
+    finding = by_field(comparison).get("email")
+    if category is None:
+        assert finding is None
+    else:
+        assert (finding.category, finding.proposed_value) == (category, proposed)
+
+
+LANGUAGE_PAGE = "<p>Services offered in English and Spanish.</p>"
+LANGUAGE_QUOTE = "Services offered in English and Spanish."
+
+
+def test_a_language_the_record_lacks_is_an_addition():
+    record = service(languages=[{"id": "l", "name": "English"}])
+    comparison = run_compare(
+        record, LANGUAGE_PAGE, languages=fact(["English", "Spanish"], LANGUAGE_QUOTE)
+    )
+    assert by_field(comparison)["languages"].proposed_value == "English, Spanish"
+
+
+def test_a_language_the_page_leaves_out_does_not_flag():
+    record = service(languages=[{"id": "l", "name": "English"}, {"id": "m", "name": "Tagalog"}])
+    comparison = run_compare(record, LANGUAGE_PAGE, languages=fact(["English"], LANGUAGE_QUOTE))
+    assert comparison.category is Category.VERIFIED
+
+
+# ---- presence-only facts and closures ---- #
+
+
+def test_hours_are_only_checked_for_presence():
+    # Comparing schedules structurally is not built yet, so a record with hours never flags.
+    record = service(schedules=[{"id": "s", "byday": "MO", "opens_at": "09:00-08:00"}])
+    comparison = run_compare(
+        record,
+        "<p>Open Tuesdays 9 AM to 1 PM.</p>",
+        hours=fact(["Tuesdays 9 AM to 1 PM"], "Open Tuesdays 9 AM to 1 PM."),
+    )
+    assert comparison.category is Category.VERIFIED
+
+
+def test_accessibility_on_the_location_counts():
+    location = {"id": "loc", "location_type": "physical", "accessibility": [{"id": "a"}]}
+    record = service(service_at_locations=[{"id": "sal", "location": location}])
+    comparison = run_compare(
+        record,
+        "<p>Wheelchair accessible entrance.</p>",
+        accessibility=fact(["Wheelchair accessible entrance"], "Wheelchair accessible entrance."),
+    )
+    assert comparison.category is Category.VERIFIED
+
+
+CLOSED_PAGE = "<p>Our organization has permanently closed.</p>"
+CLOSED_QUOTE = "Our organization has permanently closed."
+
+
+def test_a_closure_announcement_is_actively_bad_with_a_status_proposal():
+    comparison = run_compare(service(), CLOSED_PAGE, operating_status=fact("closed", CLOSED_QUOTE))
+    assert comparison.category is Category.ACTIVELY_BAD
+    finding = by_field(comparison)["status"]
+    assert (finding.current_value, finding.proposed_value) == ("active", "defunct")
+    assert finding.confidence == CONFIDENCE_CLOSURE_TEXT
+    assert finding.model_id == "fake-model"
+    assert_storable(comparison)
+
+
+def test_a_closure_the_record_already_shows_does_not_flag():
+    comparison = run_compare(
+        service(status="defunct"), CLOSED_PAGE, operating_status=fact("closed", CLOSED_QUOTE)
+    )
+    assert comparison.category is Category.VERIFIED
+
+
+def test_a_temporary_closure_proposes_temporarily_closed():
+    sentence = "We are temporarily closed."
+    comparison = run_compare(
+        service(), f"<p>{sentence}</p>", operating_status=fact("temporarily_closed", sentence)
+    )
+    assert by_field(comparison)["status"].proposed_value == "temporarily closed"
+
+
+# ---- evidence and verified results ---- #
+
+
+def test_a_quote_not_in_the_page_text_is_never_used_as_evidence():
+    record = service(eligibility_description="Open to residents of Santa Clara County.")
+    facts = {"area_served": {"value": ["San Mateo County"], "quote": COUNTY_QUOTE}}
+    comparison = compare(
+        record,
+        facts,
+        url="https://x.org",
+        model_id="m",
+        checked_at=CHECKED_AT,
+        page_text="A different page about something else entirely.",
+    )
+    assert "eligibility_description" not in by_field(comparison)
+    assert comparison.dropped == [
+        {
+            "field": "eligibility_description",
+            "category": "discrepancy",
+            "problems": ["evidence needs a non-empty snippet"],
+        }
+    ]
+    # A difference that can't be evidenced must not be reported as a match.
+    assert comparison.category is Category.CHECK_FAILED
+    (finding,) = comparison.findings
+    assert finding.category is Category.CHECK_FAILED
+    assert finding.evidence[0].snippet == (
+        "a difference was found but its quote is not in the page (eligibility_description)"
+    )
+    assert_storable(comparison)
+
+
+def test_a_page_with_nothing_to_compare_is_a_low_confidence_verified():
+    comparison = run_compare(service(), "<h1>Bayview Pantry</h1><p>Welcome to our site.</p>")
+    (finding,) = comparison.findings
+    assert finding.category is Category.VERIFIED
+    assert finding.confidence == CONFIDENCE_NOTHING_TO_COMPARE
+    assert finding.evidence[0].snippet == "Bayview Pantry"  # a quote from the page
+
+
+def test_finding_ids_are_deterministic_and_unique_per_field():
+    record = service(eligibility_description="Open to residents of Santa Clara County.")
+    first = run_compare(record, COUNTY_PAGE, area_served=fact(["San Mateo County"], COUNTY_QUOTE))
+    again = run_compare(record, COUNTY_PAGE, area_served=fact(["San Mateo County"], COUNTY_QUOTE))
+    assert [f.id for f in first.findings] == [f.id for f in again.findings]
+    assert finding_id("s", "phones", CHECKED_AT) != finding_id("s", "email", CHECKED_AT)
+    assert finding_id("s", "phones", CHECKED_AT) != finding_id("s", "phones", "2026-12-01T00:00Z")
+
+
+# ---- properties ---- #
+
+COUNTY_NAMES = ["Alameda", "Marin", "San Mateo", "Santa Clara", "Sonoma", "Napa", "Contra Costa"]
+county_sets = st.sets(st.sampled_from(COUNTY_NAMES), min_size=1, max_size=4)
+
+
+def county_sentence(names, style):
+    names = sorted(names)
+    joined = names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+    suffix = "County" if len(names) == 1 else "Counties"
+    if style == 0:
+        return f"Open to residents of {joined} {suffix}."
+    if style == 1:
+        return f"Residents of {joined} {suffix} only, please."
+    return f"We serve people who live in {joined} {suffix} today."
+
+
+# Feature: resource-engine, Property 7: only factual differences flag
+@given(stored=county_sets, page=county_sets, styles=st.tuples(st.integers(0, 2), st.integers(0, 2)))
+def test_only_factual_county_differences_flag(stored, page, styles):
+    record = service(eligibility_description=county_sentence(stored, styles[0]))
+    sentence = county_sentence(page, styles[1])
+    comparison = run_compare(
+        record,
+        f"<p>{sentence}</p>",
+        area_served=fact([f"{name} County" for name in sorted(page)], sentence),
+    )
+    flagged = "eligibility_description" in by_field(comparison)
+    assert flagged == (stored != page)
+
+
+finding_categories = st.sampled_from(list(Category))
+# Written out, so a change to the precedence in the code is caught here.
+EXPECTED_PRECEDENCE = [
+    Category.CHECK_FAILED,
+    Category.ACTIVELY_BAD,
+    Category.DISCREPANCY,
+    Category.MISSING_INFORMATION,
+    Category.VERIFIED,
+]
+
+
+# Feature: resource-engine, Property 8: exactly one category per check
+@given(categories=st.lists(finding_categories, max_size=6))
+def test_categorize_returns_exactly_one_category(categories):
+    findings = [
+        Finding(
+            id=str(index),
+            service_id="s",
+            field="f",
+            current_value=None,
+            proposed_value=None,
+            category=category,
+            confidence=0.5,
+            model_id="m",
+            checked_at=CHECKED_AT,
+        )
+        for index, category in enumerate(categories)
+    ]
+    if not categories:
+        with pytest.raises(ValueError):
+            categorize(findings)
+        return
+    category = categorize(findings)
+    expected = next(c for c in EXPECTED_PRECEDENCE if c in set(categories))
+    assert category is expected
+
+
+failed_sites = st.builds(
+    WebsiteResult,
+    content=st.one_of(st.none(), st.just("")),
+    status=st.one_of(st.none(), st.integers(100, 599)),
+    error=st.one_of(
+        st.none(),
+        st.sampled_from(
+            ["unreachable", "timed out", "certificate has expired", "Name or service not known"]
+        ),
+        st.text(min_size=1, max_size=40),
+    ),
+)
+
+
+# Feature: resource-engine, Property 9: failed checks surface as findings, never silent skips
+@given(site=failed_sites, unreachable_before=st.booleans())
+def test_a_failed_fetch_always_surfaces_as_a_storable_finding(site, unreachable_before):
+    comparison = check_page(
+        service(),
+        site,
+        None,
+        url="https://example.org",
+        checked_at=CHECKED_AT,
+        unreachable_before=unreachable_before,
+    )
+    assert comparison.category in {Category.CHECK_FAILED, Category.ACTIVELY_BAD}
+    assert len(comparison.findings) == 1
+    assert comparison.dropped == []
+    assert comparison.findings[0].evidence[0].snippet.strip()
+    assert_storable(comparison)
+
+
+# Feature: resource-engine, Property 8: a completed check has one category matching its findings
+@given(stored=county_sets, page=county_sets, add_phone=st.booleans())
+def test_a_completed_check_has_findings_and_one_consistent_category(stored, page, add_phone):
+    record = service(eligibility_description=county_sentence(stored, 0))
+    sentence = county_sentence(page, 0)
+    facts = {"area_served": fact([f"{n} County" for n in sorted(page)], sentence)}
+    html = f"<p>{sentence}</p>"
+    if add_phone:
+        html += "<p>Call (415) 555-0101 for help.</p>"
+        facts["phones"] = fact(["(415) 555-0101"], "Call (415) 555-0101 for help.")
+    comparison = run_compare(record, html, **facts)
+    assert comparison.findings
+    assert comparison.category is categorize(comparison.findings)
+    assert_storable(comparison)
+
+
+# ---- round-1 review: pinned values ---- #
+
+
+def test_the_precedence_order_is_pinned():
+    assert list(PRECEDENCE) == EXPECTED_PRECEDENCE
+
+
+def test_the_confidence_scale_is_pinned():
+    # The evaluation harness and triage depend on these exact values.
+    assert {
+        name: getattr(compare_module, name)
+        for name in dir(compare_module)
+        if name.startswith("CONFIDENCE_")
+    } == {
+        "CONFIDENCE_CHECK_FAILED": 1.0,
+        "CONFIDENCE_SITE_GONE": 0.9,
+        "CONFIDENCE_REPEATED_FAILURE": 0.8,
+        "CONFIDENCE_CONTRADICTION": 0.9,
+        "CONFIDENCE_ADDITION": 0.7,
+        "CONFIDENCE_PHONE_MISMATCH": 0.7,
+        "CONFIDENCE_ADDITIONAL_CONTACT": 0.5,
+        "CONFIDENCE_MISSING": 0.8,
+        "CONFIDENCE_CLOSURE_TEXT": 0.7,
+        "CONFIDENCE_VERIFIED": 0.9,
+        "CONFIDENCE_NOTHING_TO_COMPARE": 0.3,
+    }
+
+
+# ---- round-1 review: a check always ends with a finding ---- #
+
+
+def test_categorize_refuses_an_empty_check():
+    with pytest.raises(ValueError, match="at least one finding"):
+        categorize([])
+
+
+@pytest.mark.parametrize("reason", ["", "   ", None])
+def test_a_failure_without_a_reason_still_has_evidence(reason):
+    comparison = failure(
+        service(), Category.CHECK_FAILED, reason, url="https://x.org", checked_at=CHECKED_AT
+    )
+    assert comparison.findings[0].evidence[0].snippet == "the check failed"
+
+
+@pytest.mark.parametrize("url", ["", "  "])
+def test_a_check_without_a_url_is_a_programming_error(url):
+    site = WebsiteResult(None, 404, "not found")
+    with pytest.raises(ValueError, match="url"):
+        check_page(service(), site, None, url=url, checked_at=CHECKED_AT)
+    with pytest.raises(ValueError, match="url"):
+        failure(service(), Category.CHECK_FAILED, "x", url=url, checked_at=CHECKED_AT)
+
+
+@pytest.mark.parametrize(
+    ("argument", "kwargs"),
+    [
+        ("model_id", {"model_id": "", "page_text": "Page text."}),
+        ("page_text", {"model_id": "m", "page_text": "  "}),
+    ],
+)
+def test_compare_needs_a_model_and_the_page_text(argument, kwargs):
+    with pytest.raises(ValueError, match=argument):
+        compare(service(), {}, url="https://x.org", checked_at=CHECKED_AT, **kwargs)
+
+
+def test_a_page_with_only_scripts_is_a_failed_check():
+    site = WebsiteResult("<script>app()</script><!-- nothing -->", 200, None)
+    comparison = check_page(service(), site, None, url="https://x.org", checked_at=CHECKED_AT)
+    assert comparison.category is Category.CHECK_FAILED
+    assert comparison.findings[0].evidence[0].snippet == "the page had no readable text"
+
+
+# ---- round-1 review: only compare values of the same kind ---- #
+
+
+@pytest.mark.parametrize(
+    ("stored", "items", "sentence"),
+    [
+        (
+            "Open to residents of Alameda County.",
+            ["Oakland"],
+            "We serve families in Oakland.",
+        ),
+        (
+            "Open to residents of San Francisco County.",
+            ["San Francisco, CA"],
+            "Our office is in San Francisco, CA.",
+        ),
+    ],
+)
+def test_a_city_or_region_is_not_compared_with_counties(stored, items, sentence):
+    comparison = run_compare(
+        service(eligibility_description=stored),
+        f"<p>{sentence}</p>",
+        area_served=fact(items, sentence),
+    )
+    assert comparison.category is Category.VERIFIED
+
+
+def test_a_state_in_service_areas_is_not_compared_with_counties():
+    record = service(service_areas=[{"id": "a", "name": "California"}])
+    comparison = run_compare(
+        record, COUNTY_PAGE, area_served=fact(["San Mateo County"], COUNTY_QUOTE)
+    )
+    assert "service_areas" not in by_field(comparison)
+
+
+def test_a_lowercase_county_is_still_a_county():
+    record = service(eligibility_description="Open to residents of San Mateo county.")
+    comparison = run_compare(
+        record, COUNTY_PAGE, area_served=fact(["San Mateo County"], COUNTY_QUOTE)
+    )
+    assert comparison.category is Category.VERIFIED
+    assert comparison.findings[0].confidence == CONFIDENCE_VERIFIED
+
+
+def test_location_words_that_cannot_be_parsed_are_not_an_addition():
+    record = service(eligibility_description="Residents of the Bay Area are welcome.")
+    comparison = run_compare(
+        record, COUNTY_PAGE, area_served=fact(["San Mateo County"], COUNTY_QUOTE)
+    )
+    assert "eligibility_description" not in by_field(comparison)
+
+
+ILLUSTRATED_INCOME = "Up to 200% of the federal poverty level (about $31,000 for one person)."
+
+
+def test_an_illustrative_dollar_figure_beside_the_same_percentage_does_not_flag():
+    record = service(eligibility_description="Income at or below 200% of the poverty level.")
+    comparison = run_compare(
+        record,
+        f"<p>{ILLUSTRATED_INCOME}</p>",
+        eligibility_income=fact("Up to 200% of the federal poverty level", ILLUSTRATED_INCOME),
+    )
+    assert comparison.category is Category.VERIFIED
+
+
+def test_income_words_that_cannot_be_parsed_are_not_an_addition():
+    record = service(eligibility_description="Low-income households only.")
+    comparison = run_compare(
+        record,
+        INCOME_PAGE,
+        eligibility_income=fact("Below 60% of area median income", INCOME_QUOTE),
+    )
+    assert "eligibility_description" not in by_field(comparison)
+    assert comparison.findings[0].confidence == CONFIDENCE_NOTHING_TO_COMPARE
+
+
+def test_an_income_limit_the_record_lacks_is_an_addition():
+    record = service(eligibility_description="Open to families with children.")
+    comparison = run_compare(
+        record,
+        INCOME_PAGE,
+        eligibility_income=fact("Below 60% of area median income", INCOME_QUOTE),
+    )
+    finding = by_field(comparison)["eligibility_description"]
+    assert finding.confidence == CONFIDENCE_ADDITION
+    assert finding.proposed_value == f"Open to families with children. {INCOME_QUOTE}"
+
+
+# ---- round-1 review: verified only claims what was compared ---- #
+
+
+def test_presence_only_facts_do_not_make_a_confident_verified():
+    record = service(schedules=[{"id": "s", "byday": "TU"}])
+    comparison = run_compare(
+        record,
+        "<p>Open Tuesdays 9 AM to 1 PM.</p>",
+        hours=fact(["Tuesdays 9 AM to 1 PM"], "Open Tuesdays 9 AM to 1 PM."),
+    )
+    (finding,) = comparison.findings
+    assert finding.category is Category.VERIFIED
+    assert finding.confidence == CONFIDENCE_NOTHING_TO_COMPARE
+
+
+def test_a_verified_result_quotes_only_the_values_that_matched():
+    record = service(minimum_age=12, maximum_age=17, schedules=[{"id": "s"}])
+    page = f"{AGE_PAGE}<p>Open Tuesdays 9 AM to 1 PM.</p>"
+    comparison = run_compare(
+        record,
+        page,
+        eligibility_age=fact({"min": 12, "max": 17}, AGE_QUOTE),
+        hours=fact(["Tuesdays 9 AM to 1 PM"], "Open Tuesdays 9 AM to 1 PM."),
+    )
+    (finding,) = comparison.findings
+    assert finding.confidence == CONFIDENCE_VERIFIED
+    assert [e.snippet for e in finding.evidence] == [AGE_QUOTE]
+
+
+# ---- round-1 review: counties in both places, splicing, missing eligibility ---- #
+
+
+def test_counties_in_service_areas_and_eligibility_are_both_compared():
+    record = service(
+        service_areas=[{"id": "a", "name": "San Mateo County"}],
+        eligibility_description="Open to residents of Santa Clara County.",
+    )
+    comparison = run_compare(
+        record, COUNTY_PAGE, area_served=fact(["San Mateo County"], COUNTY_QUOTE)
+    )
+    fields = by_field(comparison)
+    assert "service_areas" not in fields  # the same counties
+    assert fields["eligibility_description"].proposed_value == COUNTY_QUOTE
+
+
+def test_an_income_change_keeps_the_rest_of_the_stored_text():
+    record = service(
+        eligibility_description=(
+            "Open to residents of San Mateo County. Households below 80% of area median income. "
+            "Bring photo ID."
+        )
+    )
+    comparison = run_compare(
+        record,
+        INCOME_PAGE,
+        eligibility_income=fact("Below 60% of area median income", INCOME_QUOTE),
+    )
+    assert by_field(comparison)["eligibility_description"].proposed_value == (
+        f"Open to residents of San Mateo County. {INCOME_QUOTE} Bring photo ID."
+    )
+
+
+def test_counties_already_in_service_areas_are_not_missing_eligibility():
+    record = service(service_areas=[{"id": "a", "name": "San Mateo County"}])
+    comparison = run_compare(
+        record, COUNTY_PAGE, area_served=fact(["San Mateo County"], COUNTY_QUOTE)
+    )
+    assert comparison.category is Category.VERIFIED
+
+
+# ---- round-1 review: phones, places and odd records ---- #
+
+
+@pytest.mark.parametrize(
+    ("first", "second", "same"),
+    [
+        ("555-0101", "(415) 555-0101", True),  # a local number without the area code
+        ("415-555-0101 x 4", "415.555.0101", True),
+        ("+1 415 555 0101", "415-555-0101", True),
+        ("415-555-0101", "415-555-0102", False),
+        ("0101", "415-555-0101", False),  # too short to be a phone number
+        ("", "415-555-0101", False),
+    ],
+)
+def test_same_phone(first, second, same):
+    assert same_phone(first, second) is same
+
+
+def test_a_phone_with_an_extension_matches_the_stored_number():
+    record = service(phones=[{"id": "p", "number": "415-555-0101"}])
+    sentence = "Call (415) 555-0101 x 4 for the front desk."
+    comparison = run_compare(
+        record, f"<p>{sentence}</p>", phones=fact(["(415) 555-0101 x 4"], sentence)
+    )
+    assert comparison.category is Category.VERIFIED
+
+
+def test_phones_hours_and_accessibility_on_the_location_count():
+    location = {
+        "id": "loc",
+        "location_type": "physical",
+        "phones": [{"id": "p", "number": "415-555-0101"}],
+        "schedules": [{"id": "s", "byday": "TU"}],
+        "accessibility": [{"id": "a"}],
+    }
+    record = service(service_at_locations=[{"id": "sal", "location": location}])
+    page = (
+        "<p>Call (415) 555-0101 for help today.</p><p>Open Tuesdays 9 AM to 1 PM.</p>"
+        "<p>Wheelchair accessible entrance.</p>"
+    )
+    comparison = run_compare(
+        record,
+        page,
+        phones=fact(["(415) 555-0101"], "Call (415) 555-0101 for help today."),
+        hours=fact(["Tuesdays 9 AM to 1 PM"], "Open Tuesdays 9 AM to 1 PM."),
+        accessibility=fact(["Wheelchair accessible entrance"], "Wheelchair accessible entrance."),
+    )
+    assert comparison.category is Category.VERIFIED
+
+
+def test_missing_accessibility_is_missing_information():
+    sentence = "Wheelchair accessible entrance."
+    comparison = run_compare(
+        service(),
+        f"<p>{sentence}</p>",
+        accessibility=fact(["Wheelchair accessible entrance"], sentence),
+    )
+    assert by_field(comparison)["accessibility"].category is Category.MISSING_INFORMATION
+
+
+def test_languages_stored_only_by_code_are_not_missing_and_not_compared():
+    record = service(languages=[{"id": "l", "code": "es"}])
+    comparison = run_compare(
+        record, LANGUAGE_PAGE, languages=fact(["English", "Spanish"], LANGUAGE_QUOTE)
+    )
+    assert "languages" not in by_field(comparison)
+
+
+def test_odd_records_do_not_crash_the_comparison():
+    record = service(
+        phones=["415-555-0101", None, {"id": "p"}],
+        languages=None,
+        service_areas="San Mateo County",
+        service_at_locations=[None, {"id": "sal", "location": "nowhere"}],
+        minimum_age="12",
+        maximum_age=17.0,
+        email=None,
+        eligibility_description=None,
+    )
+    comparison = run_compare(
+        record, AGE_PAGE, eligibility_age=fact({"min": 12, "max": 17}, AGE_QUOTE)
+    )
+    assert comparison.category is Category.VERIFIED  # "12" and 17.0 are the page's 12 and 17
+
+
+def test_odd_extractor_values_do_not_crash_the_comparison():
+    facts = {
+        "emails": {"value": [], "quote": "x"},
+        "phones": {"value": [None, 5], "quote": "x"},
+        "eligibility_age": {"value": "12 to 17", "quote": "x"},
+        "operating_status": {"value": "open", "quote": "x"},
+    }
+    comparison = compare(
+        service(),
+        facts,
+        url="https://x.org",
+        model_id="m",
+        checked_at=CHECKED_AT,
+        page_text="Some page text.",
+    )
+    assert comparison.category is Category.VERIFIED
+
+
+def test_a_non_integer_age_on_the_record_is_not_compared():
+    comparison = run_compare(
+        service(minimum_age=12.5),
+        AGE_PAGE,
+        eligibility_age=fact({"min": 12, "max": None}, AGE_QUOTE),
+    )
+    assert by_field(comparison)["minimum_age"].category is Category.MISSING_INFORMATION
+
+
+# ---- round-1 review: certificates and closures ---- #
+
+
+@pytest.mark.parametrize(
+    ("error", "category"),
+    [
+        (
+            "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: certificate has expired",
+            Category.ACTIVELY_BAD,
+        ),
+        ("certificate verify failed: self signed certificate", Category.CHECK_FAILED),
+        ("client certificate required", Category.CHECK_FAILED),
+        ("[Errno -3] Temporary failure in name resolution", Category.CHECK_FAILED),
+    ],
+)
+def test_only_an_expired_certificate_or_missing_domain_means_the_site_is_gone(error, category):
+    site = WebsiteResult(None, None, error)
+    comparison = check_page(service(), site, None, url="https://x.org", checked_at=CHECKED_AT)
+    assert comparison.category is category
+
+
+def test_a_temporary_closure_never_downgrades_a_closed_record():
+    sentence = "We are temporarily closed."
+    comparison = run_compare(
+        service(status="defunct"),
+        f"<p>{sentence}</p>",
+        operating_status=fact("temporarily_closed", sentence),
+    )
+    assert "status" not in by_field(comparison)
+
+
+# ---- round-2 review ---- #
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Must live in Santa Clara or San Mateo County.", {"santa clara", "san mateo"}),
+        ("Alameda, Marin, or Napa Counties.", {"alameda", "marin", "napa"}),
+        ("Residents of St. Louis County.", {"st. louis"}),
+    ],
+)
+def test_counties_in_reads_or_lists_and_abbreviations(text, expected):
+    assert counties_in(text) == expected
+
+
+@pytest.mark.parametrize(
+    ("first", "second", "same"),
+    [
+        ("santa clara", "santa clara", True),
+        ("uninsured santa clara", "santa clara", True),
+        ("santa clara", "veterans santa clara", True),
+        ("santa clara", "clara", True),  # a whole-word suffix
+        ("santa clara", "san mateo", False),
+        ("santa clara", "ta clara", False),  # not a whole word
+        ("santa clara", "", False),
+    ],
+)
+def test_same_county(first, second, same):
+    assert same_county(first, second) is same
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "Must live in Santa Clara or San Mateo County.",
+        "Uninsured Santa Clara County residents are eligible.",
+        "Free services for Veterans in Santa Clara County.",
+    ],
+)
+def test_identical_eligibility_text_on_the_page_never_flags(sentence):
+    # Whatever the parser makes of a sentence, the same sentence on both sides must match.
+    record = service(eligibility_description=sentence)
+    page_counties = sorted(counties_in(sentence))
+    items = [f"{name.title()} County" for name in page_counties]
+    comparison = run_compare(
+        record,
+        f"<p>{sentence}</p>",
+        eligibility_residence=fact(sentence, sentence),
+        area_served=fact(items, sentence),
+    )
+    assert comparison.category is Category.VERIFIED
+
+
+def test_a_leading_adjective_on_the_record_does_not_make_a_contradiction():
+    record = service(eligibility_description="Uninsured Santa Clara County residents only.")
+    page = "<p>Open to residents of Santa Clara County.</p>"
+    quote = "Open to residents of Santa Clara County."
+    comparison = run_compare(record, page, area_served=fact(["Santa Clara County"], quote))
+    assert comparison.category is Category.VERIFIED
+
+
+def test_a_spliced_proposal_keeps_its_sentences_separate():
+    record = service(
+        eligibility_description="Open to residents of Santa Clara County. Bring photo ID"
+    )
+    comparison = run_compare(
+        record, COUNTY_PAGE, area_served=fact(["San Mateo County"], COUNTY_QUOTE)
+    )
+    assert by_field(comparison)["eligibility_description"].proposed_value == (
+        f"{COUNTY_QUOTE} Bring photo ID."
+    )
+
+
+def test_splicing_does_not_break_an_abbreviated_county_name():
+    record = service(eligibility_description="Residents of St. Louis County. Bring photo ID.")
+    page = "<p>Residents of Jackson County may apply.</p>"
+    quote = "Residents of Jackson County may apply."
+    comparison = run_compare(record, page, area_served=fact(["Jackson County"], quote))
+    assert by_field(comparison)["eligibility_description"].proposed_value == (
+        f"{quote} Bring photo ID."
+    )
+
+
+# ---- round-3 review ---- #
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Open Monday or Tuesday. Alameda County residents only.", {"alameda"}),
+        ("Open Monday and Tuesday. Alameda County residents only.", {"alameda"}),
+        ("Closed Sundays. Marin County. Napa County.", {"marin", "napa"}),
+        ("Residents of St. Louis County.", {"st. louis"}),
+    ],
+)
+def test_a_county_name_never_runs_across_a_sentence_break(text, expected):
+    assert counties_in(text) == expected
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "Open Monday or Tuesday. Alameda County residents only.",
+        "Food or Housing Alameda County residents can apply.",
+        "Children or Adults in Santa Clara County can apply.",
+    ],
+)
+def test_the_same_sentence_on_both_sides_never_flags(sentence):
+    record = service(eligibility_description=sentence)
+    comparison = run_compare(
+        record, f"<p>{sentence}</p>", eligibility_residence=fact(sentence, sentence)
+    )
+    assert comparison.category is Category.VERIFIED
+
+
+def test_a_proposal_equal_to_the_stored_value_is_never_a_finding():
+    # The values differ only in spacing, which is not a change.
+    record = service(email="help@example.org ")
+    facts = {"emails": {"value": ["help@example.org"], "quote": "Email help@example.org."}}
+    page = "Email help@example.org."
+    no_op = compare_module._Draft(
+        "email", "help@example.org", " help@example.org", Category.DISCREPANCY, 0.9, [page]
+    )
+    assert compare_module._no_change(no_op)
+    comparison = compare(
+        record, facts, url="https://x.org", model_id="m", checked_at=CHECKED_AT, page_text=page
+    )
+    assert comparison.category is Category.VERIFIED
