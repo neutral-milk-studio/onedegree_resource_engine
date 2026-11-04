@@ -59,8 +59,10 @@ flowchart LR
   end
   ODRS & NDP & CSV --> A
   S[(hsds.services<br/>hsds.objects<br/>Postgres)]
-  subgraph AI["maintenance/ (step 3)"]
-    W[Website source] --> B[Bedrock check] --> F[(ops.findings)]
+  subgraph AI["maintenance/"]
+    W[Website source<br/>sample pages → live] --> X[Extract facts<br/>Bedrock or offline rules]
+    X --> C[Compare in code<br/>facts, not wording] --> F[(ops.findings<br/>ops.checks)]
+    X <--> K[(ops.llm_cache<br/>by content hash)]
   end
   S --> AI
   S & F & Q --> API[FastAPI<br/>bearer auth]
@@ -74,6 +76,8 @@ flowchart LR
 | Pipeline | `ingest/pipeline/run.py` | fetch → raw save → map → validate (each object, then the nested service as served) → store or quarantine. Deterministic UUIDv5 ids, so re-runs update. |
 | Store | `shared/models.py`, `api/app/store_pg.py` | `hsds.objects` (every HSDS object), `hsds.services` (nested HSDS document + key columns), `hsds.id_map`; `ops.ingest_runs`, `ops.quarantine`, `ops.audit_log`. |
 | API | `api/app/` | `GET /services`, `GET /services/{id}`, `POST /ingest/{source}`, `GET /ingest/runs`, `GET /ingest/runs/{id}/quarantine`, `GET /metrics`, `GET /audit`. |
+| AI maintenance | `maintenance/` | Website source → extractor (Amazon Bedrock Converse, or offline rules) → comparator → findings. Harm priority, trust score, apply. |
+| Review API | `api/app/routers/review.py`, `maintenance.py` | `POST /maintenance/run`, `GET /maintenance/checks`, `GET /review/findings`, `POST /review/findings/{id}/apply`, `POST /review/findings/{id}/dismiss`, `GET /review/records/{id}/history`. |
 | Admin UI | `ui/` | React + Vite + TypeScript + Tailwind. Overview (live metrics, findings chart, sources, recent activity), plus the review screen. Light/dark/device theme. |
 
 ## Run it locally
@@ -118,6 +122,73 @@ npm test                          # UI tests (vitest)
 ```
 
 The review API contract mock still runs on its own with `make mock`.
+
+## AI maintenance and review
+
+1. **Website source** (`RE_WEBSITE_SOURCE=sample`): `data/sample_websites/manifest.json` maps
+   9 stored services to fictional `.example` URLs and a page or a simulated failure. No
+   network. A URL without a page is a failed check, never a guess.
+2. **Extract** what the page states (phone, hours, service area, eligibility, languages,
+   accessibility, closure), each with the exact quote. With `BEDROCK_MODEL_ID` set this is
+   one Bedrock Converse call per record returning strict JSON (validated with Pydantic);
+   otherwise a labelled offline rules extractor (`model_id: offline-rules`) is used.
+3. **Compare in code**: a fact whose quote isn't on the page is dropped; values are
+   normalized (phone digits, day/time slots, case, "accessible yes/no") so rewording is never
+   flagged; a page that doesn't mention a fact is not a discrepancy.
+4. **Categories**: `verified`, `discrepancy`, `missing_information`, `actively_bad` (site gone:
+   NXDOMAIN, 404/410, or a closure notice), `check_failed` (blocked, timeout, unreadable).
+   `suspicious` arrives with scam detection (step 4).
+5. **Harm priority**: actively bad > suspicious > discrepancy in phone/hours/address > other
+   discrepancy > missing information > check failed.
+6. **Trust score** (0-100) with a badge like "Verified 2 days ago" or "1 open issue": verified
+   recently is high and decays with age; each open finding lowers it by its harm.
+7. **Review**: Apply checks the record version (stale → 409), applies the value, appends an
+   HSDS `metadata` entry, re-validates the served record (invalid → 422 with paths, nothing
+   saved), saves an override so re-ingest keeps the fix, and writes the audit log (who, field,
+   old, new, when, source of change). Keep current is audited too.
+
+```bash
+make check                        # run website checks against the running stack
+```
+
+The planted problems and what each should produce are in the manifest; the test
+`test_evaluation_every_planted_problem_is_caught_and_nothing_else` asserts a 100% catch rate
+with no false flags on that set.
+
+## Cost per record
+
+Measured on the sample pages: the prompt (instructions + page text) is about **400-470
+input tokens**; the reply is about 150-300 output tokens. Pages are capped at 12,000
+characters (about 3,300 input tokens) for real sites.
+
+| Case | Input tokens | Output tokens | Cost per check at $3 / $15 per million tokens |
+|---|---|---|---|
+| Sample page | ~450 | ~250 | ~$0.005 |
+| Typical real page | ~2,500 | ~300 | ~$0.012 |
+| Largest page (cap) | ~3,300 | ~400 | ~$0.016 |
+| Page unchanged since last check | 0 (cache hit) | 0 | $0 |
+
+Prices are configuration (`BEDROCK_INPUT_USD_PER_MTOK`, `BEDROCK_OUTPUT_USD_PER_MTOK`); set
+them to the published Amazon Bedrock price of the model you choose. A smaller model at about
+$1 / $5 per million tokens brings a typical check to about $0.004. With content-hash caching,
+only pages that changed cost anything: checking 10,000 records weekly with 10% of pages
+changing is roughly 1,000 model calls, about $12 a week at the $3 / $15 rate. The dashboard
+shows the real average from `ops.checks`.
+
+## Scaling plan
+
+- **Pagination everywhere**: `/services` and the review list are paginated; ingest streams
+  page by page and writes each raw page before parsing.
+- **Queue the checks**: `POST /maintenance/run` runs inline for the pilot. In AWS, an
+  EventBridge schedule puts due record ids on **SQS**; Fargate/Lambda workers run
+  `check_one` per message, so checks scale out and a failure retries one record, not a batch.
+- **Only re-check what changed**: the page text hash and the record facts key the model
+  cache, so unchanged pages cost nothing; store `ETag`/`Last-Modified` for live fetches and
+  skip downloading unchanged pages altogether.
+- **Daily NDP updates using `lastUpdated`**: fetch with the `lastUpdated` watermark of the
+  previous successful run (the adapter `fetch(since=...)` hook), so a daily run moves only
+  changed records; deterministic ids make it an update in place.
+- **Search** moves from Postgres full-text to OpenSearch behind the same interface (step 6).
 
 ## Data decisions
 

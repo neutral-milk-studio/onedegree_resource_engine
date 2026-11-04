@@ -94,7 +94,10 @@ export function Overview({ api }: { api: DashboardApi }) {
               hint={
                 m.findings.checks_run === 0
                   ? "No website checks have run yet."
-                  : `From ${formatCount(m.findings.checks_run)} website checks.`
+                  : `From ${formatCount(m.findings.checks_run)} website checks. ${formatCount(m.findings.decided)} resolved` +
+                    (m.findings.median_seconds_to_fix !== null
+                      ? `, median ${Math.round(m.findings.median_seconds_to_fix)} s to fix.`
+                      : ".")
               }
             />
             <StatTile
@@ -105,12 +108,22 @@ export function Overview({ api }: { api: DashboardApi }) {
             <StatTile
               label="Average trust score"
               value={m.avg_trust_score === null ? null : `${Math.round(m.avg_trust_score)} / 100`}
-              hint={m.avg_trust_score === null ? "Shown after the first website check." : "Higher is better."}
+              hint={
+                m.avg_trust_score === null
+                  ? "Shown after the first website check."
+                  : `Across ${formatCount(m.findings.records_checked)} checked records. Higher is better.`
+              }
             />
             <StatTile
               label="Cost per AI check"
               value={m.cost_per_check_usd === null ? null : formatUsd(m.cost_per_check_usd)}
-              hint={m.cost_per_check_usd === null ? "No AI checks yet." : "Average Amazon Bedrock cost."}
+              hint={
+                m.cost_per_check_usd === null
+                  ? "No AI checks yet."
+                  : m.findings.model_ids.every((id) => id === "offline-rules")
+                    ? "Offline rules, no model cost. Set BEDROCK_MODEL_ID to use Amazon Bedrock."
+                    : `Average Amazon Bedrock cost (${m.findings.model_ids.join(", ")}). Unchanged pages are cached.`
+              }
             />
             <StatTile
               label="Missing information"

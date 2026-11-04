@@ -29,6 +29,10 @@ const METRICS: Metrics = {
   last_ingest: [],
   findings: {
     checks_run: 10,
+    records_checked: 10,
+    decided: 2,
+    median_seconds_to_fix: 18,
+    model_ids: ["anthropic.test-model"],
     open_total: 5,
     open_by_category: {
       actively_bad: 1,
@@ -83,7 +87,7 @@ describe("Overview", () => {
   it("draws findings bars in harm order with a table view", async () => {
     const user = userEvent.setup();
     renderWith(staticApi(METRICS));
-    const chart = await screen.findByRole("list", { name: "Open findings by category" });
+    const chart = await screen.findByRole("list", { name: "Findings by category" });
     const labels = within(chart)
       .getAllByRole("img")
       .map((bar) => bar.getAttribute("aria-label"));

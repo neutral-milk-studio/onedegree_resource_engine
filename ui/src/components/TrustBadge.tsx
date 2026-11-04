@@ -17,7 +17,7 @@ export function TrustBadge({ trust }: { trust: Trust }) {
     >
       <span aria-hidden="true">{MARKS[trust.level]}</span>
       {trust.badge}
-      {trust.score !== null && <span className="tabular-nums opacity-80">· {trust.score}</span>}
+      {trust.score !== null && <span className="tabular-nums opacity-80">· trust {trust.score}/100</span>}
     </span>
   );
 }

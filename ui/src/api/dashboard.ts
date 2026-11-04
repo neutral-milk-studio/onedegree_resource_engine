@@ -37,8 +37,13 @@ export interface Metrics {
   last_ingest: LastIngest[];
   findings: {
     checks_run: number;
+    records_checked: number;
     open_total: number;
+    /** Open findings per category; "verified" counts records whose latest check matched. */
     open_by_category: Record<FindingCategory, number>;
+    decided: number;
+    median_seconds_to_fix: number | null;
+    model_ids: string[];
   };
   conflicts_open: number | null;
   avg_trust_score: number | null;
@@ -179,6 +184,10 @@ export function createMockDashboardApi(actor: string): DashboardApi {
         last_ingest: latest.map((run) => ({ ...run })),
         findings: {
           checks_run: 0,
+          records_checked: 0,
+          decided: 0,
+          median_seconds_to_fix: null,
+          model_ids: [],
           open_total: 0,
           open_by_category: Object.fromEntries(FINDING_CATEGORIES.map((c) => [c, 0])) as Record<
             FindingCategory,

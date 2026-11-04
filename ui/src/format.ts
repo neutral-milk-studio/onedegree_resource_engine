@@ -23,7 +23,7 @@ export const CATEGORY_HELP: Record<string, string> = {
   discrepancy: "A fact on the website differs from the record",
   missing_information: "The record is missing a field the website has",
   check_failed: "The website couldn't be read; nothing was guessed",
-  verified: "The website matches the record",
+  verified: "Records whose latest website check matched",
 };
 
 const number = new Intl.NumberFormat("en-US");

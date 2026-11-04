@@ -14,6 +14,7 @@ export default defineConfig({
       "/ingest": REVIEW_API,
       "/metrics": REVIEW_API,
       "/audit": REVIEW_API,
+      "/maintenance": REVIEW_API,
     },
   },
   test: {

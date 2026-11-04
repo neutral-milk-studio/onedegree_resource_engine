@@ -1,13 +1,14 @@
 import { useMemo, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { createApi, type Session } from "./api/client";
+import type { Session } from "./api/client";
 import { createDashboardApi } from "./api/dashboard";
+import { createReviewQueueApi } from "./api/review";
 import { Login } from "./Login";
 import { ComingSoon } from "./pages/ComingSoon";
 import { Overview } from "./pages/Overview";
+import { ReviewQueue } from "./pages/ReviewQueue";
 import { useRoute } from "./router";
-import { RecordsReview } from "./sections/RecordsReview";
 import { Shell } from "./Shell";
 
 const SESSION_KEY = "resource-refresh-session";
@@ -31,7 +32,7 @@ function saveSession(session: Session | null): void {
 }
 
 function Workspace({ session, onSignOut }: { session: Session; onSignOut(): void }) {
-  const api = useMemo(() => createApi(session), [session]);
+  const review = useMemo(() => createReviewQueueApi(session), [session]);
   const dashboard = useMemo(() => createDashboardApi(session), [session]);
   const queryClient = useMemo(
     () => new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } }),
@@ -42,7 +43,7 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut(): void
     <QueryClientProvider client={queryClient}>
       <Shell page={page} userName={session.name} isDemo={dashboard.isDemo} onSignOut={onSignOut}>
         {page === "overview" && <Overview api={dashboard} />}
-        {page === "review" && <RecordsReview api={api} />}
+        {page === "review" && <ReviewQueue api={review} />}
         {page === "conflicts" && (
           <ComingSoon
             title="Conflicts"

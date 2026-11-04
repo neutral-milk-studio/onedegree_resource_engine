@@ -11,6 +11,7 @@ export function FindingsChart({ counts, checksRun }: { counts: Record<FindingCat
   const rows = FINDING_CATEGORIES.map((category) => ({ category, value: counts[category] ?? 0 }));
   const max = Math.max(...rows.map((row) => row.value), 0);
   const total = rows.reduce((sum, row) => sum + row.value, 0);
+  const openTotal = rows.reduce((sum, row) => sum + (row.category === "verified" ? 0 : row.value), 0);
   const hoveredRow = rows.find((row) => row.category === hovered);
 
   return (
@@ -18,9 +19,9 @@ export function FindingsChart({ counts, checksRun }: { counts: Record<FindingCat
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h2 id="findings-title" className="text-base font-semibold">
-            Open findings by category
+            Findings by category
           </h2>
-          <p className="text-xs text-muted">Most harmful first</p>
+          <p className="text-xs text-muted">Open findings, most harmful first. Verified counts records that matched.</p>
         </div>
         {total > 0 && (
           <button type="button" className="!px-2 !py-1 text-xs" onClick={() => setShowTable((v) => !v)}>
@@ -37,7 +38,7 @@ export function FindingsChart({ counts, checksRun }: { counts: Record<FindingCat
         </p>
       ) : showTable ? (
         <table className="w-full text-sm">
-          <caption className="visually-hidden">Open findings by category</caption>
+          <caption className="visually-hidden">Findings by category</caption>
           <thead>
             <tr className="text-left text-muted">
               <th className="py-1 font-medium">Category</th>
@@ -59,9 +60,13 @@ export function FindingsChart({ counts, checksRun }: { counts: Record<FindingCat
             {hoveredRow ? (
               <>
                 <span className="font-semibold text-ink">
-                  {CATEGORY_LABELS[hoveredRow.category]}: {formatCount(hoveredRow.value)} open
+                  {CATEGORY_LABELS[hoveredRow.category]}: {formatCount(hoveredRow.value)}
+                  {hoveredRow.category === "verified" ? " records" : " open"}
                 </span>{" "}
-                · {Math.round((hoveredRow.value / total) * 100)}% of open findings
+                ·{" "}
+                {hoveredRow.category === "verified"
+                  ? "records whose latest check matched the website"
+                  : `${openTotal ? Math.round((hoveredRow.value / openTotal) * 100) : 0}% of open findings`}
                 <br />
                 {CATEGORY_HELP[hoveredRow.category]}
               </>
@@ -69,7 +74,7 @@ export function FindingsChart({ counts, checksRun }: { counts: Record<FindingCat
               "Point at or tab to a bar for details."
             )}
           </p>
-          <ul className="flex flex-col gap-1" aria-label="Open findings by category">
+          <ul className="flex flex-col gap-1" aria-label="Findings by category">
             {rows.map((row) => {
               const share = max ? (row.value / max) * 100 : 0;
               return (
@@ -85,7 +90,7 @@ export function FindingsChart({ counts, checksRun }: { counts: Record<FindingCat
                   <div
                     tabIndex={0}
                     role="img"
-                    aria-label={`${CATEGORY_LABELS[row.category]}: ${row.value} open`}
+                    aria-label={`${CATEGORY_LABELS[row.category]}: ${row.value}${row.category === "verified" ? " records" : " open"}`}
                     className="h-8 pr-12 outline-offset-2"
                     onFocus={() => setHovered(row.category)}
                     onBlur={() => setHovered(null)}

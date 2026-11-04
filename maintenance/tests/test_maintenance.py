@@ -118,6 +118,8 @@ def test_trust_score_and_badge():
     flagged = trust_for("discrepancy", now, [2], now)
     assert flagged.score == 65 and flagged.badge.startswith("1 open issue")
     assert trust_for("actively_bad", now, [0], now).level == "low"
+    minor = trust_for("missing_information", now, [4], now)
+    assert minor.score == 85 and minor.level == "medium"  # open issue: never "high"
 
 
 def test_apply_phone_hours_languages_status_keep_hsds_valid():

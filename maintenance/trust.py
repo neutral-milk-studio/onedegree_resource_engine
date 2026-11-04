@@ -52,6 +52,8 @@ def trust_for(
     score -= sum(PENALTY.get(rank, 5) for rank in open_harm_ranks)
     score = max(0, min(100, score))
     level = "high" if score >= 80 else "medium" if score >= 50 else "low"
+    if open_harm_ranks and level == "high":
+        level = "medium"  # never show a "trusted" badge while something is open
 
     ago = _ago(last_checked_at, now)
     if open_harm_ranks:

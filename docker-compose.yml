@@ -28,7 +28,14 @@ services:
       RE_RAW_DIR: /app/var/raw
       RE_CORS_ORIGINS: http://localhost:5173
       AWS_REGION: ${AWS_REGION:-us-west-2}
+      # Amazon Bedrock (optional). Credentials pass through from your shell; never commit them.
       BEDROCK_MODEL_ID: ${BEDROCK_MODEL_ID:-}
+      BEDROCK_INPUT_USD_PER_MTOK: ${BEDROCK_INPUT_USD_PER_MTOK:-3.0}
+      BEDROCK_OUTPUT_USD_PER_MTOK: ${BEDROCK_OUTPUT_USD_PER_MTOK:-15.0}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+      RE_WEBSITE_SOURCE: sample
     ports: ["8000:8000"]
     volumes: ["rawstore:/app/var/raw"]
     depends_on:

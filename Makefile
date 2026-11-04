@@ -1,4 +1,4 @@
-.PHONY: setup test lint format mock openapi up down ingest api
+.PHONY: setup test lint format mock openapi up down ingest check api
 
 setup:
 	uv sync
@@ -30,6 +30,10 @@ down:
 # Ingest every configured source into the running stack's Postgres.
 ingest:
 	docker compose exec api uv run --no-sync python -m ingest.pipeline.run --all
+
+# Run AI website checks for every record that has a sample page.
+check:
+	docker compose exec api uv run --no-sync python -m maintenance.worker.run_check
 
 # Run the API on the host against a local Postgres (needs RE_DATABASE_URL).
 api:
