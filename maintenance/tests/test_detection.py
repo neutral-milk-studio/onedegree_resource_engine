@@ -60,6 +60,7 @@ from maintenance.extractor.extract import (
 )
 from maintenance.findings_store.memory import InMemoryFindingsStore
 from maintenance.website_source.sample import SampleWebsiteSource, normalize_url, strip_comments
+from maintenance.worker.run_check import ConfigError, WorkerConfig, website_source_for
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -2707,3 +2708,187 @@ def test_ranking_is_a_stable_reorder_by_tier_then_confidence(batch):
     urgent = {TRIAGE_ORDER.index("actively_bad")}
     if any(f.category is Category.ACTIVELY_BAD for f in findings):
         assert triage_tier(ranked[0]) in urgent  # a dead or closed listing always leads
+
+
+# --------------------------------------------------------------------------- #
+# Task 5: worker configuration
+# --------------------------------------------------------------------------- #
+
+DEFAULTS = WorkerConfig()
+
+
+def test_the_defaults_match_the_agreed_settings():
+    assert DEFAULTS == WorkerConfig(
+        mode="sweep",
+        check_interval_days=30,
+        severe_report_threshold=3,
+        inaccuracy_report_threshold=5,
+        report_window_days=30,
+        report_cooldown_days=7,
+        website_source="sample",
+    )
+
+
+def test_an_empty_environment_gives_the_defaults():
+    assert WorkerConfig.from_env({}) == DEFAULTS
+
+
+def test_blank_variables_give_the_defaults():
+    assert WorkerConfig.from_env({name: "  " for name in WorkerConfig.ENV.values()}) == DEFAULTS
+
+
+def test_every_setting_can_be_changed_from_the_environment():
+    env = {
+        "RE_WORKER_MODE": " Reports ",
+        "RE_CHECK_INTERVAL_DAYS": "14",
+        "RE_REPORT_SEVERE_THRESHOLD": "2",
+        "RE_REPORT_INACCURACY_THRESHOLD": "3",
+        "RE_REPORT_WINDOW_DAYS": "60",
+        "RE_REPORT_COOLDOWN_DAYS": "0",
+        "RE_WEBSITE_SOURCE": "SAMPLE",
+    }
+    assert WorkerConfig.from_env(env) == WorkerConfig(
+        mode="reports",
+        check_interval_days=14,
+        severe_report_threshold=2,
+        inaccuracy_report_threshold=3,
+        report_window_days=60,
+        report_cooldown_days=0,
+        website_source="sample",
+    )
+
+
+def test_from_env_reads_the_process_environment_by_default(monkeypatch):
+    monkeypatch.setenv("RE_CHECK_INTERVAL_DAYS", "10")
+    assert WorkerConfig.from_env().check_interval_days == 10
+
+
+@pytest.mark.parametrize(
+    ("name", "value", "message"),
+    [
+        ("RE_CHECK_INTERVAL_DAYS", "monthly", "RE_CHECK_INTERVAL_DAYS must be a whole number"),
+        ("RE_CHECK_INTERVAL_DAYS", "1.5", "RE_CHECK_INTERVAL_DAYS must be a whole number"),
+        ("RE_CHECK_INTERVAL_DAYS", "0", "RE_CHECK_INTERVAL_DAYS must be a whole number from 1"),
+        ("RE_CHECK_INTERVAL_DAYS", "3651", "must be a whole number from 1 to 3650"),
+        ("RE_CHECK_INTERVAL_DAYS", "1_0", "must be a whole number, not '1_0'"),
+        ("RE_CHECK_INTERVAL_DAYS", "+5", "must be a whole number, not '+5'"),
+        ("RE_CHECK_INTERVAL_DAYS", "\u0663", "must be a whole number"),  # Arabic-Indic three
+        (
+            "RE_REPORT_SEVERE_THRESHOLD",
+            "0",
+            "RE_REPORT_SEVERE_THRESHOLD must be a whole number from 1",
+        ),
+        ("RE_REPORT_INACCURACY_THRESHOLD", "-5", "must be a whole number, not '-5'"),
+        ("RE_REPORT_WINDOW_DAYS", "0", "RE_REPORT_WINDOW_DAYS must be a whole number from 1"),
+        (
+            "RE_REPORT_WINDOW_DAYS",
+            "4000",
+            "RE_REPORT_WINDOW_DAYS must be a whole number from 1 to 3650",
+        ),
+        (
+            "RE_REPORT_COOLDOWN_DAYS",
+            "-1",
+            "RE_REPORT_COOLDOWN_DAYS must be a whole number, not '-1'",
+        ),
+        (
+            "RE_REPORT_COOLDOWN_DAYS",
+            "30",
+            "RE_REPORT_COOLDOWN_DAYS must be shorter than RE_REPORT_WINDOW_DAYS",
+        ),
+        ("RE_WORKER_MODE", "daily", "RE_WORKER_MODE must be one of sweep, reports"),
+        ("RE_WEBSITE_SOURCE", "web", "RE_WEBSITE_SOURCE must be one of sample, live"),
+    ],
+)
+def test_a_bad_setting_stops_the_worker_and_names_the_variable(name, value, message):
+    with pytest.raises(ConfigError, match=re.escape(message)):
+        WorkerConfig.from_env({name: value})
+
+
+def test_settings_set_in_code_are_checked_too():
+    with pytest.raises(ConfigError, match="RE_REPORT_SEVERE_THRESHOLD"):
+        WorkerConfig(severe_report_threshold=True)  # a bool is not a whole number
+    with pytest.raises(ConfigError, match="RE_CHECK_INTERVAL_DAYS"):
+        WorkerConfig(check_interval_days="30")
+
+
+def test_a_zero_cooldown_and_the_largest_values_are_allowed():
+    config = WorkerConfig.from_env(
+        {
+            "RE_REPORT_COOLDOWN_DAYS": "0",
+            "RE_REPORT_WINDOW_DAYS": "3650",
+            "RE_CHECK_INTERVAL_DAYS": "3650",
+        }
+    )
+    assert (config.report_cooldown_days, config.report_window_days) == (0, 3650)
+
+
+def run_worker(**env):
+    """Run the worker entry point as the container does, with extra environment variables."""
+    return subprocess.run(
+        [sys.executable, "-m", "maintenance.worker.run_check"],
+        cwd=REPO_ROOT,
+        env={**os.environ, **env},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+@pytest.mark.parametrize(
+    ("env", "message"),
+    [
+        ({"RE_CHECK_INTERVAL_DAYS": "abc"}, "RE_CHECK_INTERVAL_DAYS must be a whole number"),
+        ({"RE_WEBSITE_SOURCE": "live"}, "RE_WEBSITE_SOURCE=live is not implemented yet"),
+    ],
+)
+def test_the_worker_stops_at_startup_with_a_clean_message(env, message):
+    result = run_worker(**env)
+    assert result.returncode != 0
+    assert f"invalid worker setting: {message}" in result.stderr
+    assert "Traceback" not in result.stderr
+
+
+def test_the_worker_starts_with_the_default_settings():
+    result = run_worker()
+    assert "invalid worker setting" not in result.stderr
+    assert "check loop is implemented in a later task" in result.stderr
+
+
+def test_the_sample_website_source_is_the_default():
+    assert isinstance(website_source_for(DEFAULTS), SampleWebsiteSource)
+
+
+def test_the_live_website_source_fails_at_startup():
+    config = WorkerConfig(website_source="live")
+    with pytest.raises(ConfigError, match="RE_WEBSITE_SOURCE=live is not implemented yet"):
+        website_source_for(config)
+
+
+def env_example():
+    """The variables in .env.example, with their example values."""
+    values = {}
+    for line in (REPO_ROOT / ".env.example").read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            name, _, value = line.partition("=")
+            values[name.strip()] = value.strip()
+    return values
+
+
+def test_env_example_documents_every_worker_setting_with_its_default():
+    example = env_example()
+    for name, variable in WorkerConfig.ENV.items():
+        assert variable in example, f"{variable} is missing from .env.example"
+        assert example[variable] == str(getattr(DEFAULTS, name)), variable
+
+
+def test_env_example_documents_the_extractor_settings():
+    example = env_example()
+    assert example["BEDROCK_MODEL_ID"] == ""  # no default model on purpose
+    assert extract_module.MODEL_ID_ENV == "BEDROCK_MODEL_ID"
+    # A blank temperature would leave it out of the request, so the example sets the default.
+    assert example[extract_module.TEMPERATURE_ENV] == "0"
+
+
+def test_env_example_works_as_a_complete_worker_environment():
+    assert WorkerConfig.from_env(env_example()) == DEFAULTS
