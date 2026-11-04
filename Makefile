@@ -1,4 +1,4 @@
-.PHONY: setup test lint format mock openapi
+.PHONY: setup test lint format mock openapi transform-test transform-report
 
 setup:
 	uv sync
@@ -19,3 +19,10 @@ mock:
 
 openapi:
 	uv run python -m contracts.export_openapi
+
+# Transform layer: fast tests, and an HTML report of a run on the sample pages.
+transform-test:
+	uv run pytest ingest/tests -q
+
+transform-report: transform-test
+	uv run python -m ingest.pipeline.transform.report --open

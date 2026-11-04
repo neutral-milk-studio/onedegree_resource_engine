@@ -247,3 +247,8 @@ opensearch-data/
 *.secret
 secrets.*
 *.pem
+
+# Local transform runs
+resource_engine.db
+export/
+transform-report.html
