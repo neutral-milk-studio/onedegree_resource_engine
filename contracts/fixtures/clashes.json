@@ -1,0 +1,17 @@
+[
+  {
+    "id": "b7d33d29-de01-5400-b7df-5f8f4b93ac0b",
+    "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+    "ref": {
+      "entity_type": "service",
+      "entity_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "field": "eligibility_description"
+    },
+    "source": "ndp",
+    "base_value": "El Granda, Half Moon Bay, Montara, and Moss Beach income eligible residents",
+    "source_value": "Income-eligible residents of El Granada, Half Moon Bay, La Honda, Montara, and Moss Beach",
+    "current_value": "Income-eligible residents of El Granada, Half Moon Bay, Montara, and Moss Beach",
+    "status": "open",
+    "detected_at": "2026-11-03T16:00:00Z"
+  }
+]

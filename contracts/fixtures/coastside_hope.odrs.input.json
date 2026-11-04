@@ -1,0 +1,164 @@
+{
+  "id": 6126,
+  "title": "Get rent and utility assistance",
+  "description": "As one of the Core Service Agencies of San Mateo County, Coastside Hope provides emergency rent and utility assistance for people living in Montara, Moss Beach, El Granada, and Half Moon Bay.",
+  "slug": "get-rent-and-utility-assistance",
+  "all_slugs": ["get-rent-and-utility-assistance"],
+  "is_appointment": true,
+  "available_on": null,
+  "expires_on": null,
+  "region": "",
+  "organization": {
+    "id": 1814,
+    "name": "Coastside Hope",
+    "slug": "coastside-hope-san-mateo-county-ca",
+    "website": "https://coastsidehope.org",
+    "opportunity_count": 10,
+    "resource_type": "Organization"
+  },
+  "resource_type": "Opportunity",
+  "tags": ["Deposit & rent assistance", "Paying for utilities"],
+  "categories": ["Tenant resources", "Household needs"],
+  "areas": ["Housing", "Family & Household"],
+  "properties": {
+    "cost-free": "true",
+    "service-county-california-san-mateo": "true",
+    "coordinated-entry-site": "true",
+    "coordinated-entry-site-description": "access point for families, youth, and adults",
+    "translations": {},
+    "community-available-everyone": "true",
+    "action-signup-url": "https://coastsidehope.org/our-services/",
+    "ada-accessible": "Unknown",
+    "citizenship-available-everyone": "true",
+    "elig-city-resident": "Montara, Moss Beach, El Granada, Half Moon Bay, and La Honda",
+    "elig-description": "Income limits apply.",
+    "lang-spanish": "true",
+    "restrictive-elig-city": "true",
+    "elig-city-california-montara": "true",
+    "elig-city-california-moss-beach": "true",
+    "elig-city-california-el-granada": "true",
+    "elig-city-california-half-moon-bay": "true"
+  },
+  "locations": [
+    {
+      "id": 4256,
+      "name": "Coastside Hope",
+      "address": "248 Main Street",
+      "unit": "Suite 200 (Second Floor)",
+      "city": "Half Moon Bay",
+      "state": "CA",
+      "zip_code": "94019",
+      "lat": 37.4671,
+      "long": -122.43,
+      "is_primary": true,
+      "show_on_organization": true,
+      "phones": [
+        {
+          "id": 27436,
+          "digits": "650-726-9071",
+          "phone_type": "Coastside Hope",
+          "is_primary": false
+        }
+      ],
+      "schedule": {
+        "monday_start": "08:30",
+        "monday_end": "17:00",
+        "tuesday_start": "08:30",
+        "tuesday_end": "17:00",
+        "wednesday_start": "13:00",
+        "wednesday_end": "17:00",
+        "thursday_start": "08:30",
+        "thursday_end": "17:00",
+        "friday_start": "08:30",
+        "friday_end": "17:00",
+        "saturday_start": "",
+        "saturday_end": "",
+        "sunday_start": "",
+        "sunday_end": "",
+        "notes": "Office is closed daily during lunch from 12:00 PM - 1:00 PM.",
+        "translations": {}
+      }
+    }
+  ],
+  "phones": [
+    {
+      "id": 108460,
+      "digits": "650-523-3536",
+      "phone_type": "Help with Food, Housing, CalFresh, Medi-Cal",
+      "is_primary": false
+    }
+  ],
+  "emails": [
+    {
+      "id": 10185,
+      "email": "assistance@coastsidehope.org",
+      "title": "Food, Housing, CalFresh, Medi-Cal, or similar issues",
+      "first_name": "",
+      "last_name": "",
+      "is_primary": false,
+      "show_on_organization": false
+    }
+  ],
+  "attachments": [
+    {
+      "id": 688,
+      "display_name": "Core Service Agencies Flyer",
+      "file_type": "pdf",
+      "translations": {}
+    }
+  ],
+  "images": [],
+  "access_instructions": [
+    {
+      "id": 19479,
+      "access_value": "6505233536",
+      "access_type": "phone",
+      "instructions": "Call or text for more information, and to begin the application process.",
+      "enable_direct_access": false,
+      "locations": [],
+      "emails": [],
+      "translations": {}
+    },
+    {
+      "id": 101100,
+      "access_value": null,
+      "access_type": "email",
+      "instructions": "Email for more information.",
+      "enable_direct_access": false,
+      "locations": [],
+      "emails": [
+        {
+          "id": 10185,
+          "email": "assistance@coastsidehope.org",
+          "title": "Food, Housing, CalFresh, Medi-Cal, or similar issues",
+          "first_name": "",
+          "last_name": "",
+          "is_primary": false,
+          "show_on_organization": false
+        }
+      ],
+      "translations": {}
+    },
+    {
+      "id": 101780,
+      "access_value": "Open the attached flyer for more information about the Core Service Agencies.",
+      "access_type": "other",
+      "instructions": null,
+      "enable_direct_access": false,
+      "locations": [],
+      "emails": [],
+      "translations": {}
+    }
+  ],
+  "rating": 0,
+  "rating_tags": {
+    "fast_service": 0,
+    "good_information": 0,
+    "easy_service": 0
+  },
+  "has_pending_submission": false,
+  "last_verified_at": "2025-05-06T18:08:17.000Z",
+  "updated_at": "2025-05-06T18:08:17.000Z",
+  "unavailable_at": null,
+  "translations": {}
+}

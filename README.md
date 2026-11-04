@@ -46,6 +46,13 @@ make test
 make lint
 ```
 
+The review API contract can run on its own at `http://localhost:8000`, with docs at
+`/docs`. It uses the fixtures and accepts any bearer token:
+
+```bash
+make mock
+```
+
 To run the UI, use `npm install` and `npm run dev` in `ui/`.
 
 Docker Compose runs the whole stack (AWS deployment is optional — see `infra/`).
