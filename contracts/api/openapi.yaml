@@ -1,894 +1,579 @@
 openapi: 3.1.0
 info:
-  title: The Resource Engine API
+  title: The Resource Engine API contract
   version: 3.2.3
 paths:
-  /api/health:
-    get:
-      tags:
-      - app
-      summary: Health
-      operationId: health_api_health_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/auth/login:
-    post:
-      tags:
-      - app
-      summary: Login
-      operationId: login_api_auth_login_post
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/auth/register:
-    post:
-      tags:
-      - app
-      summary: Register
-      operationId: register_api_auth_register_post
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/auth/me:
-    get:
-      tags:
-      - app
-      summary: Me
-      operationId: me_api_auth_me_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/chat:
-    post:
-      tags:
-      - app
-      summary: Chat
-      operationId: chat_api_chat_post
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/chat/history:
-    get:
-      tags:
-      - app
-      summary: Chat History
-      operationId: chat_history_api_chat_history_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/chat/resume:
-    post:
-      tags:
-      - app
-      summary: Chat Resume
-      operationId: chat_resume_api_chat_resume_post
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/chat/confirm:
-    post:
-      tags:
-      - app
-      summary: Chat Confirm
-      operationId: chat_confirm_api_chat_confirm_post
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/seeker/profile:
-    get:
-      tags:
-      - app
-      summary: Seeker Profile
-      operationId: seeker_profile_api_seeker_profile_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-    put:
-      tags:
-      - app
-      summary: Seeker Profile Save
-      operationId: seeker_profile_save_api_seeker_profile_put
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/seeker/requests:
-    get:
-      tags:
-      - app
-      summary: Seeker Requests
-      operationId: seeker_requests_api_seeker_requests_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/search:
-    get:
-      tags:
-      - app
-      summary: Search Directory
-      operationId: search_directory_api_search_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/provider/organization:
-    get:
-      tags:
-      - app
-      summary: Provider Org
-      operationId: provider_org_api_provider_organization_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/provider/records/{rid}:
-    get:
-      tags:
-      - app
-      summary: Provider Record
-      operationId: provider_record_api_provider_records__rid__get
-      parameters:
-      - name: rid
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Rid
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/provider/change-requests:
-    get:
-      tags:
-      - app
-      summary: Provider Crs
-      operationId: provider_crs_api_provider_change_requests_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-    post:
-      tags:
-      - app
-      summary: Provider Cr
-      operationId: provider_cr_api_provider_change_requests_post
-      responses:
-        '201':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/provider/needs:
-    get:
-      tags:
-      - app
-      summary: Provider Needs
-      operationId: provider_needs_api_provider_needs_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/provider/served:
-    get:
-      tags:
-      - app
-      summary: Provider Served
-      operationId: provider_served_api_provider_served_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/provider/requests/{rid}/respond:
-    post:
-      tags:
-      - app
-      summary: Provider Respond
-      operationId: provider_respond_api_provider_requests__rid__respond_post
-      parameters:
-      - name: rid
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Rid
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/provider/documents:
-    get:
-      tags:
-      - app
-      summary: Provider Docs
-      operationId: provider_docs_api_provider_documents_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-    post:
-      tags:
-      - app
-      summary: Provider Upload
-      operationId: provider_upload_api_provider_documents_post
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/admin/stats:
-    get:
-      tags:
-      - app
-      summary: Admin Stats
-      operationId: admin_stats_api_admin_stats_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/admin/seekers:
-    get:
-      tags:
-      - app
-      summary: Admin Seekers
-      operationId: admin_seekers_api_admin_seekers_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/admin/seekers/{uid}:
-    get:
-      tags:
-      - app
-      summary: Admin Seeker
-      operationId: admin_seeker_api_admin_seekers__uid__get
-      parameters:
-      - name: uid
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Uid
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/admin/providers:
-    get:
-      tags:
-      - app
-      summary: Admin Providers
-      operationId: admin_providers_api_admin_providers_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/admin/providers/{org_id}:
-    get:
-      tags:
-      - app
-      summary: Admin Provider
-      operationId: admin_provider_api_admin_providers__org_id__get
-      parameters:
-      - name: org_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Org Id
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/admin/records/{rid}:
-    get:
-      tags:
-      - app
-      summary: Admin Record
-      operationId: admin_record_api_admin_records__rid__get
-      parameters:
-      - name: rid
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Rid
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-    put:
-      tags:
-      - app
-      summary: Admin Edit
-      operationId: admin_edit_api_admin_records__rid__put
-      parameters:
-      - name: rid
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Rid
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/admin/change-requests:
-    get:
-      tags:
-      - app
-      summary: Admin Crs
-      operationId: admin_crs_api_admin_change_requests_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/admin/change-requests/{cid}/approve:
-    post:
-      tags:
-      - app
-      summary: Admin Approve
-      operationId: admin_approve_api_admin_change_requests__cid__approve_post
-      parameters:
-      - name: cid
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Cid
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/admin/change-requests/{cid}/reject:
-    post:
-      tags:
-      - app
-      summary: Admin Reject
-      operationId: admin_reject_api_admin_change_requests__cid__reject_post
-      parameters:
-      - name: cid
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Cid
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/admin/maintenance/run:
-    post:
-      tags:
-      - app
-      summary: Admin Maint Run
-      operationId: admin_maint_run_api_admin_maintenance_run_post
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/admin/maintenance/results:
-    get:
-      tags:
-      - app
-      summary: Admin Maint Results
-      operationId: admin_maint_results_api_admin_maintenance_results_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/admin/maintenance/runs:
-    get:
-      tags:
-      - app
-      summary: Admin Maint Runs
-      operationId: admin_maint_runs_api_admin_maintenance_runs_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/admin/imports/run:
-    post:
-      tags:
-      - app
-      summary: Admin Import Run
-      operationId: admin_import_run_api_admin_imports_run_post
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/admin/imports:
-    get:
-      tags:
-      - app
-      summary: Admin Imports
-      operationId: admin_imports_api_admin_imports_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/admin/quarantine:
-    get:
-      tags:
-      - app
-      summary: Admin Quarantine
-      operationId: admin_quarantine_api_admin_quarantine_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/admin/api-keys:
-    get:
-      tags:
-      - app
-      summary: Admin Keys
-      operationId: admin_keys_api_admin_api_keys_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-    post:
-      tags:
-      - app
-      summary: Admin Key Create
-      operationId: admin_key_create_api_admin_api_keys_post
-      responses:
-        '201':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/admin/api-keys/{kid}:
-    delete:
-      tags:
-      - app
-      summary: Admin Key Revoke
-      operationId: admin_key_revoke_api_admin_api_keys__kid__delete
-      parameters:
-      - name: kid
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Kid
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/admin/users:
-    get:
-      tags:
-      - app
-      summary: Admin Users
-      operationId: admin_users_api_admin_users_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-    post:
-      tags:
-      - app
-      summary: Admin User Create
-      operationId: admin_user_create_api_admin_users_post
-      responses:
-        '201':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/admin/documents:
-    get:
-      tags:
-      - app
-      summary: Admin Docs
-      operationId: admin_docs_api_admin_documents_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-    post:
-      tags:
-      - app
-      summary: Admin Upload
-      operationId: admin_upload_api_admin_documents_post
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/admin/documents/{did}/decide:
-    post:
-      tags:
-      - app
-      summary: Admin Doc Decide
-      operationId: admin_doc_decide_api_admin_documents__did__decide_post
-      parameters:
-      - name: did
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Did
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/admin/reindex:
-    post:
-      tags:
-      - app
-      summary: Admin Reindex
-      operationId: admin_reindex_api_admin_reindex_post
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /hsds/:
+  /:
     get:
       tags:
       - hsds
-      summary: Root
-      operationId: root_hsds__get
+      summary: Api Info
+      operationId: api_info__get
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
-              schema: {}
-  /hsds/services:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Api Info  Get
+      security:
+      - HTTPBearer: []
+  /services:
     get:
       tags:
       - hsds
-      summary: Services
-      operationId: services_hsds_services_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /hsds/services/{rid}:
-    get:
-      tags:
-      - hsds
-      summary: Service One
-      operationId: service_one_hsds_services__rid__get
+      summary: List Services
+      operationId: list_services_services_get
+      security:
+      - HTTPBearer: []
       parameters:
-      - name: rid
-        in: path
-        required: true
+      - name: page
+        in: query
+        required: false
         schema:
-          type: string
-          title: Rid
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: per_page
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Per Page
+      - name: organization_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Organization Id
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
-              schema: {}
+              schema:
+                $ref: '#/components/schemas/Page'
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /hsds/organizations:
+  /services/{service_id}:
     get:
       tags:
       - hsds
-      summary: Organizations
-      operationId: organizations_hsds_organizations_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /hsds/organizations/{rid}:
-    get:
-      tags:
-      - hsds
-      summary: Organization One
-      operationId: organization_one_hsds_organizations__rid__get
+      summary: Get Service
+      operationId: get_service_services__service_id__get
+      security:
+      - HTTPBearer: []
       parameters:
-      - name: rid
+      - name: service_id
         in: path
         required: true
         schema:
           type: string
-          title: Rid
+          format: uuid
+          title: Service Id
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
-              schema: {}
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Get Service Services  Service Id  Get
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /hsds/service_at_locations:
+  /review/records:
     get:
       tags:
-      - hsds
-      summary: Sals
-      operationId: sals_hsds_service_at_locations_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /hsds/service_at_locations/{rid}:
-    get:
-      tags:
-      - hsds
-      summary: Sal One
-      operationId: sal_one_hsds_service_at_locations__rid__get
+      - review
+      summary: List Records
+      operationId: list_records_review_records_get
+      security:
+      - HTTPBearer: []
       parameters:
-      - name: rid
-        in: path
-        required: true
+      - name: category
+        in: query
+        required: false
         schema:
-          type: string
-          title: Rid
+          anyOf:
+          - $ref: '#/components/schemas/Category'
+          - type: 'null'
+          title: Category
+      - name: source
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
-              schema: {}
+              schema:
+                $ref: '#/components/schemas/ListResponse_RecordSummary_'
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /hsds/locations:
+  /review/records/{record_id}:
     get:
       tags:
-      - hsds
-      summary: Locations
-      operationId: locations_hsds_locations_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /hsds/locations/{rid}:
-    get:
-      tags:
-      - hsds
-      summary: Location One
-      operationId: location_one_hsds_locations__rid__get
+      - review
+      summary: Get Record Detail
+      operationId: get_record_detail_review_records__record_id__get
+      security:
+      - HTTPBearer: []
       parameters:
-      - name: rid
+      - name: record_id
         in: path
         required: true
         schema:
           type: string
-          title: Rid
+          format: uuid
+          title: Record Id
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
-              schema: {}
+              schema:
+                $ref: '#/components/schemas/RecordDetail'
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /hsds/taxonomies:
-    get:
+    patch:
       tags:
-      - hsds
-      summary: Taxonomies
-      operationId: taxonomies_hsds_taxonomies_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /hsds/taxonomy_terms:
-    get:
-      tags:
-      - hsds
-      summary: Terms
-      operationId: terms_hsds_taxonomy_terms_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /hsds/taxonomy_terms/{rid}:
-    get:
-      tags:
-      - hsds
-      summary: Term One
-      operationId: term_one_hsds_taxonomy_terms__rid__get
+      - review
+      summary: Patch Record
+      operationId: patch_record_review_records__record_id__patch
+      security:
+      - HTTPBearer: []
       parameters:
-      - name: rid
+      - name: record_id
         in: path
         required: true
         schema:
           type: string
-          title: Rid
+          format: uuid
+          title: Record Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordPatch'
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
-              schema: {}
+              schema:
+                $ref: '#/components/schemas/StoredRecord'
+        '422':
+          description: The change fails HSDS validation. Nothing was saved.
+        '409':
+          description: The record changed since it was read.
+  /review/findings:
+    get:
+      tags:
+      - review
+      summary: List Findings
+      operationId: list_findings_review_findings_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: category
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/Category'
+          - type: 'null'
+          title: Category
+      - name: review_state
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/ReviewState'
+          - type: 'null'
+          title: Review State
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResponse_ReviewFinding_'
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /review/findings/{finding_id}/apply:
+    post:
+      tags:
+      - review
+      summary: Apply Finding
+      operationId: apply_finding_review_findings__finding_id__apply_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: finding_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Finding Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindingDecision'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewFinding'
+        '422':
+          description: The change fails HSDS validation. Nothing was saved.
+        '409':
+          description: The record changed since it was read.
+  /review/findings/{finding_id}/dismiss:
+    post:
+      tags:
+      - review
+      summary: Dismiss Finding
+      operationId: dismiss_finding_review_findings__finding_id__dismiss_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: finding_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Finding Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindingDismissal'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewFinding'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /review/clashes:
+    get:
+      tags:
+      - review
+      summary: List Clashes
+      operationId: list_clashes_review_clashes_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResponse_Clash_'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /review/clashes/{clash_id}/resolve:
+    post:
+      tags:
+      - review
+      summary: Resolve Clash
+      operationId: resolve_clash_review_clashes__clash_id__resolve_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: clash_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Clash Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClashResolution'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Clash'
+        '422':
+          description: The change fails HSDS validation. Nothing was saved.
+        '409':
+          description: The record changed since it was read.
+  /ingest/reports:
+    get:
+      tags:
+      - review
+      summary: Ingest Reports
+      operationId: ingest_reports_ingest_reports_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  $ref: '#/components/schemas/IngestCounts'
+                type: object
+                title: Response Ingest Reports Ingest Reports Get
+      security:
+      - HTTPBearer: []
 components:
   schemas:
+    Category:
+      type: string
+      enum:
+      - verified
+      - discrepancy
+      - actively_bad
+      - check_failed
+      - missing_information
+      - suspicious
+      title: Category
+      description: The one category assigned to a record per completed check (Req
+        22.1).
+    CheckResult:
+      properties:
+        service_id:
+          type: string
+          format: uuid
+          title: Service Id
+        category:
+          $ref: '#/components/schemas/Category'
+        checked_at:
+          type: string
+          format: date-time
+          title: Checked At
+        finding_ids:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: Finding Ids
+          default: []
+      type: object
+      required:
+      - service_id
+      - category
+      - checked_at
+      title: CheckResult
+      description: The latest maintenance check of one service, including verified
+        results.
+    Clash:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        service_id:
+          type: string
+          format: uuid
+          title: Service Id
+        ref:
+          $ref: '#/components/schemas/FieldRef'
+        source:
+          type: string
+          title: Source
+        base_value:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Base Value
+        source_value:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Source Value
+        current_value:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Current Value
+        status:
+          type: string
+          enum:
+          - open
+          - resolved
+          title: Status
+          default: open
+        detected_at:
+          type: string
+          format: date-time
+          title: Detected At
+      type: object
+      required:
+      - id
+      - service_id
+      - ref
+      - source
+      - base_value
+      - source_value
+      - current_value
+      - detected_at
+      title: Clash
+      description: A source update that disagrees with a change made in this system.
+    ClashResolution:
+      properties:
+        expected_version:
+          type: integer
+          title: Expected Version
+        choice:
+          type: string
+          enum:
+          - source
+          - current
+          - custom
+          title: Choice
+        custom_value:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Custom Value
+      type: object
+      required:
+      - expected_version
+      - choice
+      title: ClashResolution
+    FieldChange:
+      properties:
+        ref:
+          $ref: '#/components/schemas/FieldRef'
+        value:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Value
+      type: object
+      required:
+      - ref
+      - value
+      title: FieldChange
+    FieldRef:
+      properties:
+        entity_type:
+          type: string
+          title: Entity Type
+        entity_id:
+          type: string
+          format: uuid
+          title: Entity Id
+        field:
+          type: string
+          title: Field
+        op:
+          type: string
+          enum:
+          - set
+          - add
+          - remove
+          title: Op
+          default: set
+      type: object
+      required:
+      - entity_type
+      - entity_id
+      - field
+      title: FieldRef
+      description: Points at one field by object id, because list positions change.
+    FindingDecision:
+      properties:
+        expected_version:
+          type: integer
+          title: Expected Version
+        edited_value:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Edited Value
+      type: object
+      required:
+      - expected_version
+      title: FindingDecision
+    FindingDismissal:
+      properties:
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+      type: object
+      title: FindingDismissal
     HTTPValidationError:
       properties:
         detail:
@@ -898,6 +583,336 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    IngestCounts:
+      properties:
+        received:
+          type: integer
+          title: Received
+        stored:
+          type: integer
+          title: Stored
+        quarantined:
+          type: integer
+          title: Quarantined
+      type: object
+      required:
+      - received
+      - stored
+      - quarantined
+      title: IngestCounts
+      description: 'Per-source ingest run counts.
+
+
+        Invariant: ``received == stored + quarantined``. A record that fails is
+
+        quarantined (never dropped, never stored invalid).'
+    ListResponse_Clash_:
+      properties:
+        total_items:
+          type: integer
+          title: Total Items
+        contents:
+          items:
+            $ref: '#/components/schemas/Clash'
+          type: array
+          title: Contents
+      type: object
+      required:
+      - total_items
+      - contents
+      title: ListResponse[Clash]
+    ListResponse_RecordSummary_:
+      properties:
+        total_items:
+          type: integer
+          title: Total Items
+        contents:
+          items:
+            $ref: '#/components/schemas/RecordSummary'
+          type: array
+          title: Contents
+      type: object
+      required:
+      - total_items
+      - contents
+      title: ListResponse[RecordSummary]
+    ListResponse_ReviewFinding_:
+      properties:
+        total_items:
+          type: integer
+          title: Total Items
+        contents:
+          items:
+            $ref: '#/components/schemas/ReviewFinding'
+          type: array
+          title: Contents
+      type: object
+      required:
+      - total_items
+      - contents
+      title: ListResponse[ReviewFinding]
+    Page:
+      properties:
+        total_items:
+          type: integer
+          title: Total Items
+        total_pages:
+          type: integer
+          title: Total Pages
+        page_number:
+          type: integer
+          title: Page Number
+        size:
+          type: integer
+          title: Size
+        first_page:
+          type: boolean
+          title: First Page
+        last_page:
+          type: boolean
+          title: Last Page
+        empty:
+          type: boolean
+          title: Empty
+        contents:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Contents
+      type: object
+      required:
+      - total_items
+      - total_pages
+      - page_number
+      - size
+      - first_page
+      - last_page
+      - empty
+      title: Page
+      description: HSDS Page wrapper for list responses.
+    RecordDetail:
+      properties:
+        record:
+          additionalProperties: true
+          type: object
+          title: Record
+        version:
+          type: integer
+          title: Version
+        findings:
+          items:
+            $ref: '#/components/schemas/ReviewFinding'
+          type: array
+          title: Findings
+        clashes:
+          items:
+            $ref: '#/components/schemas/Clash'
+          type: array
+          title: Clashes
+        last_check:
+          anyOf:
+          - $ref: '#/components/schemas/CheckResult'
+          - type: 'null'
+      type: object
+      required:
+      - record
+      - version
+      - findings
+      - clashes
+      title: RecordDetail
+    RecordPatch:
+      properties:
+        expected_version:
+          type: integer
+          title: Expected Version
+        changes:
+          items:
+            $ref: '#/components/schemas/FieldChange'
+          type: array
+          minItems: 1
+          title: Changes
+      type: object
+      required:
+      - expected_version
+      - changes
+      title: RecordPatch
+    RecordSummary:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
+        organization_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Organization Name
+        source:
+          type: string
+          title: Source
+        status:
+          type: string
+          title: Status
+        version:
+          type: integer
+          title: Version
+        open_findings:
+          type: integer
+          title: Open Findings
+        last_check:
+          anyOf:
+          - $ref: '#/components/schemas/CheckResult'
+          - type: 'null'
+      type: object
+      required:
+      - id
+      - name
+      - organization_name
+      - source
+      - status
+      - version
+      - open_findings
+      title: RecordSummary
+    ReviewEvidence:
+      properties:
+        kind:
+          type: string
+          enum:
+          - quote
+          - http_signal
+          title: Kind
+        source_type:
+          $ref: '#/components/schemas/SourceType'
+        url:
+          type: string
+          title: Url
+        fetched_at:
+          type: string
+          format: date-time
+          title: Fetched At
+        snippet:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Snippet
+        http_status:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Http Status
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error
+      type: object
+      required:
+      - kind
+      - source_type
+      - url
+      - fetched_at
+      title: ReviewEvidence
+      description: Supporting evidence. A dead site has no quote, so it carries an
+        HTTP signal.
+    ReviewFinding:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        service_id:
+          type: string
+          format: uuid
+          title: Service Id
+        ref:
+          $ref: '#/components/schemas/FieldRef'
+        category:
+          $ref: '#/components/schemas/Category'
+        current_value:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Current Value
+        proposed_value:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Proposed Value
+        evidence:
+          items:
+            $ref: '#/components/schemas/ReviewEvidence'
+          type: array
+          minItems: 1
+          title: Evidence
+        confidence:
+          type: number
+          maximum: 1.0
+          minimum: 0.0
+          title: Confidence
+        model_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Model Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        review_state:
+          $ref: '#/components/schemas/ReviewState'
+          default: pending
+      type: object
+      required:
+      - id
+      - service_id
+      - ref
+      - category
+      - evidence
+      - confidence
+      - created_at
+      title: ReviewFinding
+      description: One proposed change or problem, as shown to a reviewer.
+    ReviewState:
+      type: string
+      enum:
+      - pending
+      - applied
+      - edited
+      - dismissed
+      title: ReviewState
+      description: Where a finding's proposal sits in the human review flow.
+    SourceType:
+      type: string
+      enum:
+      - ndp
+      - odrs
+      - spreadsheet
+      - website
+      - facebook
+      - directory
+      - specialist
+      - phone
+      title: SourceType
+      description: Where a value or piece of evidence came from.
+    StoredRecord:
+      properties:
+        service:
+          additionalProperties: true
+          type: object
+          title: Service
+        version:
+          type: integer
+          title: Version
+      type: object
+      required:
+      - service
+      - version
+      title: StoredRecord
+      description: A service plus the version used to detect conflicting edits.
     ValidationError:
       properties:
         loc:
@@ -924,3 +939,7 @@ components:
       - msg
       - type
       title: ValidationError
+  securitySchemes:
+    HTTPBearer:
+      type: http
+      scheme: bearer

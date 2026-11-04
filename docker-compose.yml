@@ -1,5 +1,10 @@
-# Local baseline for The Resource Engine. No AWS account needed. Model calls use the offline
-# stand-in unless LLM_BACKEND=bedrock. API and UI: http://localhost:8000
+# Local baseline for The Resource Engine. Boots the whole stack with no AWS
+# account required. This is the default, acceptable target; AWS deployment is
+# optional (see infra/). Spec: Requirement 7.3.
+#
+#   docker compose up --build            # Postgres + API + admin UI (the demo stack)
+#   docker compose --profile full up     # also LocalStack (S3), OpenSearch, and the worker
+
 services:
   postgres:
     image: postgres:16
@@ -7,34 +12,77 @@ services:
       POSTGRES_USER: resource_engine
       POSTGRES_PASSWORD: local_dev_only
       POSTGRES_DB: resource_engine
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U resource_engine"]
-      interval: 5s
-      retries: 10
     ports: ["5432:5432"]
     volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resource_engine -d resource_engine"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
 
   api:
     build: { context: ., dockerfile: api/Dockerfile }
     environment:
       RE_DATABASE_URL: postgresql://resource_engine:local_dev_only@postgres:5432/resource_engine
-    command: sh -c "python -m api.app.jobs.run import && uvicorn api.app.main:app --host 0.0.0.0 --port 8000"
+      RE_BEARER_TOKEN: ${RE_BEARER_TOKEN:-local_dev_token}
+      RE_RAW_DIR: /app/var/raw
+      RE_CORS_ORIGINS: http://localhost:5173
+      AWS_REGION: ${AWS_REGION:-us-west-2}
+      # Amazon Bedrock (optional). Credentials pass through from your shell; never commit them.
+      BEDROCK_MODEL_ID: ${BEDROCK_MODEL_ID:-}
+      BEDROCK_INPUT_USD_PER_MTOK: ${BEDROCK_INPUT_USD_PER_MTOK:-3.0}
+      BEDROCK_OUTPUT_USD_PER_MTOK: ${BEDROCK_OUTPUT_USD_PER_MTOK:-15.0}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+      RE_WEBSITE_SOURCE: sample
     ports: ["8000:8000"]
+    volumes: ["rawstore:/app/var/raw"]
     depends_on:
       postgres: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  ui:
+    build: { context: ./ui, dockerfile: Dockerfile }
+    environment:
+      # The browser calls the API directly (CORS allows http://localhost:5173).
+      VITE_API_MODE: live
+      VITE_API_BASE: http://localhost:8000
+    ports: ["5173:5173"]
+    depends_on: [api]
+
+  localstack:
+    # S3 emulation for the raw store (the API writes to a local folder by default).
+    profiles: [full]
+    image: localstack/localstack:3
+    environment:
+      SERVICES: s3
+    ports: ["4566:4566"]
+
+  opensearch:
+    # Search index (later). Single-node, security disabled for local dev.
+    profiles: [full]
+    image: opensearchproject/opensearch:2.13.0
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports: ["9200:9200"]
 
   worker:
-    # One maintenance pass: docker compose --profile jobs run --rm worker
-    profiles: ["jobs"]
+    # AI maintenance worker. Website source defaults to the SAMPLE impl (no network).
+    profiles: [full]
     build: { context: ., dockerfile: maintenance/Dockerfile }
     environment:
       RE_DATABASE_URL: postgresql://resource_engine:local_dev_only@postgres:5432/resource_engine
       RE_WEBSITE_SOURCE: sample
-      LLM_BACKEND: ${LLM_BACKEND:-mock}
-      BEDROCK_MODEL_ID: ${BEDROCK_MODEL_ID:-}
-      AWS_REGION: ${AWS_REGION:-us-west-2}
-    depends_on:
-      postgres: { condition: service_healthy }
+      RE_SEED_CONTENT_DIR: /app/seed/website_content
+    depends_on: [postgres]
 
 volumes:
   pgdata:
+  rawstore:

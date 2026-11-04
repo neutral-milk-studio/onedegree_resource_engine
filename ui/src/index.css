@@ -1,0 +1,13 @@
+@tailwind base;
+
+/* Preflight is off (see tailwind.config.js), so give Tailwind's border utilities the solid
+   style they expect. Element rules in styles.css (buttons, inputs) still win. */
+*,
+::before,
+::after {
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border);
+}
+@tailwind components;
+@tailwind utilities;

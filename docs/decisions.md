@@ -103,19 +103,20 @@ intervals, never one spanning the gap. _(Req 15.1, 15.2, 15.3)_
 nested objects are checked. Format checks are on, so a bad UUID, URL, email, or
 timestamp fails. It also rejects empty strings and opening hours without a UTC offset.
 
-## 10. Merged application
 
-- **FastAPI:** the default in the technical document, and the OpenAPI contract is generated from
-  the running app.
-- **Storage:** each organization, service, location, service at location, taxonomy, and term is one
-  HSDS JSON document in the `resource` table. Phones, schedules, and similar children sit inside
-  their parent. Workflow data lives in separate relational tables. SQLite serves local runs and
-  tests, and PostgreSQL serves AWS, through `shared/db.py`.
-- **Ingest:** `ingest/pipeline/transform` owns mapping and validation. `api/app/services/ingest.py`
-  only folds its output into documents and merges with what is stored. Counts are per HSDS object.
-- **Review:** AI findings, provider updates, and source clashes are all change requests.
-- **Validation:** records are judged by `ingest.pipeline.transform.hsds.validate`, at ingest and on
-  edits. The UTC-offset rule in `shared/hsds_validation.py` isn't applied yet, because the
-  transform doesn't record a time zone (see known limitations).
-- **One image:** the web tier and scheduled jobs share `api/Dockerfile`. Jobs are one-off Fargate
-  tasks with their own IAM role.
+## 10. Ingest storage and counting (step 1 prototype)
+
+- **Storage shape.** Every HSDS object the mappers produce is stored once in `hsds.objects`
+  (so an organization shared by many ODRS opportunities is one row). Each service is also
+  stored as a fully nested HSDS document in `hsds.services` with key columns for filters and
+  the dashboard. Both are rebuilt on re-ingest; a content hash means unchanged records are
+  not rewritten and `version` only increases on a real change.
+- **Ids.** The mappers keep their `uuid5(NAMESPACE, "source:kind:native_id")` scheme from
+  `ingest/transformer/hsds.py`: one source record produces several HSDS objects, so the kind
+  is part of the key. (`shared/uuid_util.py` is the single-object form of the same rule.)
+- **Record vs object counts.** See README "Data decisions". The dashboard shows record
+  counts; object-level quarantine rows carry `level = 'object'`.
+- **Raw store.** Local folder (`RE_RAW_DIR`, default `var/raw/`) with the S3 key layout;
+  pages are written byte-for-byte before parsing.
+- **Schema migrations.** `init_db` runs `create_all` at API start. Fine for the pilot; move
+  to Alembic before real data.

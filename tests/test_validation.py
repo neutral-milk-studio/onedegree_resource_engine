@@ -70,14 +70,11 @@ def test_hours_follow_daylight_saving(day, expected):
     assert to_hsds_time("08:30", "America/Los_Angeles", day) == expected
 
 
-def test_app_starts_and_enforces_auth(monkeypatch, tmp_path):
-    monkeypatch.setenv("DATA_DIR", str(tmp_path))
-    monkeypatch.delenv("RE_DATABASE_URL", raising=False)
-    monkeypatch.delenv("DATABASE_URL", raising=False)
+def test_app_starts_and_enforces_auth(monkeypatch):
+    monkeypatch.setenv("RE_BEARER_TOKEN", "secret")
     client = TestClient(create_app())
     assert client.get("/health").json() == {"status": "ok"}
-    assert client.get("/api/health").json()["hsds_version"] == "3.2.3"
-    assert client.get("/hsds/services").status_code == 401
-    wrong = {"Authorization": "Bearer wrong"}
-    assert client.get("/hsds/services", headers=wrong).status_code == 401
-    assert client.get("/api/admin/stats", headers=wrong).status_code == 401
+    assert client.get("/").status_code == 401
+    assert client.get("/", headers={"Authorization": "Bearer wrong"}).status_code == 401
+    response = client.get("/", headers={"Authorization": "Bearer secret"})
+    assert response.json()["version"] == "3.2.3"

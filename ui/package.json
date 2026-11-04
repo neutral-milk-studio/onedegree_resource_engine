@@ -1,14 +1,42 @@
 {
-  "name": "resource-engine-ui",
+  "name": "resource-engine-admin-ui",
   "private": true,
-  "version": "1.0.0",
-  "description": "The Resource Engine web UI. No build step: the API serves these files as they are.",
+  "version": "0.0.0",
+  "description": "Unified internal admin web application for The Resource Engine (Records & Review, Search, Ingest run-report). Thin client over the REST API.",
   "type": "module",
   "scripts": {
-    "test": "vitest run"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "lint": "eslint src",
+    "gen:api": "openapi-typescript ../contracts/api/openapi.yaml -o src/api/schema.d.ts",
+    "gen:demo": "node scripts/build-demo-data.mjs"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.105.3",
+    "ag-grid-community": "^32.3.9",
+    "ag-grid-react": "^32.3.9",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "jsdom": "^25.0.1",
-    "vitest": "^2.1.9"
+    "openapi-typescript": "^7.13.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.72.1",
+    "vite": "^5.4.0",
+    "vitest": "^2.0.5"
   }
 }
