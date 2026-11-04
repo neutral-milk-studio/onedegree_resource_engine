@@ -99,6 +99,8 @@ class Service(Timestamped, Base):
     # Changes a person applied (field -> {"value", "base", "at", "by"}). Re-applied after every
     # re-ingest so a source refresh never silently undoes a specialist's fix.
     overrides: Mapped[dict[str, Any]] = mapped_column(Json, default=dict)
+    # Derived from the document (search/indexer/build_index.py); rebuilt on every save.
+    search_text: Mapped[str | None] = mapped_column(Text)
 
 
 class IdMap(Base):

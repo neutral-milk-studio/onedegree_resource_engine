@@ -175,7 +175,10 @@ def key_columns(doc: dict) -> dict[str, Any]:
                 address = addr
         if not phones:
             phones = sal.get("phones") or (sal.get("location") or {}).get("phones") or []
+    from search.indexer.build_index import search_text
+
     return {
+        "search_text": search_text(doc),
         "organization_id": doc.get("organization_id"),
         "organization_name": org.get("name"),
         "name": doc["name"],

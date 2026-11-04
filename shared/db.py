@@ -114,6 +114,14 @@ def init_db(engine, retries: int = 1, delay: float = 2.0) -> None:
                     conn.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{OPS_SCHEMA}"'))
                 Base.metadata.create_all(conn)
                 _add_missing_columns(conn, Base.metadata)
+                if conn.dialect.name == "postgresql":
+                    # Full-text index for search (search/query/search.py).
+                    conn.execute(text(
+                        "CREATE INDEX IF NOT EXISTS services_search_fts "
+                        f'ON "{HSDS_SCHEMA}".services '
+                        "USING gin (to_tsvector('english', coalesce(search_text, '')))"
+                    ))  # fmt: skip
+            _backfill_search_text(engine)
             return
         except OperationalError as exc:
             if attempt == retries:
@@ -137,3 +145,22 @@ def _add_missing_columns(conn, metadata) -> None:
             ddl_type = column.type.compile(dialect=conn.dialect)
             name = f'"{table.name}"' if sqlite else f'"{table.schema}"."{table.name}"'
             conn.execute(text(f'ALTER TABLE {name} ADD COLUMN "{column.name}" {ddl_type}'))
+
+
+def _backfill_search_text(engine) -> None:
+    """Fill search text for rows saved before the column existed (one-time, cheap)."""
+    from sqlalchemy import select, update
+
+    from search.indexer.build_index import search_text
+    from shared.models import Service
+
+    with engine.begin() as conn:
+        rows = conn.execute(
+            select(Service.id, Service.document).where(Service.search_text.is_(None))
+        ).all()
+        for service_id, document in rows:
+            conn.execute(
+                update(Service)
+                .where(Service.id == service_id)
+                .values(search_text=search_text(document))
+            )

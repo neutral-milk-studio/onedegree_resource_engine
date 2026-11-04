@@ -17,6 +17,7 @@ export default defineConfig({
       "/maintenance": REVIEW_API,
       "/conflicts": REVIEW_API,
       "/sources": REVIEW_API,
+      "/search": REVIEW_API,
     },
   },
   test: {

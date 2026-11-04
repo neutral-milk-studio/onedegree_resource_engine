@@ -6,12 +6,13 @@ import { createConflictsApi } from "./api/conflicts";
 import { createDashboardApi } from "./api/dashboard";
 import { createPartnersApi } from "./api/partners";
 import { createReviewQueueApi } from "./api/review";
+import { createSearchApi } from "./api/search";
 import { Login } from "./Login";
 import { AddPartner } from "./pages/AddPartner";
-import { ComingSoon } from "./pages/ComingSoon";
 import { Conflicts } from "./pages/Conflicts";
 import { Overview } from "./pages/Overview";
 import { ReviewQueue } from "./pages/ReviewQueue";
+import { Search } from "./pages/Search";
 import { useRoute } from "./router";
 import { Shell } from "./Shell";
 
@@ -39,6 +40,7 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut(): void
   const review = useMemo(() => createReviewQueueApi(session), [session]);
   const conflicts = useMemo(() => createConflictsApi(session), [session]);
   const partners = useMemo(() => createPartnersApi(session), [session]);
+  const search = useMemo(() => createSearchApi(session), [session]);
   const dashboard = useMemo(() => createDashboardApi(session), [session]);
   const queryClient = useMemo(
     () => new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } }),
@@ -52,13 +54,7 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut(): void
         {page === "review" && <ReviewQueue api={review} />}
         {page === "conflicts" && <Conflicts api={conflicts} />}
         {page === "partners" && <AddPartner api={partners} />}
-        {page === "search" && (
-          <ComingSoon
-            title="Search"
-            step={6}
-            description="Search in plain language, such as “I just lost my job and can't pay rent”."
-          />
-        )}
+        {page === "search" && <Search api={search} />}
       </Shell>
     </QueryClientProvider>
   );

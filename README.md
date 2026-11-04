@@ -80,6 +80,7 @@ flowchart LR
 | Conflicts | `ingest/pipeline/conflicts.py`, `api/app/routers/conflicts.py` | Cross-source matching after every ingest; resolve by choosing the winning value. |
 | Add a partner | `ingest/adapters/spreadsheet.py`, `ingest/mapping.py`, `ingest/partners.py`, `api/app/routers/sources.py` | Upload CSV → suggested mapping with confidence → confirm → import. |
 | Review API | `api/app/routers/review.py`, `maintenance.py` | `POST /maintenance/run`, `GET /maintenance/checks`, `GET /review/findings`, `POST /review/findings/{id}/apply`, `POST /review/findings/{id}/dismiss`, `GET /review/records/{id}/history`. |
+| Search | `search/`, `api/app/routers/search.py` | `GET /search?q=`: plain-language query plan → Postgres full-text search behind a swappable `SearchBackend`. |
 | Admin UI | `ui/` | React + Vite + TypeScript + Tailwind. Overview (live metrics, findings chart, sources, recent activity), plus the review screen. Light/dark/device theme. |
 
 ## Run it locally
@@ -207,6 +208,25 @@ The sample `data/samples/spreadsheet/county_food_pantries.csv` (fictional) impor
 and all normalize to `(707) 555-01xx`; "1st and 3rd Friday" hours stay as text instead of being
 guessed into a weekly schedule.
 
+## Search
+
+`GET /search?q=` takes plain language ("I just lost my job and can't pay rent") and returns
+ranked active services with their trust badge ("Verified 2 days ago", "1 open issue",
+"Not checked yet"), a highlighted snippet, phone and website.
+
+- **Query plan** (`search/query/intent.py`): the person's own words, minus filler words, plus
+  service words for recognized needs (rent → rental, housing, eviction, utilities, financial
+  assistance; job loss → employment, unemployment, cash assistance…). Own words rank higher.
+  The page says what was searched for and why.
+- **Backend** (`search/query/search.py`): Postgres full-text search over a derived
+  `search_text` column (name, organization, description, eligibility, service area,
+  languages, city, taxonomy terms) with a GIN index, prefix matching and `ts_headline`
+  snippets. Query text reaches SQL only as bound parameters. `SimpleSearch` does the same in
+  Python for SQLite (tests). Both implement `SearchBackend`, so OpenSearch or Bedrock-embedding
+  semantic search plugs in without touching the API or UI.
+- **Never returned**: listings with an open `suspicious` or `actively_bad` finding, and inactive
+  ones. The response counts how many matching listings were hidden.
+
 ## Cost per record
 
 Measured on the sample pages: the prompt (instructions + page text) is about **400-470
@@ -240,7 +260,9 @@ shows the real average from `ops.checks`.
 - **Daily NDP updates using `lastUpdated`**: fetch with the `lastUpdated` watermark of the
   previous successful run (the adapter `fetch(since=...)` hook), so a daily run moves only
   changed records; deterministic ids make it an update in place.
-- **Search** moves from Postgres full-text to OpenSearch behind the same interface (step 6).
+- **Search** moves from Postgres full-text to OpenSearch (and Bedrock embeddings for semantic
+  ranking) behind the `SearchBackend` interface; `search/indexer/build_index.py` already builds
+  the text to index from the HSDS store, which stays the single source of truth.
 
 ## Data decisions
 
