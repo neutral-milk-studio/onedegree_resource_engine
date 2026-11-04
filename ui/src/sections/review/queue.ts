@@ -34,6 +34,7 @@ export interface QueueRow extends QueueRecord {
 
 export const CATEGORY_LABELS: Record<Category, string> = {
   actively_bad: "Actively bad",
+  suspicious: "Suspicious",
   discrepancy: "Discrepancy",
   missing_information: "Missing information",
   check_failed: "Check failed",
@@ -42,6 +43,7 @@ export const CATEGORY_LABELS: Record<Category, string> = {
 
 const CATEGORY_WEIGHT: Record<Category, number> = {
   actively_bad: 85,
+  suspicious: 80,
   discrepancy: 50,
   missing_information: 20,
   check_failed: 15,

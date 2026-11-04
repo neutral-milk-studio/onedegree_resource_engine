@@ -201,7 +201,7 @@ export interface components {
          * @description The one category assigned to a record per completed check (Req 22.1).
          * @enum {string}
          */
-        Category: "verified" | "discrepancy" | "actively_bad" | "check_failed" | "missing_information";
+        Category: "verified" | "discrepancy" | "actively_bad" | "check_failed" | "missing_information" | "suspicious";
         /**
          * CheckResult
          * @description The latest maintenance check of one service, including verified results.

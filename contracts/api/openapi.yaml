@@ -404,6 +404,7 @@ components:
       - actively_bad
       - check_failed
       - missing_information
+      - suspicious
       title: Category
       description: The one category assigned to a record per completed check (Req
         22.1).
