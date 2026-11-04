@@ -45,6 +45,24 @@ Rules for review:
 - The review list hides `verified` by default, but it still updates the last-checked time.
 - Only a person's action applies a change. Applying validates the record as HSDS and writes a history entry.
 
+## Write path
+
+Reviewers change records only through the internal review API, defined in `contracts/api/openapi.yaml`:
+
+| Endpoint | Use |
+|---|---|
+| `GET /review/records`, `GET /review/records/{id}` | Review queue, and one record with its findings and version |
+| `GET /review/findings` | List findings |
+| `POST /review/findings/{id}/apply` | Apply a proposed value, or an edited one |
+| `POST /review/findings/{id}/dismiss` | Dismiss a finding |
+| `PATCH /review/records/{id}` | Edit fields directly |
+
+- `/services` stays read-only HSDS. Internal fields and writes don't belong there.
+- Each write sends `expected_version`. A stale version returns 409, and an invalid result returns 422 with field paths. Neither saves anything.
+- Applying validates the record as HSDS, updates it, writes a history entry, and updates the finding in one transaction.
+- The reviewer's identity comes from authentication, never from the request body.
+- The review layer converts the stored `Finding` to the `ReviewFinding` response in `contracts/review.py`. Detection doesn't need to know about that shape.
+
 ## Evaluation
 
 `seed/website_content/manifest.json` is the known truth. It currently has three cases: `discrepancy`, `verified`, and `actively_bad`.
@@ -59,7 +77,6 @@ Rules for review:
 
 ## Open questions
 
-1. **Write endpoint:** the plan is the merged `POST /review/findings/{id}/apply` and `PATCH /review/records/{id}`, because `/services` is read-only HSDS. The alternative is `PATCH /services/{id}`. Pick one before building the router.
-2. **Requirements:** the code cites `.kiro/specs/resource-engine/`, which isn't in the repository. It should be shared so these rules can be checked against it.
-3. **HSDS store:** `PgHsdsStore` is still a stub with no confirmed owner, and apply depends on it. Review uses an in-memory store until it's ready.
-4. **Categories:** One Degree's final category list is still pending. The working list is in `contracts/findings.py`.
+1. **Requirements:** the code cites `.kiro/specs/resource-engine/`, which isn't in the repository. It should be shared so these rules can be checked against it.
+2. **HSDS store:** `PgHsdsStore` is still a stub with no confirmed owner, and apply depends on it. Review uses an in-memory store until it's ready.
+3. **Categories:** One Degree's final category list is still pending. The working list is in `contracts/findings.py`.
