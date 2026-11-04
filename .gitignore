@@ -252,3 +252,5 @@ secrets.*
 resource_engine.db
 export/
 transform-report.html
+# Full ODRS dumps (too large for git; later S3)
+data/raw/odrs/full/
