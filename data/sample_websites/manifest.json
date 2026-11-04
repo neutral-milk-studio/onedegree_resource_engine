@@ -1,0 +1,97 @@
+{
+  "_comment": "Sample website source (no network). Each entry maps a stored service to a fictional URL on the reserved .example domain and either a page in this folder or a simulated failure. 'planted' and 'expected' are the known truth used by the tests and the evaluation. Service ids are deterministic (uuid5), so they stay valid across re-ingests.",
+  "sites": [
+    {
+      "service_id": "fe78f6ad-9ad7-5754-9473-f9a5fba396af",
+      "url": "https://coastsidehope.example/rent-help",
+      "page": "coastside_hope_rent.html",
+      "planted": "Everything matches the record.",
+      "expected": {
+        "category": "verified"
+      }
+    },
+    {
+      "service_id": "d02029d4-b4d2-5c9d-8c59-947b76dff913",
+      "url": "https://mypuente.example/financial-help",
+      "page": "puente_financial_help.html",
+      "planted": "Phone changed to (650) 879-1700.",
+      "expected": {
+        "category": "discrepancy",
+        "field": "phone"
+      }
+    },
+    {
+      "service_id": "0ef857e6-7d0f-5f11-849f-72d0a18abefa",
+      "url": "https://freetheneed.example/food-day",
+      "page": "free_the_need_food_day.html",
+      "planted": "Hours changed from Friday 11:00-13:30 to Friday 12:00-14:30.",
+      "expected": {
+        "category": "discrepancy",
+        "field": "hours"
+      }
+    },
+    {
+      "service_id": "96be8146-362e-596d-b417-295936b01293",
+      "url": "https://ymca-crc.example/rent-help",
+      "page": "ymca_crc_rent_help.html",
+      "planted": "Record has no languages; the page lists four.",
+      "expected": {
+        "category": "missing_information",
+        "field": "languages"
+      }
+    },
+    {
+      "service_id": "2b18ff78-ba42-5e96-a5a5-5e414a395bca",
+      "url": "https://urbanforest-trees.example/street-trees",
+      "page": null,
+      "simulate": {
+        "error": "DNS lookup failed: domain does not exist (NXDOMAIN)"
+      },
+      "planted": "Dead site: the domain no longer exists.",
+      "expected": {
+        "category": "actively_bad"
+      }
+    },
+    {
+      "service_id": "db60e548-6cd2-59cc-b241-4abcd29f443e",
+      "url": "https://smc-planning.example/building",
+      "page": null,
+      "simulate": {
+        "status": 403,
+        "error": "Access denied: the site blocks automated requests"
+      },
+      "planted": "Blocked site: we can't read it, so nothing is guessed.",
+      "expected": {
+        "category": "check_failed"
+      }
+    },
+    {
+      "service_id": "e3ba6d13-c2f7-541f-b627-05ca73a74f90",
+      "url": "https://bayareacs.example/housing-help",
+      "page": "bacs_housing_help.html",
+      "planted": "Matches the record.",
+      "expected": {
+        "category": "verified"
+      }
+    },
+    {
+      "service_id": "4615a359-0626-5572-b42f-cbe85fad9d0e",
+      "url": "https://stanford-clc.example/legal-help",
+      "page": "stanford_clc_legal.html",
+      "planted": "Service area now includes Santa Clara County.",
+      "expected": {
+        "category": "discrepancy",
+        "field": "service_area"
+      }
+    },
+    {
+      "service_id": "15057c9f-5087-5085-bd3e-272e96403e42",
+      "url": "https://florencedouglas.example/seniors",
+      "page": "florence_douglas_senior.html",
+      "planted": "Accessibility is worded differently but means the same thing (facts, not wording).",
+      "expected": {
+        "category": "verified"
+      }
+    }
+  ]
+}

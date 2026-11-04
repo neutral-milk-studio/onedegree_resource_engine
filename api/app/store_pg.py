@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import math
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -21,11 +22,27 @@ from contracts.store import IngestCounts, Page, ServiceFilter
 from ingest.transformer.assemble import LINK_FIELDS, assemble_service, key_columns, served
 from shared.models import AuditEntry, HsdsObject, IdMap, IngestRun, QuarantineEntry, Service
 
+log = logging.getLogger(__name__)
+
 EXT = "x_resource_engine"
 
 
 def content_hash(obj: Any) -> str:
     return hashlib.sha256(json.dumps(obj, sort_keys=True, default=str).encode()).hexdigest()
+
+
+def reapply_overrides(doc: dict, overrides: dict, metadata: list | None) -> dict:
+    """Re-apply saved specialist changes to a freshly ingested document."""
+    from maintenance.apply import ApplyError, apply_change
+
+    for field, saved in overrides.items():
+        try:
+            doc = apply_change(doc, field, saved["value"], current=saved.get("base"))
+        except ApplyError as exc:  # keep the source value, but say so loudly
+            log.error("could not re-apply override", extra={"field": field, "error": str(exc)})
+    if metadata:
+        doc = {**doc, "metadata": metadata}
+    return doc
 
 
 class DbIndex:
@@ -98,10 +115,17 @@ class PgHsdsStore:
         session.flush()
 
     def save_service(self, session: Session, source: str, record_native_id: str, doc: dict) -> bool:
-        """Upsert the nested service row. Returns True if it was created or changed."""
-        digest = content_hash(doc)
+        """Upsert the nested service row. Returns True if it was created or changed.
+
+        Changes a person applied (``overrides``) are re-applied on top of the fresh source
+        document, and the record's HSDS change history (``metadata``) is carried over, so a
+        re-ingest never silently undoes a specialist's fix.
+        """
         native = str(((doc.get(EXT) or {}).get("source") or {}).get("record_id", record_native_id))
         row = session.get(Service, doc["id"])
+        if row is not None and (row.overrides or row.document.get("metadata")):
+            doc = reapply_overrides(doc, row.overrides or {}, row.document.get("metadata"))
+        digest = content_hash(doc)
         columns = key_columns(doc)
         if row is None:
             session.add(
@@ -215,3 +239,11 @@ class PgHsdsStore:
 
     def quarantine(self, source: str, native_id: str, raw_ref: str, reason: str) -> None:
         raise NotImplementedError("the pipeline quarantines inside its run transaction")
+
+    def replace_document(self, session: Session, row: Service, doc: dict) -> None:
+        """Save a reviewed document: new content hash, key columns, version + 1."""
+        row.document = doc
+        row.content_hash = content_hash(doc)
+        row.version = row.version + 1
+        for field, value in key_columns(doc).items():
+            setattr(row, field, value)

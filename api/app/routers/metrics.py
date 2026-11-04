@@ -16,7 +16,8 @@ from sqlalchemy import func, select
 
 from api.app.deps import get_store
 from api.app.store_pg import PgHsdsStore
-from shared.models import AuditEntry, IngestRun, Service
+from maintenance.review import trust_by_service
+from shared.models import AuditEntry, Check, Finding, IngestRun, Service
 
 router = APIRouter(tags=["Dashboard"])
 
@@ -47,8 +48,13 @@ class LastIngest(BaseModel):
 
 class FindingsMetrics(BaseModel):
     checks_run: int
+    records_checked: int
     open_total: int
+    # Open (pending) findings per category; "verified" = records whose latest check matched.
     open_by_category: dict[str, int]
+    decided: int
+    median_seconds_to_fix: float | None
+    model_ids: list[str]
 
 
 class Metrics(BaseModel):
@@ -124,6 +130,39 @@ def compute_metrics(store: PgHsdsStore) -> Metrics:
             .order_by(IngestRun.source)
         ).all()
 
+        open_counts = dict.fromkeys(FINDING_CATEGORIES, 0)
+        for category, n in s.execute(
+            select(Finding.category, func.count())
+            .where(Finding.review_state == "pending")
+            .group_by(Finding.category)
+        ):
+            open_counts[category] = n
+        trust = trust_by_service(s)
+        open_counts["verified"] = sum(1 for t in trust.values() if t.badge.startswith("Verified"))
+        checks_run, total_cost = s.execute(
+            select(func.count(Check.id), func.coalesce(func.sum(Check.cost_usd), 0.0))
+        ).one()
+        model_ids = sorted(
+            m for (m,) in s.execute(select(Check.model_id).distinct()) if m is not None
+        )
+        fix_times = sorted(
+            v
+            for (v,) in s.execute(
+                select(Finding.seconds_to_fix).where(Finding.seconds_to_fix.is_not(None))
+            )
+        )
+        decided = s.scalar(
+            select(func.count()).select_from(Finding).where(Finding.review_state != "pending")
+        )
+        scores = [t.score for t in trust.values() if t.score is not None]
+
+    median_fix = None
+    if fix_times:
+        mid = len(fix_times) // 2
+        median_fix = (
+            fix_times[mid] if len(fix_times) % 2 else (fix_times[mid - 1] + fix_times[mid]) / 2
+        )
+
     return Metrics(
         generated_at=datetime.now(UTC),
         total_records=sum(count for _, count in by_source),
@@ -143,13 +182,18 @@ def compute_metrics(store: PgHsdsStore) -> Metrics:
             )
             for r in runs
         ],
-        # AI maintenance arrives in step 3; conflicts in step 4.
         findings=FindingsMetrics(
-            checks_run=0, open_total=0, open_by_category=dict.fromkeys(FINDING_CATEGORIES, 0)
+            checks_run=checks_run,
+            records_checked=len(trust),
+            open_total=sum(n for c, n in open_counts.items() if c != "verified"),
+            open_by_category=open_counts,
+            decided=decided or 0,
+            median_seconds_to_fix=median_fix,
+            model_ids=model_ids,
         ),
-        conflicts_open=None,
-        avg_trust_score=None,
-        cost_per_check_usd=None,
+        conflicts_open=None,  # step 4
+        avg_trust_score=round(sum(scores) / len(scores), 1) if scores else None,
+        cost_per_check_usd=(total_cost / checks_run) if checks_run else None,
     )
 
 

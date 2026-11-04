@@ -32,3 +32,14 @@ def store():
 @pytest.fixture
 def raw_store(tmp_path):
     return LocalRawStore(tmp_path / "raw")
+
+
+@pytest.fixture
+def loaded_store(store, raw_store):
+    """The store with the ODRS and NDP samples ingested."""
+    from ingest.adapters.registry import get_adapter
+    from ingest.pipeline.run import run_ingest
+
+    for source in ("odrs", "ndp"):
+        run_ingest(get_adapter(source), store, raw_store)
+    return store

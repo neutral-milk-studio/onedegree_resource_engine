@@ -113,9 +113,27 @@ def init_db(engine, retries: int = 1, delay: float = 2.0) -> None:
                     conn.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{HSDS_SCHEMA}"'))
                     conn.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{OPS_SCHEMA}"'))
                 Base.metadata.create_all(conn)
+                _add_missing_columns(conn, Base.metadata)
             return
         except OperationalError as exc:
             if attempt == retries:
                 raise
             log.warning("database not ready (attempt %s/%s): %s", attempt, retries, exc)
             time.sleep(delay)
+
+
+def _add_missing_columns(conn, metadata) -> None:
+    """Add model columns that an older database lacks (pilot-grade; use Alembic later)."""
+    from sqlalchemy import inspect, text
+
+    inspector = inspect(conn)
+    sqlite = conn.dialect.name == "sqlite"
+    for table in metadata.sorted_tables:
+        schema = None if sqlite else table.schema
+        existing = {c["name"] for c in inspector.get_columns(table.name, schema=schema)}
+        for column in table.columns:
+            if column.name in existing:
+                continue
+            ddl_type = column.type.compile(dialect=conn.dialect)
+            name = f'"{table.name}"' if sqlite else f'"{table.schema}"."{table.name}"'
+            conn.execute(text(f'ALTER TABLE {name} ADD COLUMN "{column.name}" {ddl_type}'))

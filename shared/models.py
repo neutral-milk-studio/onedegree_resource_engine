@@ -7,7 +7,8 @@ HSDS records and operational data never share a table (docs/agents-guardrails.md
 - ``hsds.services``: one row per service with the fully nested HSDS service document plus a
   few key columns for filtering, search and the dashboard.
 - ``hsds.id_map``: HSDS id -> source record.
-- ``ops.*``: ingest runs, quarantine, audit log. Findings and conflicts arrive in later steps.
+- ``ops.*``: ingest runs, quarantine, audit log, website checks, findings, the model-response
+  cache. Conflicts arrive in step 4.
 
 The same models run on PostgreSQL (docker compose) and SQLite (unit tests): JSON columns
 become JSONB on Postgres, and the schema names are dropped on SQLite.
@@ -20,7 +21,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import JSON, DateTime, Integer, String, Text, func
+from sqlalchemy import JSON, Boolean, DateTime, Float, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -95,6 +96,9 @@ class Service(Timestamped, Base):
     document: Mapped[dict[str, Any]] = mapped_column(Json)
     content_hash: Mapped[str] = mapped_column(String(64))
     version: Mapped[int] = mapped_column(Integer, default=1)
+    # Changes a person applied (field -> {"value", "base", "at", "by"}). Re-applied after every
+    # re-ingest so a source refresh never silently undoes a specialist's fix.
+    overrides: Mapped[dict[str, Any]] = mapped_column(Json, default=dict)
 
 
 class IdMap(Base):
@@ -180,3 +184,73 @@ class AuditEntry(Base):
     old_value: Mapped[Any | None] = mapped_column(Json)
     new_value: Mapped[Any | None] = mapped_column(Json)
     summary: Mapped[str | None] = mapped_column(Text)
+
+
+class Check(Base):
+    """One AI maintenance check of one service against its website."""
+
+    __tablename__ = "checks"
+    __table_args__ = {"schema": OPS_SCHEMA}
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    service_id: Mapped[str] = mapped_column(String(36), index=True)
+    url: Mapped[str | None] = mapped_column(Text)
+    checked_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, index=True
+    )
+    category: Mapped[str] = mapped_column(String(32))  # the one category for this check
+    http_status: Mapped[int | None] = mapped_column(Integer)
+    error: Mapped[str | None] = mapped_column(Text)
+    page_hash: Mapped[str | None] = mapped_column(String(64))
+    model_id: Mapped[str | None] = mapped_column(String(200))
+    input_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    output_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
+    cached: Mapped[bool] = mapped_column(Boolean, default=False)
+    findings_created: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class Finding(Base):
+    """An AI finding awaiting (or after) human review. Never written into the HSDS record."""
+
+    __tablename__ = "findings"
+    __table_args__ = {"schema": OPS_SCHEMA}
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    service_id: Mapped[str] = mapped_column(String(36), index=True)
+    check_id: Mapped[str] = mapped_column(String(36), index=True)
+    category: Mapped[str] = mapped_column(String(32), index=True)
+    field: Mapped[str | None] = mapped_column(String(64))
+    entity_type: Mapped[str] = mapped_column(String(40))
+    entity_id: Mapped[str] = mapped_column(String(36))
+    entity_field: Mapped[str] = mapped_column(String(64))
+    current_value: Mapped[Any | None] = mapped_column(Json)
+    proposed_value: Mapped[Any | None] = mapped_column(Json)
+    evidence_url: Mapped[str] = mapped_column(Text)
+    evidence_quote: Mapped[str | None] = mapped_column(Text)
+    http_status: Mapped[int | None] = mapped_column(Integer)
+    error: Mapped[str | None] = mapped_column(Text)
+    confidence: Mapped[float] = mapped_column(Float)
+    model_id: Mapped[str | None] = mapped_column(String(200))
+    harm_rank: Mapped[int] = mapped_column(Integer, index=True)
+    risk_signals: Mapped[list[str]] = mapped_column(Json, default=list)
+    review_state: Mapped[str] = mapped_column(String(16), default="pending", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    decided_by: Mapped[str | None] = mapped_column(String(128))
+    decision_value: Mapped[Any | None] = mapped_column(Json)
+    dismiss_reason: Mapped[str | None] = mapped_column(Text)
+    seconds_to_fix: Mapped[float | None] = mapped_column(Float)
+
+
+class LlmCache(Base):
+    """Model replies keyed by a hash of (prompt version, model, page text, record facts)."""
+
+    __tablename__ = "llm_cache"
+    __table_args__ = {"schema": OPS_SCHEMA}
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    model_id: Mapped[str] = mapped_column(String(200))
+    value: Mapped[dict[str, Any]] = mapped_column(Json)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
