@@ -7,18 +7,18 @@ This file defines how the detection pipeline and the review layer connect. Chang
 | Area | Owner | Files |
 |---|---|---|
 | Detection | Alina | `maintenance/website_source/sample.py`, `extractor/extract.py`, `comparator/compare.py`, `worker/run_check.py`, `scheduler/eventbridge.py`, `tests/test_detection.py` |
-| Storage, review, and scoring | Kiara | `maintenance/findings_store/pg_findings.py`, `eval/harness.py`, `api/app/routers/review.py`, `ui/src/sections/RecordsReview.tsx`, `ui/src/api/client.ts`, `maintenance/tests/test_review.py` |
+| Storage, review, and scoring | Kiara | `maintenance/findings_store/change_requests.py`, `maintenance/worker/service.py`, `eval/harness.py`, `api/app/routers/app.py`, `api/app/services/proposals.py`, `ui/`, `maintenance/tests/test_worker.py` |
 | Shared | Both | `contracts/findings.py`, `seed/`, this file |
 
 ## The handoff
 
 ```
-run_checks -> Finding -> FindingsSink.save(finding) -> review list -> apply -> record and history
+run_checks -> Finding -> FindingsSink.save(finding) -> change request -> approve -> record and history
 ```
 
 - Detection creates a `Finding` from `contracts/findings.py` and calls `save`. It doesn't write to the HSDS store or to the findings tables directly.
 - Pass the store in as a `FindingsSink`, so detection doesn't need to know which one is running.
-- Use `maintenance/findings_store/memory.py` until `PgFindingsStore` is ready. Both apply the same rules through `finding_problems`.
+- `maintenance/findings_store/change_requests.py` is the production sink, and `memory.py` is for tests. Both apply the same rules through `finding_problems`.
 - The AI proposes, and a person applies. Nothing in detection changes a record.
 
 ## Finding rules
@@ -47,21 +47,22 @@ Rules for review:
 
 ## Write path
 
-Reviewers change records only through the internal review API, defined in `contracts/api/openapi.yaml`:
+Reviewers change records only through the admin API. Its contract is generated from the app into `contracts/api/openapi.yaml`:
 
 | Endpoint | Use |
 |---|---|
-| `GET /review/records`, `GET /review/records/{id}` | Review queue, and one record with its findings and version |
-| `GET /review/findings` | List findings |
-| `POST /review/findings/{id}/apply` | Apply a proposed value, or an edited one |
-| `POST /review/findings/{id}/dismiss` | Dismiss a finding |
-| `PATCH /review/records/{id}` | Edit fields directly |
+| `GET /api/admin/maintenance/results`, `GET /api/admin/records/{id}` | Records with their latest check, and one record with its history and change requests |
+| `GET /api/admin/change-requests` | List AI findings, provider updates, and source clashes |
+| `POST /api/admin/change-requests/{id}/approve` | Apply a proposed value, or an edited one through `overrides` |
+| `POST /api/admin/change-requests/{id}/reject` | Reject a change request |
+| `PUT /api/admin/records/{id}` | Edit fields directly |
 
-- `/services` stays read-only HSDS. Internal fields and writes don't belong there.
-- Each write sends `expected_version`. A stale version returns 409, and an invalid result returns 422 with field paths. Neither saves anything.
-- Applying validates the record as HSDS, updates it, writes a history entry, and updates the finding in one transaction.
+- `/hsds/*` stays read-only HSDS. Internal fields and writes don't belong there.
+- Direct edits send `expected_version`. A stale version returns 409, and an invalid result returns 422 with details. Neither saves anything.
+- A change request records the value it was based on. If the field has changed since, approving returns 409 with `stale_fields` unless the reviewer forces it.
+- A change request can be decided only once. The decision, the record, and its history are written in one transaction.
 - The reviewer's identity comes from authentication, never from the request body.
-- The review layer converts the stored `Finding` to the `ReviewFinding` response in `contracts/review.py`. Detection doesn't need to know about that shape.
+- The sink builds the change request from the stored record, so detection doesn't need to know that shape. A verified result only updates `check_result`.
 
 ## Evaluation
 
@@ -78,5 +79,5 @@ Reviewers change records only through the internal review API, defined in `contr
 ## Open questions
 
 1. **Requirements:** the code cites `.kiro/specs/resource-engine/`, which isn't in the repository. It should be shared so these rules can be checked against it.
-2. **HSDS store:** `PgHsdsStore` is still a stub with no confirmed owner, and apply depends on it. Review uses an in-memory store until it's ready.
+2. **List fields:** detection proposes text. `change_requests.py` builds phones, languages, and service areas from it. Hours stay a note until a reviewer edits them.
 3. **Categories:** One Degree's final category list is still pending. The working list is in `contracts/findings.py`.

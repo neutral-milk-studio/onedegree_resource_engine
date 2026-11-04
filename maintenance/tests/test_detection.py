@@ -2848,10 +2848,10 @@ def test_the_worker_stops_at_startup_with_a_clean_message(env, message):
     assert "Traceback" not in result.stderr
 
 
-def test_the_worker_starts_with_the_default_settings():
-    result = run_worker()
-    assert "invalid worker setting" not in result.stderr
-    assert "check loop is implemented in a later task" in result.stderr
+def test_the_worker_runs_with_the_default_settings(tmp_path):
+    result = run_worker(DATA_DIR=str(tmp_path))
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)["checked"] == 0  # a new database has nothing due
 
 
 def test_the_sample_website_source_is_the_default():

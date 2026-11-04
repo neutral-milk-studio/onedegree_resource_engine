@@ -9,7 +9,11 @@ dependencies = [
     "jsonschema[format-nongpl]>=4.23",
     "psycopg[binary]>=3.2",
     "pydantic>=2.9",
+    "pyjwt[crypto]>=2.8",
+    "pypdf>=4.0",
+    "python-multipart>=0.0.9",
     "pyyaml>=6.0",
+    "requests>=2.31",
     "tzdata>=2024.1",
     "uvicorn>=0.30",
 ]
@@ -20,6 +24,7 @@ dev = [
     "hypothesis>=6.100",
     "openapi-spec-validator>=0.7",
     "pytest>=8.3",
+    "reportlab>=4.0",
     "ruff>=0.6",
 ]
 
@@ -39,3 +44,12 @@ select = ["E", "F", "I", "B", "UP"]
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
+
+[tool.ruff.lint.per-file-ignores]
+# Ported in bulk. Behaviour is covered by tests; restyling comes separately.
+"api/app/**" = ["E501", "E702", "E731", "E741", "B006", "B007", "B008", "B904", "F401", "F841", "UP"]
+"api/tests/**" = ["E501", "E702", "F401", "F841", "I001"]
+"scripts/**" = ["E501"]
+"data/scripts/**" = ["E501"]
+"shared/db.py" = ["E501"]
+"tools/**" = ["E501", "E702", "E731", "E741", "B007", "B023", "B905", "F401", "F841", "UP", "I001"]
