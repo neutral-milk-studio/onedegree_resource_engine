@@ -69,6 +69,10 @@ class SampleWebsiteSource:
                 raise ValueError(f"duplicate manifest url: {entry['url']}")
             self._pages[key] = entry.get("page")
 
+    def knows(self, url: str) -> bool:
+        """True when the manifest has an entry for ``url``, seeded failures included."""
+        return normalize_url(url) in self._pages
+
     def get(self, url: str) -> WebsiteResult:
         key = normalize_url(url)
         if key not in self._pages:

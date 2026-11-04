@@ -1,7 +1,5 @@
-# Local baseline for The Resource Engine. Boots the whole stack with no AWS
-# account required. This is the default, acceptable target; AWS deployment is
-# optional (see infra/). Spec: Requirement 7.3.
-
+# Local baseline for The Resource Engine. No AWS account needed. Model calls use the offline
+# stand-in unless LLM_BACKEND=bedrock. API and UI: http://localhost:8000
 services:
   postgres:
     image: postgres:16
@@ -9,50 +7,34 @@ services:
       POSTGRES_USER: resource_engine
       POSTGRES_PASSWORD: local_dev_only
       POSTGRES_DB: resource_engine
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resource_engine"]
+      interval: 5s
+      retries: 10
     ports: ["5432:5432"]
     volumes: ["pgdata:/var/lib/postgresql/data"]
-
-  localstack:
-    # S3 emulation for the raw store.
-    image: localstack/localstack:3
-    environment:
-      SERVICES: s3
-    ports: ["4566:4566"]
-
-  opensearch:
-    # Search index (P5 stretch). Single-node, security disabled for local dev.
-    image: opensearchproject/opensearch:2.13.0
-    environment:
-      discovery.type: single-node
-      DISABLE_SECURITY_PLUGIN: "true"
-      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
-    ports: ["9200:9200"]
 
   api:
     build: { context: ., dockerfile: api/Dockerfile }
     environment:
       RE_DATABASE_URL: postgresql://resource_engine:local_dev_only@postgres:5432/resource_engine
-      RE_S3_ENDPOINT: http://localstack:4566
-      RE_OPENSEARCH_URL: http://opensearch:9200
-      RE_BEARER_TOKEN: local_dev_token
+    command: sh -c "python -m api.app.jobs.run import && uvicorn api.app.main:app --host 0.0.0.0 --port 8000"
     ports: ["8000:8000"]
-    depends_on: [postgres, localstack, opensearch]
+    depends_on:
+      postgres: { condition: service_healthy }
 
   worker:
-    # AI maintenance worker. Website source defaults to the SAMPLE impl (no network).
+    # One maintenance pass: docker compose --profile jobs run --rm worker
+    profiles: ["jobs"]
     build: { context: ., dockerfile: maintenance/Dockerfile }
     environment:
       RE_DATABASE_URL: postgresql://resource_engine:local_dev_only@postgres:5432/resource_engine
       RE_WEBSITE_SOURCE: sample
-      RE_SEED_CONTENT_DIR: /app/seed/website_content
-    depends_on: [postgres]
-
-  ui:
-    build: { context: ./ui, dockerfile: Dockerfile }
-    environment:
-      VITE_API_BASE: http://localhost:8000
-    ports: ["5173:5173"]
-    depends_on: [api]
+      LLM_BACKEND: ${LLM_BACKEND:-mock}
+      BEDROCK_MODEL_ID: ${BEDROCK_MODEL_ID:-}
+      AWS_REGION: ${AWS_REGION:-us-west-2}
+    depends_on:
+      postgres: { condition: service_healthy }
 
 volumes:
   pgdata:

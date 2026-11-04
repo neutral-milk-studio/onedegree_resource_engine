@@ -1,4 +1,4 @@
-"""Maintenance worker: configuration now; the check loop follows (tasks 22 / 25).
+"""Maintenance worker: its configuration and entry point. The loop is in worker.service.
 
 select-due -> fetch (website source) -> extract (Bedrock) -> compare -> finding.
 Records last-checked time + result in the check_log ops table.
@@ -7,11 +7,11 @@ Spec: Requirements 18.1, 18.4, 19.5, 20, 21, 22, 23.
 
 from __future__ import annotations
 
+import json
 import os
 from collections.abc import Mapping
 from dataclasses import dataclass, fields
 
-from contracts.store import HsdsStore
 from contracts.website_source import WebsiteSource
 
 WORKER_MODES = ("sweep", "reports")  # sweep: the monthly check; reports: user-report triggers
@@ -113,9 +113,9 @@ def website_source_for(config: WorkerConfig) -> WebsiteSource:
     return SampleWebsiteSource()
 
 
-def run_checks(store: HsdsStore, website_source: WebsiteSource) -> None:
-    """Run maintenance checks for records due, writing findings and the check log."""
-    raise NotImplementedError("task 22/25: select-due -> fetch -> extract -> compare -> finding")
+def run_checks(service, *, limit: int | None = None, force: bool = False) -> dict:
+    """Run maintenance checks for records due, writing findings and the check results."""
+    return service.run(limit=limit, force=force)
 
 
 def main() -> None:
@@ -125,7 +125,11 @@ def main() -> None:
         website_source_for(config)  # reject bad settings at startup, before any check runs
     except ConfigError as error:
         raise SystemExit(f"invalid worker setting: {error}") from None
-    raise SystemExit("maintenance worker stub — the check loop is implemented in a later task")
+    if config.mode == "reports":
+        raise SystemExit(f"{WorkerConfig.ENV['mode']}=reports is not implemented yet; use sweep")
+    from api.app.container import build_container
+
+    print(json.dumps(run_checks(build_container().maintenance)))
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -254,3 +254,7 @@ export/
 transform-report.html
 # Full ODRS dumps (too large for git; later S3)
 data/raw/odrs/full/
+
+# Local runs of the app and generated demo data
+var/
+data/generated/

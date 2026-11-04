@@ -17,6 +17,7 @@ manifest marks it "truncated": true with the next_page to resume from. Re-runnin
 same --out folder (e.g. one --resource at a time) merges into the existing manifest. The api_key is scrubbed from any URLs saved in the files.
 Standard library only; no pip installs needed.
 """
+
 import argparse
 import json
 import os
@@ -26,7 +27,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -51,7 +52,11 @@ def load_env() -> None:
 
 def with_key(url: str, key: str) -> str:
     parts = urllib.parse.urlsplit(url)
-    query = [(k, v) for k, v in urllib.parse.parse_qsl(parts.query, keep_blank_values=True) if k != "api_key"]
+    query = [
+        (k, v)
+        for k, v in urllib.parse.parse_qsl(parts.query, keep_blank_values=True)
+        if k != "api_key"
+    ]
     query.append(("api_key", key))
     return urllib.parse.urlunsplit(parts._replace(query=urllib.parse.urlencode(query)))
 
@@ -61,13 +66,16 @@ def scrub(text: str) -> str:
 
 
 def get(url: str, key: str) -> str:
-    req = urllib.request.Request(with_key(url, key), headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
+    req = urllib.request.Request(
+        with_key(url, key), headers={"User-Agent": USER_AGENT, "Accept": "application/json"}
+    )
     with urllib.request.urlopen(req, timeout=60) as resp:
         return resp.read().decode("utf-8")
 
 
-def fetch_resource(host: str, resource: str, key: str, out_dir: Path, max_pages: int | None,
-                   per_page: int | None) -> dict:
+def fetch_resource(
+    host: str, resource: str, key: str, out_dir: Path, max_pages: int | None, per_page: int | None
+) -> dict:
     url = f"{host}/v1/{resource}"
     if per_page:
         url += f"?per_page={per_page}"
@@ -91,31 +99,53 @@ def fetch_resource(host: str, resource: str, key: str, out_dir: Path, max_pages:
         page += 1
         if url:
             time.sleep(0.5)  # be polite to the server
-    result = {"pages": page - 1, "records_saved": records, "total_count_reported": total,
-              "per_page_reported": per_page_reported, "truncated": bool(url)}
+    result = {
+        "pages": page - 1,
+        "records_saved": records,
+        "total_count_reported": total,
+        "per_page_reported": per_page_reported,
+        "truncated": bool(url),
+    }
     if url:
         result["next_page"] = scrub(url)
-        print(f"  WARNING: {resource} stopped at --max-pages {max_pages} with more pages remaining "
-              f"({records} of {total} records saved). Resume from: {scrub(url)}", file=sys.stderr)
+        print(
+            f"  WARNING: {resource} stopped at --max-pages {max_pages} with more pages remaining "
+            f"({records} of {total} records saved). Resume from: {scrub(url)}",
+            file=sys.stderr,
+        )
     return result
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--resource", choices=["all", *RESOURCES], default="all")
-    parser.add_argument("--max-pages", type=int, default=None, help="stop after N pages per resource (default: no limit)")
-    parser.add_argument("--out", help="output folder name under data/raw/odrs/ (default: UTC fetch time)")
-    parser.add_argument("--per-page", type=int, help="request this many records per page (sent as per_page=<n>)")
+    parser.add_argument(
+        "--max-pages",
+        type=int,
+        default=None,
+        help="stop after N pages per resource (default: no limit)",
+    )
+    parser.add_argument(
+        "--out", help="output folder name under data/raw/odrs/ (default: UTC fetch time)"
+    )
+    parser.add_argument(
+        "--per-page", type=int, help="request this many records per page (sent as per_page=<n>)"
+    )
     args = parser.parse_args()
 
     load_env()
     key = os.environ.get("ODRS_API_KEY")
     if not key:
-        print("ODRS_API_KEY not set. Add it to .env in the repo root (see the top of this file).", file=sys.stderr)
+        print(
+            "ODRS_API_KEY not set. Add it to .env in the repo root (see the top of this file).",
+            file=sys.stderr,
+        )
         return 1
     host = os.environ.get("ODRS_HOST", DEFAULT_HOST).rstrip("/")
 
-    fetched_at = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    fetched_at = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     out_name = args.out or fetched_at
     if Path(out_name).name != out_name or out_name in ("", ".", ".."):
         print(f"--out must be a plain folder name, got {out_name!r}", file=sys.stderr)
@@ -124,11 +154,17 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     manifest_file = out_dir / "manifest.json"
-    manifest = json.loads(manifest_file.read_text()) if manifest_file.exists() else {"source": "odrs", "resources": {}}
+    manifest = (
+        json.loads(manifest_file.read_text())
+        if manifest_file.exists()
+        else {"source": "odrs", "resources": {}}
+    )
     manifest.update({"host": host, "fetched_at": fetched_at})
-    for resource in (RESOURCES if args.resource == "all" else [args.resource]):
+    for resource in RESOURCES if args.resource == "all" else [args.resource]:
         try:
-            manifest["resources"][resource] = fetch_resource(host, resource, key, out_dir, args.max_pages, args.per_page)
+            manifest["resources"][resource] = fetch_resource(
+                host, resource, key, out_dir, args.max_pages, args.per_page
+            )
             manifest["resources"][resource]["fetched_at"] = fetched_at
         except urllib.error.HTTPError as exc:
             print(f"HTTP {exc.code} on {resource}: check the key and host.", file=sys.stderr)

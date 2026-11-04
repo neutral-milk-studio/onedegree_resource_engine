@@ -1,0 +1,43 @@
+name: deploy
+# Manual on purpose until the first deployment has been proven in the account.
+on:
+  workflow_dispatch:
+permissions: { id-token: write, contents: read }
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+  TF_DIR: infra/terraform
+  TF_VAR_bedrock_model_id: ${{ vars.BEDROCK_MODEL_ID }}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen
+      - run: uv run pytest
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: production        # add required reviewers in GitHub for a manual gate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with: { role-to-assume: "${{ secrets.AWS_DEPLOY_ROLE_ARN }}", aws-region: "${{ env.AWS_REGION }}" }
+      - uses: hashicorp/setup-terraform@v3
+      - name: Bootstrap ECR (first run creates the repository)
+        run: |
+          terraform -chdir=$TF_DIR init -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" -backend-config="key=resource-engine.tfstate" -backend-config="region=$AWS_REGION"
+          terraform -chdir=$TF_DIR apply -auto-approve -target=aws_ecr_repository.app -var="image_tag=bootstrap"
+      - uses: aws-actions/amazon-ecr-login@v2
+        id: ecr
+      - name: Build and push image
+        run: |
+          REPO=$(terraform -chdir=$TF_DIR output -raw ecr_repository_url)
+          docker build -f api/Dockerfile -t $REPO:${{ github.sha }} .
+          docker push $REPO:${{ github.sha }}
+      - name: Apply infrastructure with the new image
+        run: terraform -chdir=$TF_DIR apply -auto-approve -var="image_tag=${{ github.sha }}"
+      - name: Wait for the service and smoke test
+        run: |
+          aws ecs wait services-stable --cluster $(terraform -chdir=$TF_DIR output -raw cluster_name) --services $(terraform -chdir=$TF_DIR output -raw service_name)
+          curl --fail --retry 10 --retry-delay 6 "http://$(terraform -chdir=$TF_DIR output -raw alb_dns_name)/api/health"

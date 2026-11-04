@@ -14,6 +14,9 @@ The FastAPI-generated document is diffed against this file in tests (Req 32.4).
 
 ## Endpoints
 
+The HSDS API is served under `/hsds`, so `/services` below is `/hsds/services`. The UI's own API
+is under `/api`.
+
 | Endpoint | Status | Purpose |
 |----------|--------|---------|
 | `GET /` | Required | Information about the API and its relationship to HSDS |
@@ -75,24 +78,10 @@ The API is REST, implemented in Python + FastAPI. Responses validate against the
 pinned HSDS v3.2.3 JSON Schema in tests, including at least one paginated list
 against the Page schema. _(Req 32.1–32.3)_
 
-## Internal review API
+## Internal API
 
-`/review/*` and `/ingest/reports` are internal endpoints for the review tool. They may
-carry operational fields, while `/services` stays strict HSDS. The machine-readable
-contract for them is [`openapi.yaml`](openapi.yaml), generated from
-`contracts/mock_api.py` with `make openapi`. A test fails if the two differ. Run the
-mock with `make mock`.
-
-| Endpoint | Purpose |
-|----------|---------|
-| `GET /review/records`, `GET /review/records/{id}` | Review queue and one record with findings, clashes, and version |
-| `PATCH /review/records/{id}` | Edit fields |
-| `GET /review/findings` | List findings |
-| `POST /review/findings/{id}/apply`, `/dismiss` | Decide on a finding |
-| `GET /review/clashes`, `POST /review/clashes/{id}/resolve` | Decide on a source clash |
-| `GET /ingest/reports` | Received, stored, and quarantined counts by source |
-
-Writes send `expected_version`. A stale version returns 409, and an invalid result
-returns 422 with field paths. Nothing is saved in either case. The reviewer's identity
-comes from the bearer token.
-
+`/api/*` is the web UI's own API, for help seekers, providers, and admins. It may carry operational
+fields, while `/hsds/*` stays strict HSDS. The machine-readable contract is
+[`openapi.yaml`](openapi.yaml), generated from the running app (`api.app.main`) with `make openapi`.
+A test fails if the two differ. The review rules are in
+[`docs/ai-maintenance-handoff.md`](../../docs/ai-maintenance-handoff.md).

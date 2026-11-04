@@ -7,6 +7,7 @@ Usage:
 Saves data/samples/ODRS/odrs_page<N>_<YYYYMMDD>.json, one file per page, untouched
 except that credential-like query parameters are stripped from any URL strings.
 """
+
 import json
 import os
 import re
@@ -20,7 +21,9 @@ from pathlib import Path
 RAW_DIR = Path(__file__).resolve().parent.parent / "data" / "samples" / "ODRS"
 SEED_FILE = RAW_DIR / "BayesExport_20250729.json"
 USER_AGENT = "ResourceEngine-Hackathon/0.1 (One Degree hackathon team)"
-SECRET_PARAM = re.compile(r"([?&])(api_key|apikey|key|token|access_token|signature|X-Amz-[A-Za-z-]+)=[^&\"\s]*", re.I)
+SECRET_PARAM = re.compile(
+    r"([?&])(api_key|apikey|key|token|access_token|signature|X-Amz-[A-Za-z-]+)=[^&\"\s]*", re.I
+)
 
 
 def with_key(url: str) -> str:
@@ -39,7 +42,9 @@ def scrub(text: str) -> str:
 
 
 def fetch(url: str) -> str:
-    req = urllib.request.Request(with_key(url), headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
+    req = urllib.request.Request(
+        with_key(url), headers={"User-Agent": USER_AGENT, "Accept": "application/json"}
+    )
     with urllib.request.urlopen(req, timeout=30) as resp:
         return resp.read().decode("utf-8")
 
@@ -55,7 +60,10 @@ def main() -> int:
             body = fetch(next_url)
         except Exception as exc:  # report, don't hide
             print(f"Failed on page {page}: {exc}", file=sys.stderr)
-            print("If this is 401/403, you need ODRS_API_KEY (staging key from One Degree).", file=sys.stderr)
+            print(
+                "If this is 401/403, you need ODRS_API_KEY (staging key from One Degree).",
+                file=sys.stderr,
+            )
             return 1
         out = RAW_DIR / f"odrs_page{page}_{today}.json"
         out.write_text(scrub(body))

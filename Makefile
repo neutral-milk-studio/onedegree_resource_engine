@@ -1,4 +1,4 @@
-.PHONY: setup test lint format mock openapi transform-test transform-report
+.PHONY: setup test lint format demo openapi transform-test transform-report
 
 setup:
 	uv sync
@@ -14,8 +14,8 @@ format:
 	uv run ruff check --fix .
 	uv run ruff format .
 
-mock:
-	uv run uvicorn contracts.mock_api:app --reload --port 8000
+demo:
+	uv run python -m api.app.demo --reset
 
 openapi:
 	uv run python -m contracts.export_openapi
