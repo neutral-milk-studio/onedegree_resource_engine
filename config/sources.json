@@ -1,0 +1,4 @@
+[
+  {"name": "odrs", "adapter": "odrs", "location": "data/raw/odrs/sample/opportunities_page*.json"},
+  {"name": "ndp", "adapter": "ndp", "location": "data/samples/NDP/national-data-platform-sample-*.json"}
+]

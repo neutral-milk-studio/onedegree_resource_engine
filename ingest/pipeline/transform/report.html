@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transform Report</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1d1b; --muted: #6b6b66; --line: #e3e2dd;
+    --ok: #1f7a4d; --ok-bg: #e4f3ea; --bad: #b3261e; --bad-bg: #fbe9e7;
+    --warn: #8a5a00; --warn-bg: #fdf1d8; --accent: #2f5bd3; --accent-bg: #e8eefc;
+    --code-bg: #f3f2ee; --k: #7b3fa0; --s: #1f7a4d; --n: #b35c00; --b: #2f5bd3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161615; --panel: #1f1f1d; --ink: #ecebe6; --muted: #9c9b94; --line: #33322f;
+      --ok: #6fd3a0; --ok-bg: #173327; --bad: #ff8a80; --bad-bg: #3a1d1b;
+      --warn: #f2c26b; --warn-bg: #3a2f17; --accent: #8fb0ff; --accent-bg: #1d2742;
+      --code-bg: #191918; --k: #d7a6f2; --s: #8fd8b0; --n: #f5b26b; --b: #8fb0ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 20px 24px 0; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+    margin: 0 0 10px; font-weight: 600; }
+  .meta { color: var(--muted); font-size: 12px; }
+  .tabs { display: flex; gap: 4px; margin-top: 16px; border-bottom: 1px solid var(--line); }
+  .tabs button { border: 0; background: none; color: var(--muted); padding: 8px 14px;
+    font: inherit; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; }
+  .tabs button.on { color: var(--ink); border-bottom-color: var(--accent); }
+  main { padding: 20px 24px 40px; display: grid; gap: 20px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px; min-width: 0; }
+  .row { display: grid; grid-template-columns: 1fr 1.4fr; gap: 20px; }
+  @media (max-width: 900px) { .row, .explorer { grid-template-columns: 1fr !important; } }
+
+  /* pipeline flow */
+  .flow { display: flex; align-items: stretch; flex-wrap: wrap; gap: 6px; }
+  .stage { flex: 1 1 130px; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+    background: var(--panel); }
+  .stage .n { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stage .t { font-weight: 600; font-size: 12px; }
+  .stage .d { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .stage .drop { color: var(--bad); font-size: 12px; margin-top: 4px; }
+  .stage.ok { background: var(--ok-bg); border-color: transparent; }
+  .stage.ok .n, .stage.ok .t { color: var(--ok); }
+  .stage.bad { background: var(--bad-bg); border-color: transparent; }
+  .stage.bad .n, .stage.bad .t { color: var(--bad); }
+  .arrow { align-self: center; color: var(--muted); font-size: 18px; }
+  .recon { margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .recon b { color: var(--ok); }
+  .recon b.no { color: var(--bad); }
+
+  /* tables */
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; }
+  td.num, th.num { text-align: right; width: 70px; }
+  .bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden;
+    display: flex; min-width: 60px; }
+  .bar i { display: block; height: 100%; }
+  .bar .s { background: var(--ok); } .bar .q { background: var(--bad); }
+  .reason { padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .reason:last-child { border-bottom: 0; }
+  .reason code { font-size: 12px; }
+  .reason .ids { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .empty { color: var(--muted); font-style: italic; }
+
+  /* chips */
+  .chip { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11px;
+    font-weight: 600; white-space: nowrap; }
+  .chip.kind { background: var(--accent-bg); color: var(--accent); }
+  .chip.stored { background: var(--ok-bg); color: var(--ok); }
+  .chip.quarantined { background: var(--bad-bg); color: var(--bad); }
+  .chip.warn { background: var(--warn-bg); color: var(--warn); }
+  button.link { border: 0; background: var(--code-bg); color: var(--accent); cursor: pointer;
+    font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 1px 6px;
+    border-radius: 4px; }
+
+  /* explorer */
+  .explorer { display: grid; grid-template-columns: 280px 1fr; gap: 16px; min-height: 500px; }
+  .list { border-right: 1px solid var(--line); padding-right: 12px; min-width: 0; }
+  .list input[type=search] { width: 100%; padding: 7px 9px; border-radius: 6px; font: inherit;
+    border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+  .list label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0; }
+  .items { max-height: 640px; overflow: auto; }
+  .item { display: block; width: 100%; text-align: left; border: 0; background: none;
+    color: var(--ink); font: inherit; padding: 7px 8px; border-radius: 6px; cursor: pointer; }
+  .item:hover { background: var(--code-bg); }
+  .item.on { background: var(--accent-bg); }
+  .item .nm { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item .sub { font-size: 11px; color: var(--muted); }
+  .detail { min-width: 0; }
+  .detail h3 { margin: 0 0 2px; font-size: 16px; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px;
+    margin-top: 14px; }
+  @media (max-width: 1200px) { .cols { grid-template-columns: 1fr; } }
+  pre { margin: 0; background: var(--code-bg); border-radius: 6px; padding: 10px; overflow: auto;
+    font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  pre.raw { max-height: 640px; }
+  .j-k { color: var(--k); } .j-s { color: var(--s); } .j-n { color: var(--n); }
+  .j-b { color: var(--b); }
+
+  /* tree */
+  .node { margin: 4px 0; }
+  .node > details > summary { list-style: none; cursor: pointer; display: flex; gap: 8px;
+    align-items: center; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--line);
+    background: var(--panel); }
+  .node > details > summary::-webkit-details-marker { display: none; }
+  .node > details > summary:hover { border-color: var(--accent); }
+  .node.quarantined > details > summary { border-color: var(--bad); background: var(--bad-bg); }
+  .node .lbl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; }
+  .node .id { color: var(--muted); font: 11px ui-monospace, Menlo, monospace; }
+  .node details[open] > pre { margin-top: 4px; }
+  .children { margin-left: 14px; padding-left: 10px; border-left: 2px solid var(--line); }
+  .errs { margin: 4px 0 0 8px; padding: 0; list-style: none; color: var(--bad); font-size: 12px; }
+  .errs li::before { content: "✕ "; }
+  .banner { padding: 10px 12px; border-radius: 8px; background: var(--bad-bg); color: var(--bad);
+    margin-top: 12px; }
+  .hint { color: var(--muted); font-size: 12px; margin: 0 0 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Transform report</h1>
+  <div class="meta" id="meta"></div>
+  <nav class="tabs" id="tabs"></nav>
+</header>
+<main id="main"></main>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+const DATA = JSON.parse(document.getElementById("data").textContent);
+const state = { src: 0, rec: 0, q: "", problems: false };
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const short = (id) => (id || "").slice(0, 8);
+
+function json(v) {
+  const s = JSON.stringify(v, null, 2).replace(/[&<>]/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+  return s.replace(
+    /("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(\.\d+)?([eE][+-]?\d+)?)/g,
+    (m) => {
+      let c = "j-n";
+      if (m[0] === '"') c = /:$/.test(m) ? "j-k" : "j-s";
+      else if (/true|false|null/.test(m)) c = "j-b";
+      return `<span class="${c}">${m}</span>`;
+    });
+}
+
+function render() {
+  const src = DATA.sources[state.src];
+  document.getElementById("meta").textContent =
+    `Generated ${DATA.generated} · ran ingest.pipeline.run.run_ingest into an in-memory store`;
+  document.getElementById("tabs").innerHTML = DATA.sources.map((s, i) =>
+    `<button class="${i === state.src ? "on" : ""}" data-src="${i}">${esc(s.source.toUpperCase())}
+      <span class="chip ${s.counts.quarantined ? "quarantined" : "stored"}">${s.counts.quarantined} quarantined</span>
+    </button>`).join("");
+  if (!src) { document.getElementById("main").innerHTML = '<p class="empty">No sources ran.</p>'; return; }
+  document.getElementById("main").innerHTML =
+    flow(src) + `<div class="row">${kinds(src)}${reasons(src)}</div>` + explorer(src);
+  bind();
+}
+
+function flow(src) {
+  const s = src.stages, c = src.counts;
+  const afterMap = s.objects, afterVal = afterMap - s.validation, afterPar = afterVal - s.parents;
+  const st = (t, n, d, drop) => `<div class="stage"><div class="t">${t}</div><div class="n">${n}</div>
+    <div class="d">${d}</div>${drop ? `<div class="drop">${drop}</div>` : ""}</div>`;
+  const ok = c.received === c.stored + c.quarantined;
+  return `<section class="panel"><h2>Pipeline</h2><div class="flow">
+    ${st("1 · Fetch", s.records, "source records read from " + src.files.length + " file(s)")}
+    <span class="arrow">→</span>
+    ${st("2 · Map", s.objects, "HSDS objects made by " + esc(src.source) + ".map()",
+         s.map_failed ? `✕ ${s.map_failed} record(s) could not be mapped` : "")}
+    <span class="arrow">→</span>
+    ${st("3 · Validate", afterVal, "pass HSDS schema + quality rules",
+         s.validation ? `✕ ${s.validation} failed` : "")}
+    <span class="arrow">→</span>
+    ${st("4 · Parents", afterPar, "parent exists and passed",
+         s.parents ? `✕ ${s.parents} parent failed or missing` : "")}
+    <span class="arrow">→</span>
+    ${st("5 · Store", s.kept, "upserted into HSDS tables",
+         s.store ? `✕ ${s.store} rejected by database` : "")}
+    <span class="arrow">⇒</span>
+    <div class="stage ok"><div class="t">Stored</div><div class="n">${s.kept}</div>
+      <div class="d">${s.unique_rows} unique rows (records share some objects)</div></div>
+    <div class="stage bad"><div class="t">Quarantined</div><div class="n">${s.quarantined + s.map_failed}</div>
+      <div class="d">held with reasons, never dropped</div></div>
+  </div>
+  <div class="recon">IngestCounts: received ${c.received} = stored ${c.stored} + quarantined ${c.quarantined}
+    <b class="${ok ? "" : "no"}">${ok ? "✓ reconciled" : "✕ does not add up"}</b></div></section>`;
+}
+
+function kinds(src) {
+  const max = Math.max(1, ...src.kinds.map((k) => k.stored + k.quarantined));
+  const rows = src.kinds.map((k) => `<tr><td><span class="chip kind">${esc(k.kind)}</span></td>
+    <td class="num">${k.stored}</td><td class="num">${k.quarantined || ""}</td>
+    <td><div class="bar" style="width:${Math.max(8, 100 * (k.stored + k.quarantined) / max)}%">
+      <i class="s" style="flex:${k.stored}"></i><i class="q" style="flex:${k.quarantined}"></i></div></td></tr>`);
+  return `<section class="panel"><h2>HSDS tables</h2><table>
+    <tr><th>table</th><th class="num">stored</th><th class="num">quar.</th><th></th></tr>
+    ${rows.join("")}</table></section>`;
+}
+
+function reasons(src) {
+  const body = src.reasons.length ? src.reasons.map((r) => `<div class="reason">
+      <span class="chip kind">${esc(r.kind)}</span> <code>${esc(r.reason)}</code>
+      <div class="ids">${r.records.map((id) =>
+        `<button class="link" data-goto="${esc(id)}">${esc(id)}</button>`).join("")}</div></div>`).join("")
+    : '<p class="empty">Nothing quarantined.</p>';
+  return `<section class="panel"><h2>Quarantine reasons</h2>
+    <p class="hint">Grouped by message; click a record to open it below.</p>${body}</section>`;
+}
+
+function visible(src) {
+  const q = state.q.toLowerCase();
+  return src.records.map((r, i) => [r, i]).filter(([r]) =>
+    (!state.problems || r.problems || r.failed) &&
+    (!q || r.label.toLowerCase().includes(q) || r.native_id.toLowerCase().includes(q)));
+}
+
+function explorer(src) {
+  const items = visible(src).map(([r, i]) => `<button class="item ${i === state.rec ? "on" : ""}" data-rec="${i}">
+      <span class="nm">${esc(r.label)}</span>
+      <span class="sub">${esc(r.native_id)} · ${r.objects} objects
+        ${r.failed ? '<span class="chip quarantined">unmappable</span>' : ""}
+        ${r.problems ? `<span class="chip warn">${r.problems} quarantined</span>` : ""}</span>
+    </button>`).join("");
+  const r = src.records[state.rec];
+  return `<section class="panel"><h2>Record explorer</h2><div class="explorer">
+    <div class="list">
+      <input type="search" id="q" placeholder="Search name or id" value="${esc(state.q)}">
+      <label><input type="checkbox" id="problems" ${state.problems ? "checked" : ""}> only records with problems</label>
+      <div class="items">${items || '<p class="empty">No matches.</p>'}</div>
+    </div>
+    <div class="detail">${r ? detail(r) : ""}</div>
+  </div></section>`;
+}
+
+function detail(r) {
+  const tree = r.tree.length ? r.tree.map(node).join("") : '<p class="empty">No HSDS objects.</p>';
+  return `<h3>${esc(r.label)}</h3><div class="meta">native id ${esc(r.native_id)} · ${r.objects} HSDS objects</div>
+    ${r.failed ? `<div class="banner">Whole record quarantined: ${r.failed.map(esc).join("; ")}</div>` : ""}
+    <div class="cols">
+      <div><h2>Source record (raw)</h2><pre class="raw">${json(r.raw)}</pre></div>
+      <div><h2>HSDS objects</h2>
+        <p class="hint">Nested by parent link. Click an object to see it as stored.
+          <button class="link" id="expand">expand all</button></p>${tree}</div>
+    </div>`;
+}
+
+function node(n) {
+  return `<div class="node ${n.status}"><details><summary>
+      <span class="chip kind">${esc(n.kind)}</span><span class="lbl">${esc(n.label)}</span>
+      <span class="id">${short(n.id)}</span><span class="chip ${n.status}">${n.status}</span>
+    </summary><pre>${json(n.obj)}</pre></details>
+    ${n.errors.length ? `<ul class="errs">${n.errors.map((e) => `<li>${esc(e)}</li>`).join("")}</ul>` : ""}
+    ${n.children.length ? `<div class="children">${n.children.map(node).join("")}</div>` : ""}</div>`;
+}
+
+function bind() {
+  document.querySelectorAll("[data-src]").forEach((b) => b.onclick = () => {
+    state.src = +b.dataset.src; state.rec = 0; render(); });
+  document.querySelectorAll("[data-rec]").forEach((b) => b.onclick = () => {
+    state.rec = +b.dataset.rec; render(); });
+  document.querySelectorAll("[data-goto]").forEach((b) => b.onclick = () => {
+    const recs = DATA.sources[state.src].records;
+    state.rec = Math.max(0, recs.findIndex((r) => r.native_id === b.dataset.goto));
+    state.q = ""; render();
+    document.querySelector(".explorer").scrollIntoView({ behavior: "smooth" });
+  });
+  const q = document.getElementById("q");
+  if (q) q.oninput = () => {
+    const pos = q.selectionStart; state.q = q.value; render();
+    const n = document.getElementById("q"); n.focus(); n.setSelectionRange(pos, pos);
+  };
+  const p = document.getElementById("problems");
+  if (p) p.onchange = () => { state.problems = p.checked; render(); };
+  const ex = document.getElementById("expand");
+  if (ex) ex.onclick = () => document.querySelectorAll(".detail details").forEach((d) => d.open = true);
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 name: CI
 
-# Guardrail gates. All four must pass before a PR can merge into protected main.
+# Guardrail gates. All must pass before a PR can merge into protected main.
 # Uses the uv + pyproject.toml toolchain established in the repo (see Makefile:
 # `make setup/test/lint`). Spec: Requirements 3.1, 3.2, 3.3, 44.1.
 
@@ -89,3 +89,30 @@ jobs:
         run: uv run ruff check .
       - name: Ruff format check
         run: uv run ruff format --check .
+
+  ui:
+    name: Gate 5 — UI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - name: Syntax check
+        run: for f in *.js; do node --check "$f"; done
+      - run: npm test
+
+  images:
+    name: Gate 6 — Images and infrastructure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f api/Dockerfile -t resource-engine:ci .
+      - run: docker build -f maintenance/Dockerfile -t resource-engine-worker:ci .
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform -chdir=infra/terraform init -backend=false
+      - run: terraform -chdir=infra/terraform validate

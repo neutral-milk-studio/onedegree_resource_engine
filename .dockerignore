@@ -1,0 +1,15 @@
+.git
+.venv
+var
+export
+**/__pycache__
+**/.pytest_cache
+.ruff_cache
+ui/node_modules
+ui/*.test.js
+data/generated
+data/raw/odrs/full
+.env
+.env.*
+infra
+docs
