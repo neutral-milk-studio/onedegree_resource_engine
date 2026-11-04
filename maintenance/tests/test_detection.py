@@ -69,6 +69,10 @@ from maintenance.worker.run_check import (
     CheckLogEntry,
     ConfigError,
     InMemoryCheckLog,
+    InMemoryReportSource,
+    ReportSummary,
+    ReviewFlag,
+    UserReport,
     WorkerConfig,
     WorkerSetupError,
     due_records,
@@ -76,6 +80,7 @@ from maintenance.worker.run_check import (
     page_hash,
     parse_iso,
     record_hash,
+    report_trigger,
     run_checks,
     website_source_for,
 )
@@ -3246,8 +3251,6 @@ def test_a_finding_the_sink_refuses_is_reported_and_the_check_still_logged():
 
 
 def test_bad_run_arguments_are_refused():
-    with pytest.raises(NotImplementedError, match="RE_WORKER_MODE=reports"):
-        sweep(config=WorkerConfig(mode="reports"))
     with pytest.raises(ValueError, match="limit"):
         sweep(limit=-1)
     with pytest.raises(ValueError, match="timezone-aware"):
@@ -3747,3 +3750,256 @@ def test_hashes_without_a_reviewed_category_never_skip():
     log.record(stale)
     summary, _, _ = sweep(seed_store(EASTSIDE_ID), log=log)
     assert (summary.model_calls, summary.skipped_unchanged) == (1, 0)
+
+
+# --------------------------------------------------------------------------- #
+# Task 8: report-triggered review
+# --------------------------------------------------------------------------- #
+
+REPORTS = WorkerConfig(mode="reports")
+
+
+def reported(service_id, kind, count, *, at=NOW - timedelta(days=1), start=0):
+    """``count`` distinct people reporting ``service_id`` as ``kind``."""
+    return [UserReport(service_id, f"person-{start + n}", kind, iso(at)) for n in range(count)]
+
+
+def reviewed_last_month(service_ids=(EASTSIDE_ID,), invoke=None):
+    """A check log where these records were reviewed 20 days ago (past the cooldown)."""
+    log = InMemoryCheckLog()
+    sweep(seed_store(*service_ids), log=log, invoke=invoke, clock=Clock(NOW - timedelta(days=20)))
+    return log
+
+
+def report_run(reports, *, log=None, store=None, invoke=None, source=None, config=REPORTS):
+    log = log if log is not None else reviewed_last_month()
+    return sweep(
+        store or seed_store(EASTSIDE_ID),
+        log=log,
+        invoke=invoke,
+        source=source,
+        config=config,
+        report_source=InMemoryReportSource(reports),
+    )
+
+
+@pytest.mark.parametrize(
+    ("severe", "inaccurate", "expected"),
+    [(2, 4, None), (3, 0, "severe"), (0, 5, "inaccuracy"), (3, 5, "severe"), (2, 5, "inaccuracy")],
+)
+def test_report_rules_and_severe_wins(severe, inaccurate, expected):
+    trigger = report_trigger(ReportSummary("s", severe, inaccurate), WorkerConfig())
+    assert (trigger.value if trigger else None) == expected
+
+
+def test_reports_count_each_person_once_and_only_after_the_since_time():
+    source = InMemoryReportSource(
+        [
+            *reported("s", "unavailable", 2),
+            UserReport("s", "person-0", "deletion", iso(NOW)),  # same person, other kind
+            UserReport("s", "person-9", "unavailable", iso(NOW - timedelta(days=40))),  # old
+            *reported("s", "inaccurate", 3),
+            UserReport("other", "person-0", "unavailable", iso(NOW)),
+        ]
+    )
+    counts = source.summary("s", iso(NOW - timedelta(days=30)))
+    assert (counts.severe_reporters, counts.inaccuracy_reporters) == (2, 3)
+    assert source.services_with_reports(iso(NOW - timedelta(days=30))) == ["s", "other"]
+
+
+@pytest.mark.parametrize(
+    ("kind", "reporter", "message"),
+    [("spam", "p", "report kind"), ("inaccurate", " ", "reporter identity")],
+)
+def test_a_report_needs_a_known_kind_and_a_reporter(kind, reporter, message):
+    with pytest.raises(ValueError, match=message):
+        UserReport("s", reporter, kind, iso(NOW))
+
+
+def test_severe_reports_force_a_fresh_review_and_raise_the_legitimacy_flag():
+    invoker = SeedInvoker()
+    log = reviewed_last_month()
+    summary, _, _ = report_run(reported(EASTSIDE_ID, "unavailable", 3), log=log, invoke=invoker)
+    entry = log.entries[-1]
+    assert summary.triggered == {"severe": 1} and summary.model_calls == 1  # hash bypassed
+    assert not entry.skipped_unchanged and entry.flags == [ReviewFlag.LEGITIMACY_REVIEW]
+    assert entry.category is Category.VERIFIED  # the review decides, not the reports
+    assert entry.reports == {
+        "since": iso(NOW - timedelta(days=20)),
+        "severe_reporters": 3,
+        "inaccuracy_reporters": 0,
+        "trigger": "severe",
+    }
+
+
+def test_severe_reports_on_a_site_that_wont_load_still_raise_the_flag():
+    log = reviewed_last_month()
+    summary, _, _ = report_run(
+        reported(EASTSIDE_ID, "deletion", 3), log=log, source=Pages({EASTSIDE_URL: DOWN})
+    )
+    entry = log.entries[-1]
+    assert entry.category is Category.CHECK_FAILED
+    assert entry.flags == [ReviewFlag.LEGITIMACY_REVIEW] and summary.flags == {
+        "legitimacy_review": 1
+    }
+
+
+def test_inaccuracy_reports_on_an_unchanged_page_skip_the_model_and_raise_a_flag():
+    invoker = SeedInvoker()
+    log = reviewed_last_month()
+    summary, _, _ = report_run(reported(EASTSIDE_ID, "inaccurate", 5), log=log, invoke=invoker)
+    entry = log.entries[-1]
+    assert entry.skipped_unchanged and summary.model_calls == 0
+    assert entry.flags == [ReviewFlag.REPORTS_ON_UNCHANGED_PAGE]
+    assert entry.category is Category.VERIFIED and entry.reports["trigger"] == "inaccuracy"
+
+
+def test_inaccuracy_reports_on_a_changed_page_get_the_standard_review():
+    log = reviewed_last_month()
+    changed = Pages({EASTSIDE_URL: ok(eastside_page() + "<p>New hours.</p>")})
+    summary, _, _ = report_run(reported(EASTSIDE_ID, "inaccurate", 5), log=log, source=changed)
+    entry = log.entries[-1]
+    assert summary.model_calls == 1 and not entry.skipped_unchanged and entry.flags == []
+
+
+def test_reports_below_both_thresholds_trigger_nothing():
+    summary, _, _ = report_run(
+        [
+            *reported(EASTSIDE_ID, "unavailable", 2),
+            *reported(EASTSIDE_ID, "inaccurate", 4, start=10),
+        ]
+    )
+    assert (summary.due, summary.below_threshold, summary.checked) == (0, 1, 0)
+
+
+def test_no_report_triggered_check_within_the_cooldown():
+    log = InMemoryCheckLog()
+    sweep(seed_store(EASTSIDE_ID), log=log, clock=Clock(NOW - timedelta(days=6)))
+    summary, _, _ = report_run(reported(EASTSIDE_ID, "unavailable", 3), log=log)
+    assert (summary.due, summary.cooling_down) == (0, [EASTSIDE_ID])
+
+
+def test_reports_reset_after_the_check_they_triggered():
+    log = reviewed_last_month()
+    reports = reported(EASTSIDE_ID, "unavailable", 3)
+    first, _, _ = report_run(reports, log=log)
+    assert first.checked == 1
+    # A week later the same reports are older than the last check, so they no longer count.
+    later = sweep(
+        seed_store(EASTSIDE_ID),
+        log=log,
+        clock=Clock(NOW + timedelta(days=8)),
+        config=REPORTS,
+        report_source=InMemoryReportSource(reports),
+    )[0]
+    assert (later.due, later.below_threshold) == (0, 1)
+
+
+def test_reports_older_than_the_window_dont_count_for_a_never_checked_record():
+    old = reported(EASTSIDE_ID, "unavailable", 3, at=NOW - timedelta(days=31))
+    summary, _, _ = report_run(old, log=InMemoryCheckLog())
+    assert summary.due == 0
+
+
+def test_severe_records_are_checked_before_inaccuracy_ones():
+    log = reviewed_last_month((EASTSIDE_ID, BAYVIEW_ID))
+    reports = [*reported(EASTSIDE_ID, "inaccurate", 5), *reported(BAYVIEW_ID, "deletion", 3)]
+    report_run(reports, log=log, store=seed_store(EASTSIDE_ID, BAYVIEW_ID))
+    assert [e.service_id for e in log.entries[-2:]] == [BAYVIEW_ID, EASTSIDE_ID]
+
+
+def test_the_monthly_sweep_also_applies_reports_since_the_last_check():
+    log = InMemoryCheckLog()
+    sweep(seed_store(EASTSIDE_ID), log=log, clock=Clock(NOW - MONTH))
+    summary, _, _ = sweep(
+        seed_store(EASTSIDE_ID),
+        log=log,
+        report_source=InMemoryReportSource(reported(EASTSIDE_ID, "unavailable", 3)),
+    )
+    assert summary.triggered == {"severe": 1} and summary.model_calls == 1
+    assert log.entries[-1].flags == [ReviewFlag.LEGITIMACY_REVIEW]
+
+
+def test_a_reported_record_without_a_website_is_logged_with_the_flag():
+    store = FakeHsdsStore([{**SEED_SERVICES[EASTSIDE_ID], "url": None}])
+    log = InMemoryCheckLog()
+    summary, _, _ = report_run(reported(EASTSIDE_ID, "unavailable", 3), log=log, store=store)
+    entry = log.entries[-1]
+    assert summary.no_website == [EASTSIDE_ID]
+    assert entry.flags == [ReviewFlag.LEGITIMACY_REVIEW] and entry.reports["severe_reporters"] == 3
+
+
+def test_thresholds_window_and_cooldown_come_from_the_config():
+    config = WorkerConfig(mode="reports", severe_report_threshold=1, report_cooldown_days=0)
+    summary, _, _ = report_run(reported(EASTSIDE_ID, "unavailable", 1), config=config)
+    assert summary.triggered == {"severe": 1}
+
+
+def test_a_report_source_outage_stops_the_run():
+    class Down:
+        def services_with_reports(self, since):
+            raise ConnectionError("reports database is down")
+
+    with pytest.raises(WorkerSetupError, match="could not read user reports"):
+        sweep(config=REPORTS, report_source=Down())
+
+
+def test_a_report_source_that_fails_while_counting_names_the_record():
+    class CountFails(InMemoryReportSource):
+        def summary(self, service_id, since):
+            raise ConnectionError("reports database is down")
+
+    with pytest.raises(WorkerSetupError, match="could not read user reports") as raised:
+        sweep(
+            seed_store(EASTSIDE_ID),
+            config=REPORTS,
+            report_source=CountFails([UserReport(EASTSIDE_ID, "p-0", "unavailable", iso(NOW))]),
+        )
+    assert raised.value.summary.stopped_at == EASTSIDE_ID
+
+
+def test_reports_never_change_a_record():
+    store = seed_store(EASTSIDE_ID)
+    before = copy.deepcopy(store.services)
+    report_run(reported(EASTSIDE_ID, "deletion", 3), store=store)
+    assert store.services == before
+
+
+def test_odd_ids_from_the_report_source_are_ignored():
+    class Odd(InMemoryReportSource):
+        def services_with_reports(self, since):
+            return [EASTSIDE_ID, EASTSIDE_ID, "", None, 7]
+
+    summary, _, _ = sweep(
+        seed_store(EASTSIDE_ID),
+        log=reviewed_last_month(),
+        config=REPORTS,
+        report_source=Odd(reported(EASTSIDE_ID, "unavailable", 3)),
+    )
+    assert (summary.due, summary.checked) == (1, 1)
+
+
+# Feature: resource-engine, Detection D2: severe reports always get a fresh review and the flag
+@given(
+    page=st.sampled_from(["same", "changed", "down", "empty"]),
+    severe=st.integers(min_value=3, max_value=6),
+    inaccurate=st.integers(min_value=0, max_value=8),
+)
+def test_severe_reports_always_mean_a_fresh_look_and_the_legitimacy_flag(page, severe, inaccurate):
+    pages = {
+        "same": ok(eastside_page()),
+        "changed": ok(eastside_page() + "<p>Changed.</p>"),
+        "down": DOWN,
+        "empty": ok("<script>x()</script>"),
+    }
+    log = reviewed_last_month()
+    reports = [
+        *reported(EASTSIDE_ID, "unavailable", severe),
+        *reported(EASTSIDE_ID, "inaccurate", inaccurate, start=100),
+    ]
+    summary, _, _ = report_run(reports, log=log, source=Pages({EASTSIDE_URL: pages[page]}))
+    entry = log.entries[-1]
+    assert summary.triggered == {"severe": 1}
+    assert not entry.skipped_unchanged
+    assert entry.flags == [ReviewFlag.LEGITIMACY_REVIEW]
+    assert entry.category is not None

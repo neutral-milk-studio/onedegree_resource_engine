@@ -7,6 +7,14 @@ Review need: a page and record that are both unchanged since the last completed 
 skip the model and carry that result forward. Anything else gets the standard AI review,
 including a record whose page has never been reviewed: records come from agency databases
 that vet their organizations, so a first review needs no extra human sign-off.
+
+User reports (counted per distinct reporter, since the last check, within the window):
+- severe (unavailable or deletion) at the threshold: a fresh AI review even on an unchanged
+  page, and the legitimacy flag. The category is whatever the review finds.
+- inaccuracy at the threshold: an unchanged page skips the model and raises the
+  reports-on-unchanged-page flag; a changed page gets the standard AI review.
+Severe wins when both cross. The ``reports`` mode checks only reported records, and not
+within the cooldown after a record's last check.
 Spec: Requirements 18.1, 18.4, 19.5, 20, 21, 22, 23.
 """
 
@@ -156,6 +164,90 @@ class ReviewFlag(str, Enum):  # noqa: UP042 - str+Enum matches contracts/finding
 REVIEW_VERSION = "1"
 
 
+REPORT_KINDS = ("inaccurate", "unavailable", "deletion")
+SEVERE_KINDS = ("unavailable", "deletion")
+
+
+class ReportTrigger(str, Enum):  # noqa: UP042 - str+Enum matches contracts/findings.py
+    SEVERE = "severe"  # unavailable or deletion reports at the threshold
+    INACCURACY = "inaccuracy"  # inaccurate-information reports at the threshold
+
+
+@dataclass
+class ReportSummary:
+    """Distinct reporters of a record since a time. Each person counts once per bucket."""
+
+    service_id: str
+    severe_reporters: int  # reported it unavailable or for deletion
+    inaccuracy_reporters: int  # reported inaccurate information
+
+
+class ReportSource(Protocol):
+    def services_with_reports(self, since: str) -> list[str]:
+        """Ids of the services reported after ``since`` (ISO 8601)."""
+        ...
+
+    def summary(self, service_id: str, since: str) -> ReportSummary:
+        """Distinct reporters of one service after ``since``."""
+        ...
+
+
+class NoReports:
+    """The default: no user reports, so only the monthly sweep runs checks."""
+
+    def services_with_reports(self, since: str) -> list[str]:
+        return []
+
+    def summary(self, service_id: str, since: str) -> ReportSummary:
+        return ReportSummary(service_id, 0, 0)
+
+
+@dataclass(frozen=True)
+class UserReport:
+    service_id: str
+    reporter_id: str  # one identity per person, so a person reporting twice counts once
+    kind: str  # one of REPORT_KINDS
+    reported_at: str  # ISO 8601
+
+    def __post_init__(self) -> None:
+        if self.kind not in REPORT_KINDS:
+            raise ValueError(f"report kind must be one of {', '.join(REPORT_KINDS)}")
+        if not self.reporter_id.strip():
+            raise ValueError("a report needs a reporter identity, or it can't be counted once")
+
+
+class InMemoryReportSource:
+    """Reports held in memory: for tests, the demo, and as the counting rules to match."""
+
+    def __init__(self, reports: list[UserReport] | None = None) -> None:
+        self.reports = list(reports or [])
+
+    def add(self, report: UserReport) -> None:
+        self.reports.append(report)
+
+    def _after(self, since: str) -> list[UserReport]:
+        start = parse_iso(since)
+        return [r for r in self.reports if parse_iso(r.reported_at) > start]
+
+    def services_with_reports(self, since: str) -> list[str]:
+        return list(dict.fromkeys(r.service_id for r in self._after(since)))
+
+    def summary(self, service_id: str, since: str) -> ReportSummary:
+        mine = [r for r in self._after(since) if r.service_id == service_id]
+        severe = {r.reporter_id for r in mine if r.kind in SEVERE_KINDS}
+        inaccurate = {r.reporter_id for r in mine if r.kind == "inaccurate"}
+        return ReportSummary(service_id, len(severe), len(inaccurate))
+
+
+def report_trigger(summary: ReportSummary, config: WorkerConfig) -> ReportTrigger | None:
+    """Which report rule a record meets, if any. Severe wins when both are met."""
+    if summary.severe_reporters >= config.severe_report_threshold:
+        return ReportTrigger.SEVERE
+    if summary.inaccuracy_reporters >= config.inaccuracy_report_threshold:
+        return ReportTrigger.INACCURACY
+    return None
+
+
 @dataclass
 class CheckLogEntry:
     """One check of one record: when, the result, and the model log (R18.4, R20.2)."""
@@ -169,6 +261,7 @@ class CheckLogEntry:
     note: str = ""  # why the check ended the way it did, for operators
     flags: list[ReviewFlag] = field(default_factory=list)
     skipped_unchanged: bool = False  # no model call: page and record unchanged since review
+    reports: dict[str, Any] = field(default_factory=dict)  # the report counts that applied
     model_called: bool = False  # fact extraction was attempted
     # The last completed AI review, carried from check to check until a new one completes.
     # A failed fetch or a failed model call keeps them, so a passing outage doesn't cost a
@@ -286,6 +379,9 @@ class RunSummary:
     model_calls: int = 0  # fact extractions attempted
     skipped_unchanged: int = 0  # checks that carried the last review forward, no model call
     flags: Counter[str] = field(default_factory=Counter)  # review flags raised
+    triggered: Counter[str] = field(default_factory=Counter)  # checks run under a report rule
+    below_threshold: int = 0  # reported records whose reports don't meet a rule yet
+    cooling_down: list[str] = field(default_factory=list)  # reported, but checked too recently
     stopped_at: str | None = None  # the record being checked when a setup error stopped the run
 
 
@@ -390,12 +486,14 @@ def check_record(
     invoke: Invoker | None,
     previous: CheckLogEntry | None,
     checked_at: str,
+    trigger: ReportTrigger | None = None,
 ) -> tuple[Comparison | None, CheckLogEntry]:
     """Check one record: fetch, decide whether it needs an AI review, extract, compare.
 
     Returns the comparison, or None when the page and record are unchanged since the last
     completed review: then nothing new is found, and ``entry.category`` carries that
-    review's result forward. Raises only for setup errors.
+    review's result forward. Severe reports always get a fresh review; inaccuracy reports
+    on an unchanged page are skipped with a flag for a person. Raises only for setup errors.
     """
     site, note = _fetch(website_source, url)
     entry = _new_entry(record["id"], checked_at, url, previous)
@@ -406,12 +504,17 @@ def check_record(
     if readable:
         page = page_hash(site.content or "")
         stored = record_hash(record)
-        if (
+        unchanged = (
             entry.content_hash is not None
             and entry.content_hash == page
             and entry.record_hash == stored
             and entry.reviewed_category is not None
-        ):
+        )
+        if unchanged and trigger is not ReportTrigger.SEVERE:
+            if trigger is ReportTrigger.INACCURACY:
+                # People say it's wrong, but the page says what it said at the last review,
+                # so another AI review would find the same. A person has to look.
+                entry.flags.append(ReviewFlag.REPORTS_ON_UNCHANGED_PAGE)
             entry.skipped_unchanged = True
             entry.category = entry.reviewed_category
             entry.note = f"page and record unchanged since the review at {entry.reviewed_at}"
@@ -463,6 +566,7 @@ def run_checks(
     invoke: Invoker | None = None,
     now: Callable[[], datetime] = _utc_now,
     limit: int | None = None,
+    report_source: ReportSource | None = None,
 ) -> RunSummary:
     """Check every record that is due, save the findings, and log each check.
 
@@ -470,24 +574,34 @@ def run_checks(
     ``invoke`` is the model call (Bedrock by default). ``limit`` caps the checks in one run;
     the rest stay due for the next run.
 
+    ``config.mode`` picks the records: ``sweep`` checks those due by age, ``reports`` those
+    whose user reports meet a rule. Either way, reports since a record's last check decide
+    how it is checked (see the module docstring). ``report_source`` defaults to no reports.
+
     Raises ``WorkerSetupError`` when every record would fail the same way. A problem with
     one record (a page that won't load, an unusable model answer, a bug hit by one odd
     record) becomes a ``check_failed`` finding for that record, and the run continues.
     """
     config = config or WorkerConfig()
-    if config.mode != "sweep":
-        raise NotImplementedError(f"{WorkerConfig.ENV['mode']}={config.mode} is not built yet")
+    reports = report_source or NoReports()
     if limit is not None and limit < 0:
         raise ValueError("limit can't be negative")
 
     summary = RunSummary()
-    due = due_records(
-        store,
-        check_log,
-        now=_aware(now()),
-        interval_days=config.check_interval_days,
-        summary=summary,
-    )
+    started = _aware(now())
+    if config.mode == "reports":
+        due, triggers = reported_records(
+            reports, check_log, now=started, config=config, summary=summary
+        )
+    else:
+        due = due_records(
+            store,
+            check_log,
+            now=started,
+            interval_days=config.check_interval_days,
+            summary=summary,
+        )
+        triggers = {}
     if limit is not None:
         due = due[:limit]
     summary.due = len(due)
@@ -498,6 +612,14 @@ def run_checks(
             summary.not_found.append(service_id)
             continue
         checked_at = iso(_aware(now()))
+        if config.mode == "reports":
+            trigger, counts = triggers[service_id]
+        else:
+            trigger, counts = _reports_for(
+                reports, check_log, service_id, now=started, config=config, summary=summary
+            )
+        if trigger is not None:
+            summary.triggered[trigger.value] += 1
         url = record.get("url").strip() if isinstance(record.get("url"), str) else ""
         if not url:
             # A finding needs a url for its evidence, so a record with no website can't get
@@ -505,6 +627,7 @@ def run_checks(
             summary.no_website.append(service_id)
             entry = _new_entry(service_id, checked_at, None, check_log.last(service_id))
             entry.note = "the record has no website url to check"
+            _apply_reports(entry, trigger, counts, summary)
             _persist(check_log.record, entry, summary=summary, service_id=service_id)
             continue
 
@@ -517,6 +640,7 @@ def run_checks(
                 invoke=invoke,
                 previous=previous,
                 checked_at=checked_at,
+                trigger=trigger,
             )
         except Exception as exc:
             if _is_setup_error(exc):
@@ -535,10 +659,9 @@ def run_checks(
                 checked_at=checked_at,
             )
 
+        _apply_reports(entry, trigger, counts, summary)
         if entry.model_called:
             summary.model_calls += 1
-        for flag in entry.flags:
-            summary.flags[flag.value] += 1
         if comparison is None:  # unchanged since the last review: carried forward
             _persist(check_log.record, entry, summary=summary, service_id=service_id)
             summary.checked += 1
@@ -569,6 +692,99 @@ def run_checks(
         summary.checked += 1
         summary.categories[comparison.category.value] += 1
     return summary
+
+
+def _readable_or_none(entry: CheckLogEntry | None) -> datetime | None:
+    return _readable_time(entry.checked_at) if entry is not None else None
+
+
+def _reports_since(last: datetime | None, *, now: datetime, config: WorkerConfig) -> datetime:
+    """Reports count after the last check, and never from before the window."""
+    window_start = now - timedelta(days=config.report_window_days)
+    return max(last, window_start) if last is not None else window_start
+
+
+def _reports_for(
+    reports: ReportSource,
+    check_log: CheckLog,
+    service_id: str,
+    *,
+    now: datetime,
+    config: WorkerConfig,
+    summary: RunSummary,
+) -> tuple[ReportTrigger | None, dict[str, Any]]:
+    """The report rule a record meets now, and the counts behind it."""
+    since = iso(
+        _reports_since(_readable_or_none(check_log.last(service_id)), now=now, config=config)
+    )
+    counts = _ask(reports.summary, service_id, since, summary=summary, service_id=service_id)
+    trigger = report_trigger(counts, config)
+    return trigger, {
+        "since": since,
+        "severe_reporters": counts.severe_reporters,
+        "inaccuracy_reporters": counts.inaccuracy_reporters,
+        "trigger": trigger.value if trigger else None,
+    }
+
+
+def reported_records(
+    reports: ReportSource,
+    check_log: CheckLog,
+    *,
+    now: datetime,
+    config: WorkerConfig,
+    summary: RunSummary,
+) -> tuple[list[str], dict[str, tuple[ReportTrigger, dict[str, Any]]]]:
+    """Records whose reports meet a rule and that are past the cooldown: severe first."""
+    window_start = iso(now - timedelta(days=config.report_window_days))
+    candidates = _ask(reports.services_with_reports, window_start, summary=summary)
+    cooldown = timedelta(days=config.report_cooldown_days)
+    severe: list[str] = []
+    inaccuracy: list[str] = []
+    triggers: dict[str, tuple[ReportTrigger, dict[str, Any]]] = {}
+    for service_id in dict.fromkeys(c for c in candidates if isinstance(c, str) and c.strip()):
+        last = _readable_or_none(check_log.last(service_id))
+        if last is not None and now - last < cooldown:
+            summary.cooling_down.append(service_id)
+            continue
+        trigger, counts = _reports_for(
+            reports, check_log, service_id, now=now, config=config, summary=summary
+        )
+        if trigger is None:
+            summary.below_threshold += 1
+            continue
+        triggers[service_id] = (trigger, counts)
+        (severe if trigger is ReportTrigger.SEVERE else inaccuracy).append(service_id)
+    return severe + inaccuracy, triggers
+
+
+def _ask(
+    read: Callable[..., Any], *args: Any, summary: RunSummary, service_id: str | None = None
+) -> Any:
+    """Read the report source. If it is down every record is affected, so stop the run."""
+    try:
+        return read(*args)
+    except Exception as exc:
+        summary.stopped_at = service_id  # the record being counted, if any
+        raise WorkerSetupError(
+            f"stopped the run: could not read user reports ({type(exc).__name__}: {exc})",
+            summary,
+        ) from exc
+
+
+def _apply_reports(
+    entry: CheckLogEntry,
+    trigger: ReportTrigger | None,
+    counts: dict[str, Any],
+    summary: RunSummary,
+) -> None:
+    """Record the report counts on the entry and raise the flags they call for."""
+    if counts and (counts["severe_reporters"] or counts["inaccuracy_reporters"]):
+        entry.reports = dict(counts)
+    if trigger is ReportTrigger.SEVERE and ReviewFlag.LEGITIMACY_REVIEW not in entry.flags:
+        entry.flags.append(ReviewFlag.LEGITIMACY_REVIEW)  # whatever the check itself found
+    for flag in entry.flags:
+        summary.flags[flag.value] += 1
 
 
 def _persist(
