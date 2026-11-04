@@ -1,0 +1,2792 @@
+{
+  "records": [
+    {
+      "service": {
+        "id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+        "organization_id": "bb5e39fd-0fb2-5695-b477-46a5f93be890",
+        "name": "Rent Utility Assistance",
+        "description": "Distributes financial assistance when funding is available. Provides rent payment and security deposit assistance. Offers utility assistance for gas, electric, and water services.",
+        "url": "http://www.coastsidehope.org",
+        "email": "admin@coastsidehope.org",
+        "status": "active",
+        "application_process": "Call for appointment",
+        "fees_description": "No fee",
+        "eligibility_description": "El Granda, Half Moon Bay, Montara, and Moss Beach income eligible residents",
+        "assured_date": "2025-08-01",
+        "last_modified": "2025-08-01T00:00:00Z",
+        "organization": {
+          "id": "bb5e39fd-0fb2-5695-b477-46a5f93be890",
+          "name": "Coastside Hope",
+          "alternate_name": "COASTSIDE OPPORTUNITY CENTER",
+          "description": "Nonprofit organization providing food distribution, housing resources, and immigration services.",
+          "website": "http://www.coastsidehope.org",
+          "year_incorporated": 1976,
+          "tax_status": "non_profit",
+          "legal_status": "non_profit",
+          "phones": [
+            {
+              "id": "9689cf02-d77b-5d19-95a1-1bf0f5927049",
+              "organization_id": "bb5e39fd-0fb2-5695-b477-46a5f93be890",
+              "number": "(650) 726-9071",
+              "type": "voice",
+              "description": "Main Number"
+            },
+            {
+              "id": "397eb465-6d95-5948-b035-bb009551ae53",
+              "organization_id": "bb5e39fd-0fb2-5695-b477-46a5f93be890",
+              "number": "(650) 726-9076",
+              "type": "fax"
+            }
+          ]
+        },
+        "phones": [
+          {
+            "id": "92526fb6-92f6-5466-86ab-27d38c03457a",
+            "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+            "number": "(650) 726-9071",
+            "type": "voice",
+            "description": "Main Number"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "87b604ae-f501-58f0-9af8-7e7b6eb88c0a",
+            "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+            "freq": "WEEKLY",
+            "wkst": "MO",
+            "byday": "MO,TU,TH,FR",
+            "opens_at": "08:30-08:00",
+            "closes_at": "17:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          },
+          {
+            "id": "82e59df7-b4ce-50e5-8876-3674fb262c8e",
+            "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+            "freq": "WEEKLY",
+            "wkst": "MO",
+            "byday": "WE",
+            "opens_at": "13:00-08:00",
+            "closes_at": "17:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "f192ea93-1706-5863-9564-c0a21c624427",
+            "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+            "name": "El Granada"
+          },
+          {
+            "id": "349f5377-2d95-5425-b763-625fb57949ea",
+            "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+            "name": "Moss Beach"
+          },
+          {
+            "id": "8da16649-5e98-5aaa-b98c-9a4d935e670f",
+            "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+            "name": "Montara"
+          },
+          {
+            "id": "c63e03a3-84bd-5d1b-807f-aa257c8e5893",
+            "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+            "name": "Half Moon Bay"
+          }
+        ],
+        "languages": [
+          {
+            "id": "d64de5ce-c305-54b8-9755-79287b3f5d11",
+            "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+            "name": "English",
+            "code": "en"
+          },
+          {
+            "id": "eed247e8-e81e-58a0-a026-ef46ef8f9ad6",
+            "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+            "name": "Spanish",
+            "code": "es"
+          }
+        ],
+        "required_documents": [
+          {
+            "id": "414b47e5-604b-56ce-94d5-fb17813ba0f0",
+            "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+            "document": "Photo identification"
+          },
+          {
+            "id": "f7910080-3ae4-5e6b-a601-b5e94a90f977",
+            "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+            "document": "proof of address"
+          },
+          {
+            "id": "1f9fc22b-8a72-57e2-81f6-91fde38042ec",
+            "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+            "document": "income information"
+          }
+        ],
+        "attributes": [
+          {
+            "id": "1a8ef6ce-0228-554e-a6f0-cac1b09dd1df",
+            "link_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+            "link_entity": "service",
+            "taxonomy_term_id": "298f65db-44fd-5490-ae0e-69b31b688c0c",
+            "taxonomy_term": {
+              "id": "298f65db-44fd-5490-ae0e-69b31b688c0c",
+              "name": "Rental Deposit Assistance",
+              "description": "Basic Needs > Housing/Shelter > Housing Expense Assistance > Rental Deposit Assistance",
+              "taxonomy_id": "945522ff-98dc-5807-8f72-5c44e85fb971",
+              "taxonomy_detail": {
+                "id": "945522ff-98dc-5807-8f72-5c44e85fb971",
+                "name": "211 Taxonomy",
+                "description": "Service taxonomy terms supplied by the 211 National Data Platform."
+              },
+              "code": "BH-3800.7250"
+            }
+          },
+          {
+            "id": "8896e150-461a-53de-b98d-e962c60f01a0",
+            "link_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+            "link_entity": "service",
+            "taxonomy_term_id": "09848a17-984d-552b-ac33-b83f9f8e3af5",
+            "taxonomy_term": {
+              "id": "09848a17-984d-552b-ac33-b83f9f8e3af5",
+              "name": "Rent Payment Assistance",
+              "description": "Basic Needs > Housing/Shelter > Housing Expense Assistance > Rent Payment Assistance",
+              "taxonomy_id": "945522ff-98dc-5807-8f72-5c44e85fb971",
+              "taxonomy_detail": {
+                "id": "945522ff-98dc-5807-8f72-5c44e85fb971",
+                "name": "211 Taxonomy",
+                "description": "Service taxonomy terms supplied by the 211 National Data Platform."
+              },
+              "code": "BH-3800.7000"
+            }
+          }
+        ],
+        "service_at_locations": [
+          {
+            "id": "26ac9287-a251-514a-80d9-f642d666b6a0",
+            "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+            "location_id": "2e4746dd-0db0-52fc-8860-0067308ac7cf",
+            "location": {
+              "id": "2e4746dd-0db0-52fc-8860-0067308ac7cf",
+              "location_type": "physical",
+              "organization_id": "bb5e39fd-0fb2-5695-b477-46a5f93be890",
+              "name": "Main Office",
+              "latitude": 37.46706,
+              "longitude": -122.4298,
+              "addresses": [
+                {
+                  "id": "876781ff-9b92-51dd-b147-24fe46b3fcc7",
+                  "location_id": "2e4746dd-0db0-52fc-8860-0067308ac7cf",
+                  "address_1": "248 Main Street, Suite 200",
+                  "city": "Half Moon Bay",
+                  "state_province": "CA",
+                  "postal_code": "94019",
+                  "country": "US",
+                  "address_type": "physical"
+                },
+                {
+                  "id": "f587421a-49d4-5167-b228-675fee9e2f3a",
+                  "location_id": "2e4746dd-0db0-52fc-8860-0067308ac7cf",
+                  "address_1": "PO Box 1089",
+                  "city": "El Granada",
+                  "state_province": "CA",
+                  "postal_code": "94018",
+                  "country": "US",
+                  "address_type": "postal"
+                }
+              ],
+              "accessibility": [
+                {
+                  "id": "72540159-fbd6-5166-94f6-092aa6a40db3",
+                  "location_id": "2e4746dd-0db0-52fc-8860-0067308ac7cf",
+                  "description": "Fully accessible to individuals using mobility aids."
+                }
+              ]
+            }
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "211bayarea-10613258",
+            "parent_record_id": "211bayarea-10595293",
+            "data_owner": "211bayarea",
+            "access": "public",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+        "organization_id": "0d9be3e0-8bdc-589e-9558-7561bb64f1ae",
+        "name": "Get rent and utility assistance",
+        "description": "As one of the Core Service Agencies of San Mateo County, Coastside Hope provides emergency rent and utility assistance for people living in Montara, Moss Beach, El Granada, and Half Moon Bay.",
+        "url": "https://coastsidehope.org/our-services/",
+        "email": "assistance@coastsidehope.org",
+        "status": "active",
+        "application_process": "Call or text 650-523-3536 for more information and to begin the application process. Or email assistance@coastsidehope.org for more information.",
+        "fees_description": "Free",
+        "eligibility_description": "Income limits apply.",
+        "assured_date": "2025-05-06",
+        "last_modified": "2025-05-06T18:08:17.000Z",
+        "organization": {
+          "id": "0d9be3e0-8bdc-589e-9558-7561bb64f1ae",
+          "name": "Coastside Hope",
+          "description": "No description available for Coastside Hope.",
+          "website": "https://coastsidehope.org",
+          "x_resource_engine": {
+            "description_status": "placeholder"
+          }
+        },
+        "phones": [
+          {
+            "id": "d9b458d9-04bf-5b2b-b7fb-a6da1616a3a9",
+            "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+            "number": "650-523-3536",
+            "type": "voice",
+            "description": "Help with Food, Housing, CalFresh, Medi-Cal"
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "d4d7d04b-ef66-5d78-8ce8-756b1e8f4d21",
+            "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+            "name": "San Mateo County"
+          },
+          {
+            "id": "7d1cc2e6-d6ef-5c4d-a2c6-40574a079b67",
+            "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+            "name": "Montara"
+          },
+          {
+            "id": "39a64ace-08b8-56d1-8479-38464de731c3",
+            "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+            "name": "Moss Beach"
+          },
+          {
+            "id": "f83f04c6-1e6b-5357-aeeb-470459116dec",
+            "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+            "name": "El Granada"
+          },
+          {
+            "id": "a75db465-6025-59fd-9a09-fa7c3e0acd28",
+            "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+            "name": "Half Moon Bay"
+          },
+          {
+            "id": "ae2aad44-fdd8-5742-a0e1-7a3e227de4c5",
+            "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+            "name": "La Honda"
+          }
+        ],
+        "languages": [
+          {
+            "id": "7bc2cea2-e359-5fe7-b430-0f82371e0def",
+            "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+            "name": "Spanish",
+            "code": "es"
+          }
+        ],
+        "attributes": [
+          {
+            "id": "eb7a2d64-8093-58f0-8d31-8a918357fe21",
+            "link_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+            "link_entity": "service",
+            "taxonomy_term_id": "9c1a2819-1259-57b0-8898-a12ebd692936",
+            "taxonomy_term": {
+              "id": "9c1a2819-1259-57b0-8898-a12ebd692936",
+              "name": "Deposit & rent assistance",
+              "description": "One Degree tag: Deposit & rent assistance",
+              "taxonomy_id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+              "taxonomy_detail": {
+                "id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+                "name": "One Degree",
+                "description": "Tags, categories, areas, and eligibility flags from One Degree."
+              }
+            }
+          },
+          {
+            "id": "50ab5a60-7c64-5b00-bbcb-99218acad17d",
+            "link_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+            "link_entity": "service",
+            "taxonomy_term_id": "4ed88bf4-92a0-5509-8d56-58eb0450a04f",
+            "taxonomy_term": {
+              "id": "4ed88bf4-92a0-5509-8d56-58eb0450a04f",
+              "name": "Paying for utilities",
+              "description": "One Degree tag: Paying for utilities",
+              "taxonomy_id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+              "taxonomy_detail": {
+                "id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+                "name": "One Degree",
+                "description": "Tags, categories, areas, and eligibility flags from One Degree."
+              }
+            }
+          },
+          {
+            "id": "0156b884-3121-5bf5-a3d1-77be4cbc8971",
+            "link_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+            "link_entity": "service",
+            "taxonomy_term_id": "de017124-3a80-54e8-b83a-f009f9771155",
+            "taxonomy_term": {
+              "id": "de017124-3a80-54e8-b83a-f009f9771155",
+              "name": "Tenant resources",
+              "description": "One Degree category: Tenant resources",
+              "taxonomy_id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+              "taxonomy_detail": {
+                "id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+                "name": "One Degree",
+                "description": "Tags, categories, areas, and eligibility flags from One Degree."
+              }
+            }
+          },
+          {
+            "id": "e808691f-6972-54e7-b180-02f43bcab909",
+            "link_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+            "link_entity": "service",
+            "taxonomy_term_id": "8b278a2f-5741-5e6e-8f88-2e9979b63f62",
+            "taxonomy_term": {
+              "id": "8b278a2f-5741-5e6e-8f88-2e9979b63f62",
+              "name": "Household needs",
+              "description": "One Degree category: Household needs",
+              "taxonomy_id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+              "taxonomy_detail": {
+                "id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+                "name": "One Degree",
+                "description": "Tags, categories, areas, and eligibility flags from One Degree."
+              }
+            }
+          },
+          {
+            "id": "3859b128-ce0f-56f8-873f-38c827c4c78c",
+            "link_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+            "link_entity": "service",
+            "taxonomy_term_id": "e58a2218-96de-5529-8a26-88a99027affd",
+            "taxonomy_term": {
+              "id": "e58a2218-96de-5529-8a26-88a99027affd",
+              "name": "Housing",
+              "description": "One Degree area: Housing",
+              "taxonomy_id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+              "taxonomy_detail": {
+                "id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+                "name": "One Degree",
+                "description": "Tags, categories, areas, and eligibility flags from One Degree."
+              }
+            }
+          },
+          {
+            "id": "bee40a19-ad4c-55d6-ab40-4a4863aad7f5",
+            "link_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+            "link_entity": "service",
+            "taxonomy_term_id": "29411ad9-58de-54bb-8afc-50c827f250d0",
+            "taxonomy_term": {
+              "id": "29411ad9-58de-54bb-8afc-50c827f250d0",
+              "name": "Family & Household",
+              "description": "One Degree area: Family & Household",
+              "taxonomy_id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+              "taxonomy_detail": {
+                "id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+                "name": "One Degree",
+                "description": "Tags, categories, areas, and eligibility flags from One Degree."
+              }
+            }
+          },
+          {
+            "id": "15dcbcc1-e9ab-5a4b-b6bb-42a7c54d4b20",
+            "link_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+            "link_entity": "service",
+            "taxonomy_term_id": "6a654c6a-30b6-553b-921e-32d288b57b41",
+            "taxonomy_term": {
+              "id": "6a654c6a-30b6-553b-921e-32d288b57b41",
+              "name": "community-available-everyone",
+              "description": "One Degree flag: community-available-everyone",
+              "taxonomy_id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+              "taxonomy_detail": {
+                "id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+                "name": "One Degree",
+                "description": "Tags, categories, areas, and eligibility flags from One Degree."
+              }
+            }
+          },
+          {
+            "id": "2071f011-5a69-5599-acc7-8cf6f6bef56c",
+            "link_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+            "link_entity": "service",
+            "taxonomy_term_id": "f0333006-4b57-5058-9322-e2f5c3ba4c04",
+            "taxonomy_term": {
+              "id": "f0333006-4b57-5058-9322-e2f5c3ba4c04",
+              "name": "citizenship-available-everyone",
+              "description": "One Degree flag: citizenship-available-everyone",
+              "taxonomy_id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+              "taxonomy_detail": {
+                "id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+                "name": "One Degree",
+                "description": "Tags, categories, areas, and eligibility flags from One Degree."
+              }
+            }
+          },
+          {
+            "id": "d5043937-703e-5213-91c2-c497c526835a",
+            "link_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+            "link_entity": "service",
+            "taxonomy_term_id": "00b6af24-8db7-5bac-bc83-c2e858641d1d",
+            "taxonomy_term": {
+              "id": "00b6af24-8db7-5bac-bc83-c2e858641d1d",
+              "name": "coordinated-entry-site",
+              "description": "One Degree flag: coordinated-entry-site",
+              "taxonomy_id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+              "taxonomy_detail": {
+                "id": "ddb0df1d-bbfd-51ec-b440-2a21014178d4",
+                "name": "One Degree",
+                "description": "Tags, categories, areas, and eligibility flags from One Degree."
+              }
+            }
+          }
+        ],
+        "service_at_locations": [
+          {
+            "id": "4a840e68-79bd-5bae-b7a7-e81dc69ade66",
+            "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+            "location_id": "015686d5-4e46-53f5-8bcb-5c91cf9d3c6d",
+            "location": {
+              "id": "015686d5-4e46-53f5-8bcb-5c91cf9d3c6d",
+              "location_type": "physical",
+              "organization_id": "0d9be3e0-8bdc-589e-9558-7561bb64f1ae",
+              "name": "Coastside Hope",
+              "latitude": 37.4671,
+              "longitude": -122.43,
+              "addresses": [
+                {
+                  "id": "d3afdb5e-7760-594b-a72f-fe3945a92d80",
+                  "location_id": "015686d5-4e46-53f5-8bcb-5c91cf9d3c6d",
+                  "address_1": "248 Main Street",
+                  "address_2": "Suite 200 (Second Floor)",
+                  "city": "Half Moon Bay",
+                  "state_province": "CA",
+                  "postal_code": "94019",
+                  "country": "US",
+                  "address_type": "physical"
+                }
+              ],
+              "phones": [
+                {
+                  "id": "5a5fe2b3-47aa-5efa-97cf-dd8461187542",
+                  "location_id": "015686d5-4e46-53f5-8bcb-5c91cf9d3c6d",
+                  "number": "650-726-9071",
+                  "type": "voice",
+                  "description": "Coastside Hope"
+                }
+              ],
+              "schedules": [
+                {
+                  "id": "739931eb-c16f-5ebc-ad7e-1dc77894f0c2",
+                  "location_id": "015686d5-4e46-53f5-8bcb-5c91cf9d3c6d",
+                  "freq": "WEEKLY",
+                  "wkst": "MO",
+                  "byday": "MO,TU,TH,FR",
+                  "opens_at": "08:30-08:00",
+                  "closes_at": "12:00-08:00",
+                  "x_resource_engine": {
+                    "timezone": "America/Los_Angeles"
+                  },
+                  "notes": "Office is closed daily during lunch from 12:00 PM - 1:00 PM."
+                },
+                {
+                  "id": "712b639b-99c2-5987-8a83-0848bec664c4",
+                  "location_id": "015686d5-4e46-53f5-8bcb-5c91cf9d3c6d",
+                  "freq": "WEEKLY",
+                  "wkst": "MO",
+                  "byday": "MO,TU,TH,FR",
+                  "opens_at": "13:00-08:00",
+                  "closes_at": "17:00-08:00",
+                  "x_resource_engine": {
+                    "timezone": "America/Los_Angeles"
+                  },
+                  "notes": "Office is closed daily during lunch from 12:00 PM - 1:00 PM."
+                },
+                {
+                  "id": "6963cee9-3c2c-5a40-9cee-94d51292d42b",
+                  "location_id": "015686d5-4e46-53f5-8bcb-5c91cf9d3c6d",
+                  "freq": "WEEKLY",
+                  "wkst": "MO",
+                  "byday": "WE",
+                  "opens_at": "13:00-08:00",
+                  "closes_at": "17:00-08:00",
+                  "x_resource_engine": {
+                    "timezone": "America/Los_Angeles"
+                  },
+                  "notes": "Office is closed daily during lunch from 12:00 PM - 1:00 PM."
+                }
+              ]
+            }
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "odrs",
+            "record_id": "6126",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "2d4f6a8c-0b1d-5e3f-9a7c-1b3d5f7a9c0e",
+        "organization_id": "7c9e6a2b-0d14-5f3a-8b21-1a2b3c4d5e6f",
+        "name": "Grocery Distribution",
+        "status": "active",
+        "description": "Weekly free grocery distribution. No appointment required.",
+        "eligibility_description": "Open to residents of San Francisco County.",
+        "url": "https://bayview-foodpantry.example.org/grocery",
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "1001",
+            "fetched_at": "2026-10-20T15:04:05Z"
+          }
+        },
+        "organization": {
+          "id": "7c9e6a2b-0d14-5f3a-8b21-1a2b3c4d5e6f",
+          "name": "Bayview Community Food Pantry",
+          "description": "Provides free groceries and hot meals to residents of the Bayview neighborhood.",
+          "website": "https://bayview-foodpantry.example.org"
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "3e5a7c9d-1f2b-5a4c-8d6e-2c4e6a8b0d1f",
+        "organization_id": "a1b2c3d4-e5f6-5a7b-8c9d-0e1f2a3b4c5d",
+        "name": "Housing Legal Clinic",
+        "status": "active",
+        "description": "Walk-in legal clinic for tenants facing eviction.",
+        "eligibility_description": "Household income at or below 200% of the federal poverty level.",
+        "url": "https://eastside-legal.example.org/housing",
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "1002",
+            "fetched_at": "2026-10-20T15:04:05Z"
+          }
+        },
+        "organization": {
+          "id": "a1b2c3d4-e5f6-5a7b-8c9d-0e1f2a3b4c5d",
+          "name": "Eastside Legal Aid",
+          "description": "Free civil legal help for low-income residents, including housing and benefits cases.",
+          "website": "https://eastside-legal.example.org"
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "4f6b8d0e-2a3c-5b5d-9e7f-3d5f7a9b1c2e",
+        "organization_id": "f0e1d2c3-b4a5-5968-8778-6a5b4c3d2e1f",
+        "name": "Overnight Shelter Beds",
+        "status": "active",
+        "description": "Overnight beds for youth ages 12 to 17.",
+        "eligibility_description": "Youth ages 12 to 17.",
+        "minimum_age": 12,
+        "maximum_age": 17,
+        "url": "https://harbor-youth.example.org/shelter",
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "B-55",
+            "fetched_at": "2026-10-20T15:04:05Z"
+          }
+        },
+        "organization": {
+          "id": "f0e1d2c3-b4a5-5968-8778-6a5b4c3d2e1f",
+          "name": "Harbor Youth Shelter",
+          "description": "Emergency overnight shelter and case management for unaccompanied youth.",
+          "website": "https://harbor-youth.example.org"
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "0d2817f1-56a5-5e10-9cf6-1ec7aff660d9",
+        "organization_id": "9ce7ca85-027d-5e86-9361-5a0879b3b7c9",
+        "name": "Tenant Legal Clinic",
+        "status": "active",
+        "description": "Tenant Legal Clinic, offered by Northgate Legal Aid.",
+        "eligibility_description": "Open to tenants in Alameda County with an income at or below 200% of the federal poverty level.",
+        "assured_date": "2025-03-14",
+        "organization": {
+          "id": "9ce7ca85-027d-5e86-9361-5a0879b3b7c9",
+          "name": "Northgate Legal Aid",
+          "description": "Northgate Legal Aid is a fictional organization for this demo.",
+          "website": "https://northgate-legal.example.org"
+        },
+        "phones": [
+          {
+            "id": "e6556c11-0736-5788-8daa-6d9cdc1d5674",
+            "service_id": "0d2817f1-56a5-5e10-9cf6-1ec7aff660d9",
+            "number": "(415) 555-0142",
+            "type": "voice"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "northgate-legal",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "845ce558-e50a-55b0-a8e3-0d0ca32c19c1",
+        "organization_id": "f6a2e4ae-39ab-550d-b037-9c2850180e10",
+        "name": "Walk-in Primary Care",
+        "status": "active",
+        "description": "Walk-in Primary Care, offered by Riverside Family Clinic.",
+        "eligibility_description": "Open to all adults.",
+        "assured_date": "2025-03-14",
+        "organization": {
+          "id": "f6a2e4ae-39ab-550d-b037-9c2850180e10",
+          "name": "Riverside Family Clinic",
+          "description": "Riverside Family Clinic is a fictional organization for this demo.",
+          "website": "https://riverside-clinic.example.org"
+        },
+        "phones": [
+          {
+            "id": "3e846671-ac5d-57ab-83d7-4b734457c397",
+            "service_id": "845ce558-e50a-55b0-a8e3-0d0ca32c19c1",
+            "number": "(415) 555-0142",
+            "type": "voice"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "riverside-clinic",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "d2815d9c-57f4-5be7-b6bc-4c9975687177",
+        "organization_id": "42d19853-95fe-5a43-921c-e63aea34aa73",
+        "name": "After-school Tutoring",
+        "status": "active",
+        "description": "After-school Tutoring, offered by Mission Youth Center.",
+        "eligibility_description": "Students in grades 6 to 12.",
+        "assured_date": "2025-03-14",
+        "organization": {
+          "id": "42d19853-95fe-5a43-921c-e63aea34aa73",
+          "name": "Mission Youth Center",
+          "description": "Mission Youth Center is a fictional organization for this demo.",
+          "website": "https://mission-youth.example.org"
+        },
+        "phones": [
+          {
+            "id": "e4bf2aa5-402e-5d88-8704-37406d337488",
+            "service_id": "d2815d9c-57f4-5be7-b6bc-4c9975687177",
+            "number": "(415) 555-0142",
+            "type": "voice"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "mission-youth",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "b66aaf89-1f50-58c2-ac35-1ff2d06413d0",
+        "organization_id": "b5cc2e9f-a713-55a3-8955-f4a8543efe76",
+        "name": "Public School Education",
+        "status": "active",
+        "description": "Provides public elementary and middle school education.",
+        "url": "http://www.pacificasd.org",
+        "application_process": "Call for appointment",
+        "fees_description": "No fee",
+        "eligibility_description": "Students residing within school boundaries",
+        "assured_date": "2025-06-13",
+        "organization": {
+          "id": "b5cc2e9f-a713-55a3-8955-f4a8543efe76",
+          "name": "Pacifica School District (PSD)",
+          "description": "Public school district providing education services.",
+          "website": "http://www.pacificasd.org"
+        },
+        "phones": [
+          {
+            "id": "70c50345-ba9b-503b-8852-a93983850465",
+            "service_id": "b66aaf89-1f50-58c2-ac35-1ff2d06413d0",
+            "number": "(650) 738-6600",
+            "type": "voice",
+            "description": "Main Number"
+          },
+          {
+            "id": "6e4fd4cd-9544-52d7-b94f-9fcc8c02b330",
+            "service_id": "b66aaf89-1f50-58c2-ac35-1ff2d06413d0",
+            "number": "(650) 738-6606",
+            "type": "voice",
+            "description": "Alternate Number"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "bba76e31-bef1-58bb-b5b3-b8b2f44fe542",
+            "service_id": "b66aaf89-1f50-58c2-ac35-1ff2d06413d0",
+            "freq": "WEEKLY",
+            "byday": "MO,TU,WE,TH,FR",
+            "opens_at": "08:00-08:00",
+            "closes_at": "17:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "a6adc496-dde4-5226-8ba6-6634f0b8d0fc",
+            "service_id": "b66aaf89-1f50-58c2-ac35-1ff2d06413d0",
+            "name": "Pacifica"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "211bayarea-10613152",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "e9721be2-e5d5-514a-9481-44164ba40bf8",
+        "organization_id": "3053d569-e8fa-5116-a255-613b16e2957a",
+        "name": "Dining Room",
+        "status": "active",
+        "description": "Serves prepared breakfast and packed meals. Provides access to shower facilities.",
+        "url": "http://www.catholicworkerhospitalityhouse.org",
+        "email": "mail@catholicworkerhospitalityhouse.org",
+        "application_process": "Call or visit",
+        "fees_description": "No fee",
+        "eligibility_description": "People experiencing homelessness",
+        "assured_date": "2026-08-19",
+        "organization": {
+          "id": "3053d569-e8fa-5116-a255-613b16e2957a",
+          "name": "Catholic Worker Hospitality House",
+          "description": "Community-based organization serving the needs of low-income and homeless individuals.",
+          "website": "http://www.catholicworkerhospitalityhouse.org"
+        },
+        "phones": [
+          {
+            "id": "6d15de82-4951-500d-b495-5e68cb093429",
+            "service_id": "e9721be2-e5d5-514a-9481-44164ba40bf8",
+            "number": "(650) 291-2400",
+            "type": "voice",
+            "description": "Alternate Number"
+          },
+          {
+            "id": "6f81f742-5f98-5365-9a53-1e30cb1be10e",
+            "service_id": "e9721be2-e5d5-514a-9481-44164ba40bf8",
+            "number": "(650) 827-0706",
+            "type": "voice",
+            "description": "Main Number"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "0a938d18-a8d3-541c-8ccf-449c732a3e42",
+            "service_id": "e9721be2-e5d5-514a-9481-44164ba40bf8",
+            "freq": "WEEKLY",
+            "byday": "MO,TU,WE,TH,FR",
+            "opens_at": "06:00-08:00",
+            "closes_at": "08:30-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "b29746bd-b0e0-52a9-9828-f49a628d79fe",
+            "service_id": "e9721be2-e5d5-514a-9481-44164ba40bf8",
+            "name": "San Mateo"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "211bayarea-10613162",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "819398bc-3925-556c-8dab-9e0b04abfa30",
+        "organization_id": "3053d569-e8fa-5116-a255-613b16e2957a",
+        "name": "Homeless Shelter",
+        "status": "active",
+        "description": "Provides emergency homeless shelter for people experiencing homelessness.",
+        "url": "http://www.catholicworkerhospitalityhouse.org",
+        "email": "mail@catholicworkerhospitalityhouse.org",
+        "application_process": "Call or visit",
+        "fees_description": "No fee",
+        "eligibility_description": "People experiencing homelessness",
+        "assured_date": "2024-12-13",
+        "organization": {
+          "id": "3053d569-e8fa-5116-a255-613b16e2957a",
+          "name": "Catholic Worker Hospitality House",
+          "description": "Community-based organization serving the needs of low-income and homeless individuals.",
+          "website": "http://www.catholicworkerhospitalityhouse.org"
+        },
+        "phones": [
+          {
+            "id": "0b86dcb3-45cf-56c8-a0f3-e319844d1458",
+            "service_id": "819398bc-3925-556c-8dab-9e0b04abfa30",
+            "number": "(650) 291-2400",
+            "type": "voice",
+            "description": "Alternate Number"
+          },
+          {
+            "id": "1bc45f3d-38ee-5387-a85d-033436c4266b",
+            "service_id": "819398bc-3925-556c-8dab-9e0b04abfa30",
+            "number": "(650) 827-0706",
+            "type": "voice",
+            "description": "Main Number"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "d9da8407-2b3a-5407-98e7-c1af9de533fa",
+            "service_id": "819398bc-3925-556c-8dab-9e0b04abfa30",
+            "freq": "WEEKLY",
+            "byday": "MO,TU,WE,TH,FR",
+            "opens_at": "06:00-08:00",
+            "closes_at": "08:30-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "32018e4f-d770-5241-a01a-8fc52bccc016",
+            "service_id": "819398bc-3925-556c-8dab-9e0b04abfa30",
+            "name": "San Mateo"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "211bayarea-36405086",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "ad6eefb5-afe1-51d6-a0cf-58a052e133f9",
+        "organization_id": "b01cf446-df18-5e73-9919-07cb41b12b0e",
+        "name": "Legal Assistance",
+        "status": "active",
+        "description": "Provides legal assistance with eviction defense, record expungement, and Social Security disability benefits.",
+        "url": "http://law.stanford.edu/community-law-clinic",
+        "application_process": "Call for screening interview",
+        "fees_description": "No fee",
+        "eligibility_description": "San Mateo County income eligible residents",
+        "assured_date": "2025-04-15",
+        "organization": {
+          "id": "b01cf446-df18-5e73-9919-07cb41b12b0e",
+          "name": "Stanford Community Law Clinic (CLC)",
+          "description": "Nonprofit organization offering legal aid in San Mateo and Santa Clara counties.",
+          "website": "http://law.stanford.edu/community-law-clinic"
+        },
+        "phones": [
+          {
+            "id": "03fc4e25-6856-5d85-a751-6d2a5feffe64",
+            "service_id": "ad6eefb5-afe1-51d6-a0cf-58a052e133f9",
+            "number": "(650) 725-9200",
+            "type": "voice",
+            "description": "Main Number"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "39a5c0f0-920e-5e93-97e8-39cca65c3d89",
+            "service_id": "ad6eefb5-afe1-51d6-a0cf-58a052e133f9",
+            "freq": "WEEKLY",
+            "byday": "MO,TU,WE,TH,FR",
+            "opens_at": "09:00-08:00",
+            "closes_at": "17:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "57af108b-6f7e-58c7-b8db-3b7cfc8e5b49",
+            "service_id": "ad6eefb5-afe1-51d6-a0cf-58a052e133f9",
+            "name": "San Mateo"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "211bayarea-10613176",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "5855ef61-0ddc-5a95-86e0-a8aab7d8c359",
+        "organization_id": "5bc90d65-93ef-5d91-a8e5-3c6d2a265469",
+        "name": "Community Development Programs",
+        "status": "active",
+        "description": "Manages family resource center programs, services, and activities. Provides document translation and interpretation services. Offers notary public and referrals to community resources.",
+        "url": "http://www.mypuente.org",
+        "email": "outreach@mypuente.org",
+        "application_process": "Call for appointment",
+        "fees_description": "No fee",
+        "eligibility_description": "La Honda, Loma Mar, Pescadero, or San Gregorio residents",
+        "assured_date": "2025-04-07",
+        "organization": {
+          "id": "5bc90d65-93ef-5d91-a8e5-3c6d2a265469",
+          "name": "Puente De La Costa Sur",
+          "description": "Nonprofit organization providing education, health, and economic security programs.",
+          "website": "http://www.mypuente.org"
+        },
+        "phones": [
+          {
+            "id": "7f4fa749-f4e4-5cc1-addc-229a3209f021",
+            "service_id": "5855ef61-0ddc-5a95-86e0-a8aab7d8c359",
+            "number": "(650) 879-1691",
+            "type": "voice",
+            "description": "Main Office"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "8f512315-5ad5-52a6-8b56-b4983aea87ac",
+            "service_id": "5855ef61-0ddc-5a95-86e0-a8aab7d8c359",
+            "freq": "WEEKLY",
+            "byday": "MO,TU,WE,TH,FR",
+            "opens_at": "08:00-08:00",
+            "closes_at": "17:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "29c7f00b-a091-52ca-9585-40c4806b7f2a",
+            "service_id": "5855ef61-0ddc-5a95-86e0-a8aab7d8c359",
+            "name": "Loma Mar"
+          },
+          {
+            "id": "17eb00d1-17fe-54aa-9d0d-37e23fd37af8",
+            "service_id": "5855ef61-0ddc-5a95-86e0-a8aab7d8c359",
+            "name": "San Gregorio"
+          },
+          {
+            "id": "4af364a0-0551-5689-b66c-253f96a5781a",
+            "service_id": "5855ef61-0ddc-5a95-86e0-a8aab7d8c359",
+            "name": "La Honda"
+          },
+          {
+            "id": "1416cfce-69ae-50e6-9141-cecbc0afc865",
+            "service_id": "5855ef61-0ddc-5a95-86e0-a8aab7d8c359",
+            "name": "Pescadero"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "211bayarea-10613190",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "3d4e16ba-dfb4-5991-ad49-737431cf9d52",
+        "organization_id": "5bc90d65-93ef-5d91-a8e5-3c6d2a265469",
+        "name": "Financial Assistance Program",
+        "status": "active",
+        "description": "Distributes financial assistance to income eligible residents when funding is available. Provides financial assistance for rent payments and security deposits. Offers utility payment assistance for gas and electric services. Provides financial assistance to pay general medical expenses.",
+        "url": "http://www.mypuente.org",
+        "email": "outreach@mypuente.org",
+        "application_process": "Call for appointment",
+        "fees_description": "No fee",
+        "eligibility_description": "La Honda, Loma Mar, Pescadero, or San Gregorio income eligible residents",
+        "assured_date": "2025-04-07",
+        "organization": {
+          "id": "5bc90d65-93ef-5d91-a8e5-3c6d2a265469",
+          "name": "Puente De La Costa Sur",
+          "description": "Nonprofit organization providing education, health, and economic security programs.",
+          "website": "http://www.mypuente.org"
+        },
+        "phones": [
+          {
+            "id": "4bcca3a0-0c97-5b43-84a6-954d6d890e87",
+            "service_id": "3d4e16ba-dfb4-5991-ad49-737431cf9d52",
+            "number": "(650) 879-1691",
+            "type": "voice",
+            "description": "Main Office"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "5202e6b6-af16-5939-ba01-7607be32b152",
+            "service_id": "3d4e16ba-dfb4-5991-ad49-737431cf9d52",
+            "freq": "WEEKLY",
+            "byday": "MO,TU,WE,TH,FR",
+            "opens_at": "08:00-08:00",
+            "closes_at": "17:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "39a7c4d0-0cdc-58a6-96f2-865e2f645333",
+            "service_id": "3d4e16ba-dfb4-5991-ad49-737431cf9d52",
+            "name": "Loma Mar"
+          },
+          {
+            "id": "991e3a06-9065-5617-ac18-9df2b2899050",
+            "service_id": "3d4e16ba-dfb4-5991-ad49-737431cf9d52",
+            "name": "Pescadero"
+          },
+          {
+            "id": "67f62722-ef55-5a60-94b0-548568432462",
+            "service_id": "3d4e16ba-dfb4-5991-ad49-737431cf9d52",
+            "name": "San Gregorio"
+          },
+          {
+            "id": "88a71255-b9e4-5ed7-b548-e505424505b6",
+            "service_id": "3d4e16ba-dfb4-5991-ad49-737431cf9d52",
+            "name": "La Honda"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "211bayarea-10613192",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "b6e541ac-f3c1-54b7-923a-91f7d3f059d1",
+        "organization_id": "5bc90d65-93ef-5d91-a8e5-3c6d2a265469",
+        "name": "Coordinated Entry System (CES)",
+        "status": "active",
+        "description": "Provides referrals to emergency shelters for people experiencing homelessness.",
+        "url": "http://www.mypuente.org",
+        "email": "outreach@mypuente.org",
+        "application_process": "Call for appointment",
+        "fees_description": "No fee",
+        "eligibility_description": "People experiencing homelessness",
+        "assured_date": "2025-05-01",
+        "organization": {
+          "id": "5bc90d65-93ef-5d91-a8e5-3c6d2a265469",
+          "name": "Puente De La Costa Sur",
+          "description": "Nonprofit organization providing education, health, and economic security programs.",
+          "website": "http://www.mypuente.org"
+        },
+        "phones": [
+          {
+            "id": "f61fb181-fa60-5459-aefe-cf6636713eb9",
+            "service_id": "b6e541ac-f3c1-54b7-923a-91f7d3f059d1",
+            "number": "(650) 879-1691",
+            "type": "voice",
+            "description": "Main Number"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "559fac0a-9d84-587a-9539-455bed5cca2d",
+            "service_id": "b6e541ac-f3c1-54b7-923a-91f7d3f059d1",
+            "freq": "WEEKLY",
+            "byday": "MO,TU,WE,TH,FR",
+            "opens_at": "08:00-08:00",
+            "closes_at": "17:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "6b17ba1d-d92d-5462-8a93-2ce9713b3f25",
+            "service_id": "b6e541ac-f3c1-54b7-923a-91f7d3f059d1",
+            "name": "San Mateo"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "211bayarea-18669182",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "b72ce5b6-4d10-5eed-8d92-84a8ac6595f8",
+        "organization_id": "5bc90d65-93ef-5d91-a8e5-3c6d2a265469",
+        "name": "Public Benefits Enrollment",
+        "status": "active",
+        "description": "Provides public benefits application and health insurance enrollment. Offers assistance with CalFresh, CalWORKs, and Medi-Cal. Assists with Social Security and Employment Development Department benefits applications.",
+        "url": "http://www.mypuente.org",
+        "email": "outreach@mypuente.org",
+        "application_process": "Call for appointment",
+        "fees_description": "No fee",
+        "eligibility_description": "La Honda, Loma Mar, Pescadero, or San Gregorio residents",
+        "assured_date": "2025-04-07",
+        "organization": {
+          "id": "5bc90d65-93ef-5d91-a8e5-3c6d2a265469",
+          "name": "Puente De La Costa Sur",
+          "description": "Nonprofit organization providing education, health, and economic security programs.",
+          "website": "http://www.mypuente.org"
+        },
+        "phones": [
+          {
+            "id": "cd495ead-d847-524f-a490-3f56781c7c4e",
+            "service_id": "b72ce5b6-4d10-5eed-8d92-84a8ac6595f8",
+            "number": "(650) 879-1691",
+            "type": "voice",
+            "description": "Main Office"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "e2ced6ff-0ddc-5db6-8353-4014bfcdc5c7",
+            "service_id": "b72ce5b6-4d10-5eed-8d92-84a8ac6595f8",
+            "freq": "WEEKLY",
+            "byday": "MO,TU,WE,TH,FR",
+            "opens_at": "08:00-08:00",
+            "closes_at": "17:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "ad9c3804-1863-5ddd-9b19-a62368afe822",
+            "service_id": "b72ce5b6-4d10-5eed-8d92-84a8ac6595f8",
+            "name": "San Gregorio"
+          },
+          {
+            "id": "b1a4345a-9746-559b-bca0-3701ab308598",
+            "service_id": "b72ce5b6-4d10-5eed-8d92-84a8ac6595f8",
+            "name": "Loma Mar"
+          },
+          {
+            "id": "05447cbf-74c5-5117-8f7c-49c33a73b457",
+            "service_id": "b72ce5b6-4d10-5eed-8d92-84a8ac6595f8",
+            "name": "La Honda"
+          },
+          {
+            "id": "4ca77c1f-f744-5b6b-8cab-3f2afb9ed7a6",
+            "service_id": "b72ce5b6-4d10-5eed-8d92-84a8ac6595f8",
+            "name": "Pescadero"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "211bayarea-52000628",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "0c09c6a2-21d5-5adc-84f7-8c49c39ccc64",
+        "organization_id": "288a9007-8264-5065-b290-529c1067f26c",
+        "name": "Carpool Vanpool Programs",
+        "status": "active",
+        "description": "Encourages carpooling to reduce the number of vehicles traveling in the county. Helps residents and commuters find alternatives to driving alone. Provides information and commute planning assistance to employees and employer programs. Offers shuttles for private businesses and government agencies. Helps employees make the last mile commute to workplaces from transit stations.",
+        "url": "http://www.commute.org",
+        "email": "support@commute.org",
+        "application_process": "Register online or call",
+        "fees_description": "No fee",
+        "eligibility_description": "Open to all",
+        "assured_date": "2025-07-08",
+        "organization": {
+          "id": "288a9007-8264-5065-b290-529c1067f26c",
+          "name": "Commute.org",
+          "description": "Public agency working to reduce the number of single occupant vehicles in the county.",
+          "website": "http://www.commute.org"
+        },
+        "phones": [
+          {
+            "id": "a126b87b-e34c-5965-893f-635c7f289307",
+            "service_id": "0c09c6a2-21d5-5adc-84f7-8c49c39ccc64",
+            "number": "(650) 588-8170",
+            "type": "voice",
+            "description": "Main Number"
+          },
+          {
+            "id": "330e40b8-4572-5eac-9dcc-823d9e1e6b60",
+            "service_id": "0c09c6a2-21d5-5adc-84f7-8c49c39ccc64",
+            "number": "my.commute.org",
+            "type": "voice",
+            "description": "My Commute"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "9e2ce8be-81f4-5b4d-901b-77474b87fe7b",
+            "service_id": "0c09c6a2-21d5-5adc-84f7-8c49c39ccc64",
+            "freq": "WEEKLY",
+            "byday": "MO,TU,WE,TH,FR",
+            "opens_at": "08:00-08:00",
+            "closes_at": "17:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "ba79811d-2c43-5eec-a6cf-5df4c1774c35",
+            "service_id": "0c09c6a2-21d5-5adc-84f7-8c49c39ccc64",
+            "name": "San Mateo"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "211bayarea-10613212",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "46f619a1-17a7-5a3f-bd19-dd2b53900131",
+        "organization_id": "288a9007-8264-5065-b290-529c1067f26c",
+        "name": "Assistance Programs",
+        "status": "active",
+        "description": "Provides transportation discount assistance to income eligible commuters. Offers information about different programs which may begin and end depending on funding.",
+        "url": "http://www.commute.org",
+        "email": "gopass@commute.org",
+        "application_process": "Apply online or call",
+        "fees_description": "No fee",
+        "eligibility_description": "San Mateo County income eligible commuters",
+        "assured_date": "2025-07-08",
+        "organization": {
+          "id": "288a9007-8264-5065-b290-529c1067f26c",
+          "name": "Commute.org",
+          "description": "Public agency working to reduce the number of single occupant vehicles in the county.",
+          "website": "http://www.commute.org"
+        },
+        "phones": [
+          {
+            "id": "397fe5d3-5369-5c9d-920c-0a823ec1de69",
+            "service_id": "46f619a1-17a7-5a3f-bd19-dd2b53900131",
+            "number": "(650) 588-8170",
+            "type": "voice",
+            "description": "Main Number"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "c786109e-6110-5d21-a30f-4318333bc021",
+            "service_id": "46f619a1-17a7-5a3f-bd19-dd2b53900131",
+            "freq": "WEEKLY",
+            "byday": "MO,TU,WE,TH,FR",
+            "opens_at": "09:00-08:00",
+            "closes_at": "17:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "2c7c3c44-61db-55a5-b24e-95524c032267",
+            "service_id": "46f619a1-17a7-5a3f-bd19-dd2b53900131",
+            "name": "San Mateo"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "211bayarea-83210499",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "fc66bb61-36f4-5e76-8f91-eda5bc44a4ab",
+        "organization_id": "288a9007-8264-5065-b290-529c1067f26c",
+        "name": "Guaranteed Ride Home (GRH)",
+        "status": "active",
+        "description": "Provides an alternative for commuters to go home in an emergency. Offers financial reimbursement for up to four trips per calendar year and $60 per trip. Serves eligible participants not driving alone to work or school in San Mateo County.",
+        "url": "http://www.commute.org",
+        "email": "support@commute.org",
+        "application_process": "Register online or call",
+        "fees_description": "No fee",
+        "eligibility_description": "Open to all",
+        "assured_date": "2025-07-08",
+        "organization": {
+          "id": "288a9007-8264-5065-b290-529c1067f26c",
+          "name": "Commute.org",
+          "description": "Public agency working to reduce the number of single occupant vehicles in the county.",
+          "website": "http://www.commute.org"
+        },
+        "phones": [
+          {
+            "id": "d388fd0e-9fd3-5933-b234-3d4336b0432c",
+            "service_id": "fc66bb61-36f4-5e76-8f91-eda5bc44a4ab",
+            "number": "(650) 588-8170",
+            "type": "voice",
+            "description": "Main Number"
+          },
+          {
+            "id": "f845845e-7bcd-5e22-bbb3-3b9b8c5639ab",
+            "service_id": "fc66bb61-36f4-5e76-8f91-eda5bc44a4ab",
+            "number": "my.commute.org",
+            "type": "voice",
+            "description": "My Commute"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "b48ab546-5308-584b-a2de-d5074a771ea9",
+            "service_id": "fc66bb61-36f4-5e76-8f91-eda5bc44a4ab",
+            "freq": "WEEKLY",
+            "byday": "MO,TU,WE,TH,FR",
+            "opens_at": "08:00-08:00",
+            "closes_at": "17:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "ff39b310-3cb0-519f-953d-19f58657eb4b",
+            "service_id": "fc66bb61-36f4-5e76-8f91-eda5bc44a4ab",
+            "name": "San Mateo"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "211bayarea-87794043",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "16cc2fd0-5af9-5ac6-9493-10396035c9ff",
+        "organization_id": "c305fcbe-fbbf-5194-b725-299196636d78",
+        "name": "Clothes Closet",
+        "status": "active",
+        "description": "Provides clothing for babies, children, and adults.",
+        "url": "http://www.fbc-fairfield.org",
+        "email": "office@fbc-fairfield.org",
+        "application_process": "Visit during program hours",
+        "fees_description": "No fee",
+        "eligibility_description": "Open to all",
+        "assured_date": "2024-10-07",
+        "organization": {
+          "id": "c305fcbe-fbbf-5194-b725-299196636d78",
+          "name": "First Baptist Church Of Fairfield",
+          "description": "Faith-based organization dedicated to offering support services for the Fairfield Community.",
+          "website": "http://www.fbc-fairfield.org"
+        },
+        "phones": [
+          {
+            "id": "f4f97693-97ef-5f7f-b6b0-c387190dabcb",
+            "service_id": "16cc2fd0-5af9-5ac6-9493-10396035c9ff",
+            "number": "(707) 422-2500",
+            "type": "voice",
+            "description": "Main Number"
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "94e0ab19-6612-5d63-89a3-fd28761c0836",
+            "service_id": "16cc2fd0-5af9-5ac6-9493-10396035c9ff",
+            "name": "Solano"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "211bayarea-10605100",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "11dbccbf-4639-5b7f-98d4-fedcafbb0ba6",
+        "organization_id": "528e1807-b4e4-5368-a233-fb83aa64d4a2",
+        "name": "Sparrow Project",
+        "status": "active",
+        "description": "Provides shower and laundry facilities. Offers emergency grocery bags. Serves hot meals.",
+        "url": "http://www.fbcvallejo.com",
+        "email": "thesparrowproject@fbcvallejo.com",
+        "application_process": "Call for schedule",
+        "fees_description": "No fee",
+        "eligibility_description": "Open to all",
+        "assured_date": "2025-02-28",
+        "organization": {
+          "id": "528e1807-b4e4-5368-a233-fb83aa64d4a2",
+          "name": "First Baptist Church Vallejo",
+          "description": "Baptist church helping people in need in the community.",
+          "website": "http://www.fbcvallejo.com"
+        },
+        "phones": [
+          {
+            "id": "16a7f25d-fa07-56f3-971c-3acec8cd7aef",
+            "service_id": "11dbccbf-4639-5b7f-98d4-fedcafbb0ba6",
+            "number": "(707) 644-4064",
+            "type": "voice",
+            "description": "Alternate Number"
+          },
+          {
+            "id": "8dce1c92-fc9f-59fd-9e9c-b73900502085",
+            "service_id": "11dbccbf-4639-5b7f-98d4-fedcafbb0ba6",
+            "number": "(707) 644-4087",
+            "type": "voice",
+            "description": "Main Number"
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "8b9140d1-daee-5580-8942-34b792c85fef",
+            "service_id": "11dbccbf-4639-5b7f-98d4-fedcafbb0ba6",
+            "name": "Solano"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "211bayarea-10605102",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "173c6812-d0d6-53ce-be34-2047c9685ddb",
+        "organization_id": "7bb07466-a225-59b6-808f-ff84560ef7ab",
+        "name": "Senior Center Programs",
+        "status": "active",
+        "description": "Manages senior center programs, activities, and events. Provides health, exercise, and computer classes. Offers games, arts, and crafts lessons.",
+        "url": "http://www.florencedouglas.org",
+        "application_process": "Call or visit",
+        "fees_description": "Annual membership fees\r\n$20 one year\r\n$35 two years\r\n$50 three years",
+        "eligibility_description": "Seniors (age 55 and older)",
+        "assured_date": "2025-07-18",
+        "organization": {
+          "id": "7bb07466-a225-59b6-808f-ff84560ef7ab",
+          "name": "Florence Douglas Center",
+          "description": "Local senior center which provides services and assistance for seniors.",
+          "website": "http://www.florencedouglas.org"
+        },
+        "phones": [
+          {
+            "id": "b36a4c4f-8fe2-51a4-84aa-527daf4caf9d",
+            "service_id": "173c6812-d0d6-53ce-be34-2047c9685ddb",
+            "number": "(707) 643-1044",
+            "type": "voice",
+            "description": "Main Number"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "f552adc7-cbb4-52a3-af22-1cae6e7d2e0b",
+            "service_id": "173c6812-d0d6-53ce-be34-2047c9685ddb",
+            "freq": "WEEKLY",
+            "byday": "MO,TU,WE,TH",
+            "opens_at": "09:00-08:00",
+            "closes_at": "14:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          },
+          {
+            "id": "5b18392b-e2b6-560d-b7eb-b402fe30ae63",
+            "service_id": "173c6812-d0d6-53ce-be34-2047c9685ddb",
+            "freq": "WEEKLY",
+            "byday": "FR",
+            "opens_at": "09:00-08:00",
+            "closes_at": "13:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "9ff69ed2-524f-5255-95a6-3063da52f11a",
+            "service_id": "173c6812-d0d6-53ce-be34-2047c9685ddb",
+            "name": "Solano"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "211bayarea-10605122",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "e159956e-08e5-51d1-ac76-3137c023d210",
+        "organization_id": "7bb07466-a225-59b6-808f-ff84560ef7ab",
+        "name": "Senior Food Program",
+        "status": "active",
+        "description": "Provides food bags with bread, produce, and canned items.",
+        "url": "http://www.florencedouglas.org",
+        "application_process": "Call for appointment",
+        "fees_description": "No fee",
+        "eligibility_description": "Seniors (age 55 and older)",
+        "assured_date": "2025-07-18",
+        "organization": {
+          "id": "7bb07466-a225-59b6-808f-ff84560ef7ab",
+          "name": "Florence Douglas Center",
+          "description": "Local senior center which provides services and assistance for seniors.",
+          "website": "http://www.florencedouglas.org"
+        },
+        "phones": [
+          {
+            "id": "2cdda46b-7dfb-5a37-b7df-68d049116540",
+            "service_id": "e159956e-08e5-51d1-ac76-3137c023d210",
+            "number": "(707) 643-1044",
+            "type": "voice",
+            "description": "Main Number"
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "c543cd50-fc6e-59a6-9384-5cfc2d89b4af",
+            "service_id": "e159956e-08e5-51d1-ac76-3137c023d210",
+            "name": "Solano"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "211bayarea-71772087",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "38350e01-a985-5822-8b35-08605bc32cf4",
+        "organization_id": "7bb07466-a225-59b6-808f-ff84560ef7ab",
+        "name": "Congregate Senior Lunch",
+        "status": "active",
+        "description": "Serves senior lunch.",
+        "url": "http://www.florencedouglas.org",
+        "application_process": "Call for reservation",
+        "fees_description": "No fee",
+        "eligibility_description": "Seniors (age 55 and older)",
+        "assured_date": "2025-07-18",
+        "organization": {
+          "id": "7bb07466-a225-59b6-808f-ff84560ef7ab",
+          "name": "Florence Douglas Center",
+          "description": "Local senior center which provides services and assistance for seniors.",
+          "website": "http://www.florencedouglas.org"
+        },
+        "phones": [
+          {
+            "id": "aec94d44-6c29-53bb-a0a5-79225449e3e6",
+            "service_id": "38350e01-a985-5822-8b35-08605bc32cf4",
+            "number": "(707) 643-1044",
+            "type": "voice",
+            "description": "Main Number"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "9f2616d5-7ec9-5e19-84db-8fe399e5e18d",
+            "service_id": "38350e01-a985-5822-8b35-08605bc32cf4",
+            "freq": "WEEKLY",
+            "byday": "MO,TU,WE,TH,FR",
+            "opens_at": "11:30-08:00",
+            "closes_at": "12:30-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "47a10366-0aa6-5ad3-ab5c-67bad21d24c7",
+            "service_id": "38350e01-a985-5822-8b35-08605bc32cf4",
+            "name": "Solano"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "ndp",
+            "record_id": "211bayarea-80388044",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "b1f34764-785a-5692-9d34-f6126f5d133d",
+        "organization_id": "b450733d-7c15-5b70-b50b-4f1b54572af9",
+        "name": "Get emergency financial assistance for housing for Oakland residents",
+        "status": "active",
+        "description": "The Keep People Housed – Oakland Homelessness Prevention Program provides assistance to income eligible Oakland residents who have past-due rent, or need help paying the costs of moving into a new unit they have already identified and plan to lease.",
+        "url": "https://www.keepoaklandhoused.org/",
+        "fees_description": "Free",
+        "eligibility_description": "All Oakland residents experiencing a housing crisis who have a household income at or below 30% of Area Median Income ($31,065 for family of 1 and $35,490 for family of 2).",
+        "assured_date": "2025-06-13",
+        "organization": {
+          "id": "b450733d-7c15-5b70-b50b-4f1b54572af9",
+          "name": "Bay Area Community Services (BACS)",
+          "description": "No description available for Bay Area Community Services (BACS).",
+          "website": "http://www.bayareacs.org/"
+        },
+        "phones": [
+          {
+            "id": "ad105236-f109-5901-8dff-5ac7f738ac73",
+            "service_id": "b1f34764-785a-5692-9d34-f6126f5d133d",
+            "number": "510-613-0330",
+            "type": "voice",
+            "description": "Bay Area Community Services"
+          },
+          {
+            "id": "b40cb194-2c13-585b-b39b-cf0ada922cd7",
+            "service_id": "b1f34764-785a-5692-9d34-f6126f5d133d",
+            "number": "510-768-3100",
+            "type": "voice",
+            "description": "Catholic Charities of the East Bay"
+          },
+          {
+            "id": "625c54e5-2308-540c-8b33-779d3d273fa2",
+            "service_id": "b1f34764-785a-5692-9d34-f6126f5d133d",
+            "number": "510-548-4040",
+            "type": "voice",
+            "description": "East Bay Community Law Center"
+          },
+          {
+            "id": "60caa391-e37a-5c0e-b775-3a8c77a66870",
+            "service_id": "b1f34764-785a-5692-9d34-f6126f5d133d",
+            "number": "510-899-9289",
+            "type": "voice",
+            "description": "Keep Oakland Housed"
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "be78edd7-59e5-5798-875d-3fd81675843e",
+            "service_id": "b1f34764-785a-5692-9d34-f6126f5d133d",
+            "name": "Alameda County"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "odrs",
+            "record_id": "22560",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "a68b5872-526f-52e8-b6f1-725e2579604b",
+        "organization_id": "b7148df2-ec57-514a-97a8-6f7812e54043",
+        "name": "Apply for affordable housing",
+        "status": "active",
+        "description": "NCLT offers affordable housing opportunities for renters and buyers at locations throughout Bay Area.",
+        "url": "https://nclt.org/affordable-housing-and-community-facilities/",
+        "email": "nclt@nclt.org",
+        "eligibility_description": "Income requirements range from < 30% Area Median Income to <80% Area Median Income. View Current Housing Opportunities for specific openings and income requirements.",
+        "assured_date": "2025-07-07",
+        "organization": {
+          "id": "b7148df2-ec57-514a-97a8-6f7812e54043",
+          "name": "Northern California Land Trust (NCLT)",
+          "description": "No description available for Northern California Land Trust (NCLT).",
+          "website": "https://nclt.org/"
+        },
+        "phones": [
+          {
+            "id": "22bdd6df-fd96-55d0-8df1-ab6aa272193c",
+            "service_id": "a68b5872-526f-52e8-b6f1-725e2579604b",
+            "number": "510-548-7878",
+            "type": "voice",
+            "description": "Northern California Land Trust"
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "ae90e63a-9b6e-50c5-877e-fd3b6cba825e",
+            "service_id": "a68b5872-526f-52e8-b6f1-725e2579604b",
+            "name": "Alameda County"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "odrs",
+            "record_id": "27039",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "32e345b6-8c42-54c1-85ca-d04b3bf66a6a",
+        "organization_id": "7c709e21-9da7-5e23-b6ab-98c185c14306",
+        "name": "Find and apply for affordable housing in the Bay Area",
+        "status": "active",
+        "description": "The Bay Area Housing Finance Authority (BAHFA) offers a tool for finding and applying for affordable housing in the Bay Area, with the exception of San Francisco. The online tool allows you to search by number of bedrooms and maximum monthly rent.",
+        "fees_description": "Free",
+        "assured_date": "2025-05-09",
+        "organization": {
+          "id": "7c709e21-9da7-5e23-b6ab-98c185c14306",
+          "name": "Bay Area Housing Finance Authority (BAHFA)",
+          "description": "No description available for Bay Area Housing Finance Authority (BAHFA).",
+          "website": "https://mtc.ca.gov/about-mtc/authorities/bay-area-housing-finance-authority-bahfa"
+        },
+        "schedules": [
+          {
+            "id": "06ec8031-45a7-5f65-9a64-4cb4d2f19dbd",
+            "service_id": "32e345b6-8c42-54c1-85ca-d04b3bf66a6a",
+            "freq": "WEEKLY",
+            "byday": "MO,TU,WE,TH,FR",
+            "opens_at": "09:00-08:00",
+            "closes_at": "17:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "03d2fc72-d7ed-5e0c-a3bc-a277d2a03e5c",
+            "service_id": "32e345b6-8c42-54c1-85ca-d04b3bf66a6a",
+            "name": "Alameda County"
+          },
+          {
+            "id": "5d27b644-0306-5ebb-a161-c06bcc59da99",
+            "service_id": "32e345b6-8c42-54c1-85ca-d04b3bf66a6a",
+            "name": "Marin County"
+          },
+          {
+            "id": "6ecb6074-d108-5333-b101-af4ee9a1ae72",
+            "service_id": "32e345b6-8c42-54c1-85ca-d04b3bf66a6a",
+            "name": "San Mateo County"
+          },
+          {
+            "id": "c987475b-30f3-5ab2-8ed3-ee06da75d9ea",
+            "service_id": "32e345b6-8c42-54c1-85ca-d04b3bf66a6a",
+            "name": "Solano County"
+          },
+          {
+            "id": "b05af46d-bd8c-5cc1-a8b8-4cceef5285f2",
+            "service_id": "32e345b6-8c42-54c1-85ca-d04b3bf66a6a",
+            "name": "Contra Costa County"
+          },
+          {
+            "id": "8f381273-0cd2-56df-ab5d-67c8f2bde4ae",
+            "service_id": "32e345b6-8c42-54c1-85ca-d04b3bf66a6a",
+            "name": "Napa County"
+          },
+          {
+            "id": "308afd42-3ba3-5610-8edc-50b734462408",
+            "service_id": "32e345b6-8c42-54c1-85ca-d04b3bf66a6a",
+            "name": "Santa Clara County"
+          },
+          {
+            "id": "75fd1b1e-3f94-5f4e-94ec-07a7c75031e7",
+            "service_id": "32e345b6-8c42-54c1-85ca-d04b3bf66a6a",
+            "name": "Sonoma County"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "odrs",
+            "record_id": "36897",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "ddb3c8cf-d17e-5280-8a05-fed9d4a2a442",
+        "organization_id": "61871133-97c0-5795-8982-e42755853c57",
+        "name": "Get emergency financial assistance for the Swiss community",
+        "status": "active",
+        "description": "The Swiss Benevolent Society provides one-time or on-going financial assistance to individuals of Swiss descent to help with housing, bills, shopping, transportation, or other necessities.",
+        "url": "http://www.sbssf.com/assistance/index.php",
+        "email": "assistance@sbssf.com",
+        "fees_description": "Free",
+        "eligibility_description": "For Swiss nationals and direct descendants in Northern California.",
+        "assured_date": "2025-07-22",
+        "organization": {
+          "id": "61871133-97c0-5795-8982-e42755853c57",
+          "name": "Swiss Benevolent Society of San Francisco (SBSSF)",
+          "description": "No description available for Swiss Benevolent Society of San Francisco (SBSSF).",
+          "website": "http://www.sbssf.com"
+        },
+        "service_areas": [
+          {
+            "id": "32348837-5873-5853-9f7c-869d2470a5f2",
+            "service_id": "ddb3c8cf-d17e-5280-8a05-fed9d4a2a442",
+            "name": "San Francisco County"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "odrs",
+            "record_id": "16746",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "839b565f-f067-55ff-b5dd-4b3eec497565",
+        "organization_id": "8807d901-d141-5956-80b3-439a60342ffb",
+        "name": "Enter a long-term residential treatment program",
+        "status": "active",
+        "description": "New Bridge Foundation provides the START long-term residential rehab program that provides up to six months of counseling, group therapy and education, relapse prevention, an exercise program, health and wellness education and discharge planning.",
+        "url": "https://www.newbridgefoundation.org/addiction-treatment-programs/long-term-residential-rehab-start/",
+        "assured_date": "2025-05-25",
+        "organization": {
+          "id": "8807d901-d141-5956-80b3-439a60342ffb",
+          "name": "New Bridge Foundation",
+          "description": "No description available for New Bridge Foundation.",
+          "website": "http://www.newbridgefoundation.org/"
+        },
+        "phones": [
+          {
+            "id": "44e622f3-3fd2-5a79-a44d-05af1472b28a",
+            "service_id": "839b565f-f067-55ff-b5dd-4b3eec497565",
+            "number": "866-772-8491",
+            "type": "voice",
+            "description": "Main Office"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "d21a4231-56c4-51bb-9f8a-7332adb9ebf9",
+            "service_id": "839b565f-f067-55ff-b5dd-4b3eec497565",
+            "freq": "WEEKLY",
+            "byday": "MO,TU,WE,TH,FR,SA,SU",
+            "opens_at": "09:00-08:00",
+            "closes_at": "18:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "c33e0d8f-737e-58ed-a1c2-0d9246298b40",
+            "service_id": "839b565f-f067-55ff-b5dd-4b3eec497565",
+            "name": "Alameda County"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "odrs",
+            "record_id": "2563",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "5d248eb8-9ca6-5a8b-ad0e-c94209a052ef",
+        "organization_id": "827f058d-d844-5bb6-bf0d-e6fb6e5f2d56",
+        "name": "Get help with move-in costs or back rent",
+        "status": "active",
+        "description": "Compass Family Services' C-RENT  is part of the San Francisco Rental Assistance Project (ERAP). The C-RENT program provides back rent, move-in assistance, problem solving services, and case management services.",
+        "url": "https://www.compass-sf.org/eviction-prevention",
+        "fees_description": "Free",
+        "eligibility_description": "Household must have minor child(ren) in their custody:  Applicants must have at least 51% custody or a 50/50 court ordered share custody of a child under the age of 18",
+        "assured_date": "2025-05-06",
+        "organization": {
+          "id": "827f058d-d844-5bb6-bf0d-e6fb6e5f2d56",
+          "name": "Compass Family Services",
+          "description": "No description available for Compass Family Services.",
+          "website": "http://www.compass-sf.org/"
+        },
+        "phones": [
+          {
+            "id": "ae1448c1-0bee-5038-a0e9-596628b9607f",
+            "service_id": "5d248eb8-9ca6-5a8b-ad0e-c94209a052ef",
+            "number": "800-273-6222",
+            "type": "voice",
+            "description": "General Information, After Hours"
+          },
+          {
+            "id": "7fd94e82-e577-5860-b444-87d82652b1f8",
+            "service_id": "5d248eb8-9ca6-5a8b-ad0e-c94209a052ef",
+            "number": "415-644-0504",
+            "type": "voice",
+            "description": "Main Phone"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "16f33701-000f-5433-8c8f-502fd4cc10ed",
+            "service_id": "5d248eb8-9ca6-5a8b-ad0e-c94209a052ef",
+            "freq": "WEEKLY",
+            "byday": "MO,WE,TH,FR",
+            "opens_at": "09:00-08:00",
+            "closes_at": "17:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          },
+          {
+            "id": "8a3de16d-853f-5b65-b3f1-9a65c43f66b0",
+            "service_id": "5d248eb8-9ca6-5a8b-ad0e-c94209a052ef",
+            "freq": "WEEKLY",
+            "byday": "TU",
+            "opens_at": "09:00-08:00",
+            "closes_at": "12:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "84b4032e-9cb4-5f75-b3fc-4b6a20c87db4",
+            "service_id": "5d248eb8-9ca6-5a8b-ad0e-c94209a052ef",
+            "name": "San Francisco County"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "odrs",
+            "record_id": "14047",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "02235ce6-8c93-523b-8a0f-c5f5250e9029",
+        "organization_id": "0c13b733-9cd9-5a83-8e65-98b5762abdaa",
+        "name": "Call a hotline to find food and shelter",
+        "status": "active",
+        "description": "The City of Albany has an information line that provides assistance and referrals to shelter and housing in Albany as well as meals on wheels for Albany seniors.",
+        "url": "https://www.albanyca.gov/Departments/Recreation-Community-Services/Community-Services/Albany-Cares",
+        "fees_description": "Free",
+        "assured_date": "2025-07-27",
+        "organization": {
+          "id": "0c13b733-9cd9-5a83-8e65-98b5762abdaa",
+          "name": "City of Albany",
+          "description": "No description available for City of Albany.",
+          "website": "https://www.albanyca.org/home"
+        },
+        "phones": [
+          {
+            "id": "a4068521-a67c-5280-aabd-b81cd1c2ba0a",
+            "service_id": "02235ce6-8c93-523b-8a0f-c5f5250e9029",
+            "number": "510-559-4589",
+            "type": "voice",
+            "description": "Albany CARES"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "fca5d30b-6d33-5591-a341-08a5700a3e16",
+            "service_id": "02235ce6-8c93-523b-8a0f-c5f5250e9029",
+            "freq": "WEEKLY",
+            "byday": "MO,TU,WE,TH,FR",
+            "opens_at": "09:00-08:00",
+            "closes_at": "17:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "8c6901f5-b6f1-589c-9a32-a01e5160803f",
+            "service_id": "02235ce6-8c93-523b-8a0f-c5f5250e9029",
+            "name": "Alameda County"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "odrs",
+            "record_id": "22484",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "de52dedf-5c9c-5fbf-9a07-10bcb2da75bc",
+        "organization_id": "b37ef0c6-9b3f-5131-ad7b-e9d86a2dc49d",
+        "name": "Find a free shelter after an emergency or disaster",
+        "status": "active",
+        "description": "The Red Cross provides free shelter and food to those who need to leave their homes due to emergency or disaster with no reservations needed. In cases where it is impossible to return home, the Red Cross will assist you with finding transitional housing.",
+        "fees_description": "Free",
+        "assured_date": "2025-05-08",
+        "organization": {
+          "id": "b37ef0c6-9b3f-5131-ad7b-e9d86a2dc49d",
+          "name": "American Red Cross of the Bay Area",
+          "description": "No description available for American Red Cross of the Bay Area.",
+          "website": "https://www.redcross.org/local/california/northern-california-coastal/about-us/locations/bay-area.html"
+        },
+        "phones": [
+          {
+            "id": "6de15aee-2a9e-58eb-b68e-fd0478e5a45d",
+            "service_id": "de52dedf-5c9c-5fbf-9a07-10bcb2da75bc",
+            "number": "415-427-8000",
+            "type": "voice",
+            "description": "American Red Cross of the Bay Area"
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "ec6b7f10-a2f6-5f46-87db-2bd7a0f902a1",
+            "service_id": "de52dedf-5c9c-5fbf-9a07-10bcb2da75bc",
+            "name": "Alameda County"
+          },
+          {
+            "id": "40e2176c-a8d4-5022-88fc-4f65e79b43e6",
+            "service_id": "de52dedf-5c9c-5fbf-9a07-10bcb2da75bc",
+            "name": "Contra Costa County"
+          },
+          {
+            "id": "14b8b9f2-16c3-58da-be8a-a4202ff30d38",
+            "service_id": "de52dedf-5c9c-5fbf-9a07-10bcb2da75bc",
+            "name": "San Francisco County"
+          },
+          {
+            "id": "916fd23b-6cfe-5d02-b9e4-aa4ce47b27c4",
+            "service_id": "de52dedf-5c9c-5fbf-9a07-10bcb2da75bc",
+            "name": "San Mateo County"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "odrs",
+            "record_id": "14455",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "6f044897-37c2-52a4-a90e-ac7ba46e63c4",
+        "organization_id": "34ff1b19-5bcf-5037-bf2b-d660566af539",
+        "name": "Get help with move-in costs or back rent (SF ERAP)",
+        "status": "active",
+        "description": "San Francisco Emergency Rental Assistance Program (SF ERAP) provides assistance to eligible residents who have past-due rent, or need help paying the costs of moving into a new unit they have already identified and plan to lease.",
+        "url": "https://sf.gov/renthelp",
+        "fees_description": "Free",
+        "eligibility_description": "Experiencing a recent financial hardship and need one-time help with past-due rent OR Cannot afford security deposit and/or first and last months’ rent for a unit you are moving into.",
+        "assured_date": "2025-05-06",
+        "organization": {
+          "id": "34ff1b19-5bcf-5037-bf2b-d660566af539",
+          "name": "City and County of San Francisco",
+          "description": "No description available for City and County of San Francisco.",
+          "website": "http://www.sfgov.org/"
+        },
+        "phones": [
+          {
+            "id": "a164698c-625d-591e-ae16-5f9fdbcc1ae8",
+            "service_id": "6f044897-37c2-52a4-a90e-ac7ba46e63c4",
+            "number": "415-653-5744",
+            "type": "voice",
+            "description": "SF ERAP Helpline"
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "b54461ac-fc13-5479-8e11-fe80f4d8ca41",
+            "service_id": "6f044897-37c2-52a4-a90e-ac7ba46e63c4",
+            "name": "San Francisco County"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "odrs",
+            "record_id": "36486",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "d6e036f9-1413-5a4f-a934-b37182e967eb",
+        "organization_id": "0d52d951-4d45-5ffe-98ca-3f219aa168c9",
+        "name": "Find affordable housing in Richmond",
+        "status": "active",
+        "description": "The Richmond Housing Authority (RHA) provides affordable housing for eligible residents of Richmond through federally funded housing programs such as Project-Based Voucher.",
+        "url": "https://www.ci.richmond.ca.us/228/Public-Housing",
+        "fees_description": "Free",
+        "eligibility_description": "Income limits apply.",
+        "assured_date": "2025-05-26",
+        "organization": {
+          "id": "0d52d951-4d45-5ffe-98ca-3f219aa168c9",
+          "name": "Housing Authority of Richmond",
+          "description": "No description available for Housing Authority of Richmond.",
+          "website": "http://www.ci.richmond.ca.us/86/Housing-Authority"
+        },
+        "phones": [
+          {
+            "id": "bdb15284-2958-5b64-a263-79a83f2275f1",
+            "service_id": "d6e036f9-1413-5a4f-a934-b37182e967eb",
+            "number": "510-621-1300",
+            "type": "voice",
+            "description": "Phone"
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "7c736a9e-7324-56c3-b30f-83b71c7d21ed",
+            "service_id": "d6e036f9-1413-5a4f-a934-b37182e967eb",
+            "name": "Contra Costa County"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "odrs",
+            "record_id": "23597",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "d6b42490-6ca7-5ff8-bfa7-70c450ded181",
+        "organization_id": "7ee744e9-61ca-5753-bed6-bb1fabfb4bd5",
+        "name": "Get case management and emergency services",
+        "status": "active",
+        "description": "The Daly City Community Center provides case management, emergency food, shelter, transportation and more. People needing assistance can meet with a community caseworker to have their situation or needs assessed and then create a plan.",
+        "url": "https://www.dalycity.org/512/Community-Service-Center",
+        "fees_description": "Free",
+        "assured_date": "2025-05-06",
+        "organization": {
+          "id": "7ee744e9-61ca-5753-bed6-bb1fabfb4bd5",
+          "name": "Daly City Community Service Center",
+          "description": "No description available for Daly City Community Service Center.",
+          "website": "https://www.dalycity.org/512/Community-Service-CenterDaly-City-Partne"
+        },
+        "phones": [
+          {
+            "id": "2b952c06-3344-56bc-923c-21c5f83dc455",
+            "service_id": "d6b42490-6ca7-5ff8-bfa7-70c450ded181",
+            "number": "650-991-8007",
+            "type": "voice",
+            "description": "Daly City Community Service Center"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "bb9ee109-66ca-568e-9558-e20545864b08",
+            "service_id": "d6b42490-6ca7-5ff8-bfa7-70c450ded181",
+            "freq": "WEEKLY",
+            "byday": "MO,TU,WE,TH,FR",
+            "opens_at": "09:00-08:00",
+            "closes_at": "16:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "f0d65fe2-c932-5622-a328-f05456d862b2",
+            "service_id": "d6b42490-6ca7-5ff8-bfa7-70c450ded181",
+            "name": "San Mateo County"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "odrs",
+            "record_id": "5768",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    },
+    {
+      "service": {
+        "id": "8a97bbd0-123a-5de9-ae8b-a380dd3d2b92",
+        "organization_id": "7ee744e9-61ca-5753-bed6-bb1fabfb4bd5",
+        "name": "Get help paying for rent and utilities",
+        "status": "active",
+        "description": "As one of San Mateo County's Core Service Agencies, Daly City Community Service Center offers help to individuals and families who live in Daly City, Colma, and Broadmoor with rent and utilities support.",
+        "url": "https://www.dcpartnership.org/programs/",
+        "fees_description": "Free",
+        "assured_date": "2025-05-06",
+        "organization": {
+          "id": "7ee744e9-61ca-5753-bed6-bb1fabfb4bd5",
+          "name": "Daly City Community Service Center",
+          "description": "No description available for Daly City Community Service Center.",
+          "website": "https://www.dalycity.org/512/Community-Service-CenterDaly-City-Partne"
+        },
+        "phones": [
+          {
+            "id": "b55c1d2f-b57c-5959-9dd8-77fa973af37d",
+            "service_id": "8a97bbd0-123a-5de9-ae8b-a380dd3d2b92",
+            "number": "650-991-8007",
+            "type": "voice",
+            "description": "Main Phone"
+          }
+        ],
+        "schedules": [
+          {
+            "id": "9927146f-30d9-5dfc-9e96-d72de44d27fe",
+            "service_id": "8a97bbd0-123a-5de9-ae8b-a380dd3d2b92",
+            "freq": "WEEKLY",
+            "byday": "MO,TU,WE,TH,FR",
+            "opens_at": "09:00-08:00",
+            "closes_at": "16:00-08:00",
+            "x_resource_engine": {
+              "timezone": "America/Los_Angeles"
+            }
+          }
+        ],
+        "service_areas": [
+          {
+            "id": "f03d03d9-f9a9-54e3-a6fd-f3cc477ba0cd",
+            "service_id": "8a97bbd0-123a-5de9-ae8b-a380dd3d2b92",
+            "name": "San Mateo County"
+          }
+        ],
+        "x_resource_engine": {
+          "source": {
+            "system": "odrs",
+            "record_id": "36033",
+            "fetched_at": "2026-11-03T15:00:00Z"
+          }
+        }
+      },
+      "version": 1
+    }
+  ],
+  "findings": [
+    {
+      "id": "2be1d64b-c4a5-5864-a826-e5f786e0a159",
+      "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "ref": {
+        "entity_type": "service",
+        "entity_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+        "field": "service_areas",
+        "op": "add"
+      },
+      "category": "discrepancy",
+      "current_value": [
+        "El Granada",
+        "Moss Beach",
+        "Montara",
+        "Half Moon Bay"
+      ],
+      "proposed_value": {
+        "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+        "name": "La Honda"
+      },
+      "evidence": [
+        {
+          "kind": "quote",
+          "source_type": "website",
+          "url": "https://sample.invalid/coastside-hope/services",
+          "fetched_at": "2026-11-03T16:00:00Z",
+          "snippet": "We serve income-eligible residents of El Granada, Half Moon Bay, La Honda, Montara, and Moss Beach."
+        }
+      ],
+      "confidence": 0.9,
+      "model_id": "sample-model",
+      "created_at": "2026-11-03T16:00:00Z",
+      "review_state": "pending"
+    },
+    {
+      "id": "49689657-322b-53df-b94d-47f23e7007eb",
+      "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "ref": {
+        "entity_type": "service",
+        "entity_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+        "field": "status"
+      },
+      "category": "actively_bad",
+      "current_value": "active",
+      "evidence": [
+        {
+          "kind": "http_signal",
+          "source_type": "website",
+          "url": "https://sample.invalid/coastside-hope/gone",
+          "fetched_at": "2026-11-03T16:00:00Z",
+          "http_status": 404
+        }
+      ],
+      "confidence": 0.6,
+      "created_at": "2026-11-03T16:00:00Z",
+      "review_state": "pending"
+    },
+    {
+      "id": "06d6210f-9517-5491-89e6-82b5910540cb",
+      "service_id": "2d4f6a8c-0b1d-5e3f-9a7c-1b3d5f7a9c0e",
+      "ref": {
+        "entity_type": "service",
+        "entity_id": "2d4f6a8c-0b1d-5e3f-9a7c-1b3d5f7a9c0e",
+        "field": "eligibility_description",
+        "op": "set"
+      },
+      "category": "discrepancy",
+      "current_value": "Open to residents of San Francisco County.",
+      "proposed_value": "Open to residents of San Francisco and San Mateo Counties.",
+      "evidence": [
+        {
+          "kind": "quote",
+          "source_type": "website",
+          "url": "https://bayview-foodpantry.example.org/grocery",
+          "fetched_at": "2026-11-03T16:00:00Z",
+          "snippet": "Open to residents of San Francisco and San Mateo Counties."
+        }
+      ],
+      "confidence": 0.94,
+      "model_id": "sample-model",
+      "created_at": "2026-11-03T16:00:00Z",
+      "review_state": "pending"
+    },
+    {
+      "id": "e8cd8581-3803-516d-aa1c-cee214b78d9d",
+      "service_id": "4f6b8d0e-2a3c-5b5d-9e7f-3d5f7a9b1c2e",
+      "ref": {
+        "entity_type": "service",
+        "entity_id": "4f6b8d0e-2a3c-5b5d-9e7f-3d5f7a9b1c2e",
+        "field": "status",
+        "op": "set"
+      },
+      "category": "actively_bad",
+      "current_value": "active",
+      "proposed_value": null,
+      "evidence": [
+        {
+          "kind": "http_signal",
+          "source_type": "website",
+          "url": "https://harbor-youth.example.org/shelter",
+          "fetched_at": "2026-11-03T16:00:00Z",
+          "error": "DNS lookup failed"
+        }
+      ],
+      "confidence": 0.7,
+      "model_id": null,
+      "created_at": "2026-11-03T16:00:00Z",
+      "review_state": "pending"
+    },
+    {
+      "id": "a4f03634-bb5b-579e-ae26-f6dc03f19cd4",
+      "service_id": "0d2817f1-56a5-5e10-9cf6-1ec7aff660d9",
+      "ref": {
+        "entity_type": "service",
+        "entity_id": "0d2817f1-56a5-5e10-9cf6-1ec7aff660d9",
+        "field": "eligibility_description",
+        "op": "set"
+      },
+      "category": "discrepancy",
+      "current_value": "Open to tenants in Alameda County with an income at or below 200% of the federal poverty level.",
+      "proposed_value": "Open to tenants in Alameda County with an income at or below 300% of the federal poverty level.",
+      "evidence": [
+        {
+          "kind": "quote",
+          "source_type": "website",
+          "url": "https://northgate-legal.example.org/eligibility",
+          "fetched_at": "2026-11-03T16:00:00Z",
+          "snippet": "Tenants in Alameda County qualify with an income at or below 300% of the federal poverty level."
+        }
+      ],
+      "confidence": 0.88,
+      "model_id": "sample-model",
+      "created_at": "2026-11-03T16:00:00Z",
+      "review_state": "pending"
+    },
+    {
+      "id": "7fbc4dce-a522-5c0c-ab96-302a294a4f76",
+      "service_id": "845ce558-e50a-55b0-a8e3-0d0ca32c19c1",
+      "ref": {
+        "entity_type": "service",
+        "entity_id": "845ce558-e50a-55b0-a8e3-0d0ca32c19c1",
+        "field": "status",
+        "op": "set"
+      },
+      "category": "check_failed",
+      "current_value": "active",
+      "proposed_value": null,
+      "evidence": [
+        {
+          "kind": "http_signal",
+          "source_type": "website",
+          "url": "https://riverside-clinic.example.org",
+          "fetched_at": "2026-11-03T16:00:00Z",
+          "error": "Request timed out after 30 seconds"
+        }
+      ],
+      "confidence": 0.2,
+      "model_id": null,
+      "created_at": "2026-11-03T16:00:00Z",
+      "review_state": "pending"
+    },
+    {
+      "id": "421876fa-a63e-5f8b-b7f3-19ecbd89be7f",
+      "service_id": "d2815d9c-57f4-5be7-b6bc-4c9975687177",
+      "ref": {
+        "entity_type": "service",
+        "entity_id": "d2815d9c-57f4-5be7-b6bc-4c9975687177",
+        "field": "status",
+        "op": "set"
+      },
+      "category": "actively_bad",
+      "current_value": "active",
+      "proposed_value": null,
+      "evidence": [
+        {
+          "kind": "http_signal",
+          "source_type": "website",
+          "url": "https://mission-youth.example.org",
+          "fetched_at": "2026-11-03T16:00:00Z",
+          "error": "TLS certificate expired"
+        }
+      ],
+      "confidence": 0.65,
+      "model_id": null,
+      "created_at": "2026-11-03T16:00:00Z",
+      "review_state": "pending"
+    }
+  ],
+  "clashes": [
+    {
+      "id": "b7d33d29-de01-5400-b7df-5f8f4b93ac0b",
+      "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "ref": {
+        "entity_type": "service",
+        "entity_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+        "field": "eligibility_description"
+      },
+      "source": "ndp",
+      "base_value": "El Granda, Half Moon Bay, Montara, and Moss Beach income eligible residents",
+      "source_value": "Income-eligible residents of El Granada, Half Moon Bay, La Honda, Montara, and Moss Beach",
+      "current_value": "Income-eligible residents of El Granada, Half Moon Bay, Montara, and Moss Beach",
+      "status": "open",
+      "detected_at": "2026-11-03T16:00:00Z"
+    }
+  ],
+  "checks": {
+    "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c": {
+      "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "category": "discrepancy",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": [
+        "2be1d64b-c4a5-5864-a826-e5f786e0a159"
+      ]
+    },
+    "c6f2d161-afc7-5392-989a-d5d154cf9dcc": {
+      "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "category": "actively_bad",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": [
+        "49689657-322b-53df-b94d-47f23e7007eb"
+      ]
+    },
+    "2d4f6a8c-0b1d-5e3f-9a7c-1b3d5f7a9c0e": {
+      "service_id": "2d4f6a8c-0b1d-5e3f-9a7c-1b3d5f7a9c0e",
+      "category": "discrepancy",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": [
+        "06d6210f-9517-5491-89e6-82b5910540cb"
+      ]
+    },
+    "4f6b8d0e-2a3c-5b5d-9e7f-3d5f7a9b1c2e": {
+      "service_id": "4f6b8d0e-2a3c-5b5d-9e7f-3d5f7a9b1c2e",
+      "category": "actively_bad",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": [
+        "e8cd8581-3803-516d-aa1c-cee214b78d9d"
+      ]
+    },
+    "0d2817f1-56a5-5e10-9cf6-1ec7aff660d9": {
+      "service_id": "0d2817f1-56a5-5e10-9cf6-1ec7aff660d9",
+      "category": "discrepancy",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": [
+        "a4f03634-bb5b-579e-ae26-f6dc03f19cd4"
+      ]
+    },
+    "845ce558-e50a-55b0-a8e3-0d0ca32c19c1": {
+      "service_id": "845ce558-e50a-55b0-a8e3-0d0ca32c19c1",
+      "category": "check_failed",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": [
+        "7fbc4dce-a522-5c0c-ab96-302a294a4f76"
+      ]
+    },
+    "d2815d9c-57f4-5be7-b6bc-4c9975687177": {
+      "service_id": "d2815d9c-57f4-5be7-b6bc-4c9975687177",
+      "category": "actively_bad",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": [
+        "421876fa-a63e-5f8b-b7f3-19ecbd89be7f"
+      ]
+    },
+    "3e5a7c9d-1f2b-5a4c-8d6e-2c4e6a8b0d1f": {
+      "service_id": "3e5a7c9d-1f2b-5a4c-8d6e-2c4e6a8b0d1f",
+      "category": "verified",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": []
+    },
+    "16cc2fd0-5af9-5ac6-9493-10396035c9ff": {
+      "service_id": "16cc2fd0-5af9-5ac6-9493-10396035c9ff",
+      "category": "missing_information",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": []
+    },
+    "11dbccbf-4639-5b7f-98d4-fedcafbb0ba6": {
+      "service_id": "11dbccbf-4639-5b7f-98d4-fedcafbb0ba6",
+      "category": "missing_information",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": []
+    },
+    "e159956e-08e5-51d1-ac76-3137c023d210": {
+      "service_id": "e159956e-08e5-51d1-ac76-3137c023d210",
+      "category": "missing_information",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": []
+    },
+    "b1f34764-785a-5692-9d34-f6126f5d133d": {
+      "service_id": "b1f34764-785a-5692-9d34-f6126f5d133d",
+      "category": "missing_information",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": []
+    },
+    "a68b5872-526f-52e8-b6f1-725e2579604b": {
+      "service_id": "a68b5872-526f-52e8-b6f1-725e2579604b",
+      "category": "missing_information",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": []
+    },
+    "32e345b6-8c42-54c1-85ca-d04b3bf66a6a": {
+      "service_id": "32e345b6-8c42-54c1-85ca-d04b3bf66a6a",
+      "category": "missing_information",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": []
+    },
+    "ddb3c8cf-d17e-5280-8a05-fed9d4a2a442": {
+      "service_id": "ddb3c8cf-d17e-5280-8a05-fed9d4a2a442",
+      "category": "missing_information",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": []
+    },
+    "839b565f-f067-55ff-b5dd-4b3eec497565": {
+      "service_id": "839b565f-f067-55ff-b5dd-4b3eec497565",
+      "category": "missing_information",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": []
+    },
+    "02235ce6-8c93-523b-8a0f-c5f5250e9029": {
+      "service_id": "02235ce6-8c93-523b-8a0f-c5f5250e9029",
+      "category": "missing_information",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": []
+    },
+    "de52dedf-5c9c-5fbf-9a07-10bcb2da75bc": {
+      "service_id": "de52dedf-5c9c-5fbf-9a07-10bcb2da75bc",
+      "category": "missing_information",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": []
+    },
+    "6f044897-37c2-52a4-a90e-ac7ba46e63c4": {
+      "service_id": "6f044897-37c2-52a4-a90e-ac7ba46e63c4",
+      "category": "missing_information",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": []
+    },
+    "d6e036f9-1413-5a4f-a934-b37182e967eb": {
+      "service_id": "d6e036f9-1413-5a4f-a934-b37182e967eb",
+      "category": "missing_information",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": []
+    },
+    "d6b42490-6ca7-5ff8-bfa7-70c450ded181": {
+      "service_id": "d6b42490-6ca7-5ff8-bfa7-70c450ded181",
+      "category": "missing_information",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": []
+    },
+    "8a97bbd0-123a-5de9-ae8b-a380dd3d2b92": {
+      "service_id": "8a97bbd0-123a-5de9-ae8b-a380dd3d2b92",
+      "category": "missing_information",
+      "checked_at": "2026-11-03T16:00:00Z",
+      "finding_ids": []
+    }
+  },
+  "comparisons": {
+    "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c": [
+      {
+        "field": "Service area",
+        "agree": false,
+        "values": [
+          {
+            "source": "ndp",
+            "value": "El Granada, Moss Beach, Montara, Half Moon Bay",
+            "observed_at": "2025-08-01"
+          },
+          {
+            "source": "odrs",
+            "value": "San Mateo County, Montara, Moss Beach, El Granada, Half Moon Bay, La Honda",
+            "observed_at": "2025-05-06"
+          }
+        ]
+      },
+      {
+        "field": "Hours",
+        "agree": false,
+        "note": "ODRS splits the day around a lunch closure.",
+        "values": [
+          {
+            "source": "ndp",
+            "value": "Mon Tue Thu Fri 08:30 to 17:00; Wed 13:00 to 17:00",
+            "observed_at": "2025-08-01"
+          },
+          {
+            "source": "odrs",
+            "value": "Mon Tue Thu Fri 08:30 to 12:00; Mon Tue Thu Fri 13:00 to 17:00; Wed 13:00 to 17:00",
+            "observed_at": "2025-05-06"
+          }
+        ]
+      },
+      {
+        "field": "Email",
+        "agree": false,
+        "values": [
+          {
+            "source": "ndp",
+            "value": "admin@coastsidehope.org",
+            "observed_at": "2025-08-01"
+          },
+          {
+            "source": "odrs",
+            "value": "assistance@coastsidehope.org",
+            "observed_at": "2025-05-06"
+          }
+        ]
+      },
+      {
+        "field": "Fees",
+        "agree": true,
+        "note": "Different wording, same fact.",
+        "values": [
+          {
+            "source": "ndp",
+            "value": "No fee",
+            "observed_at": "2025-08-01"
+          },
+          {
+            "source": "odrs",
+            "value": "Free",
+            "observed_at": "2025-05-06"
+          }
+        ]
+      }
+    ]
+  },
+  "ingest": {
+    "ndp": {
+      "received": 24,
+      "stored": 23,
+      "quarantined": 1
+    },
+    "odrs": {
+      "received": 13,
+      "stored": 13,
+      "quarantined": 0
+    }
+  }
+}
