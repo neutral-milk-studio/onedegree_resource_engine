@@ -17,7 +17,7 @@ from sqlalchemy import func, select
 from api.app.deps import get_store
 from api.app.store_pg import PgHsdsStore
 from maintenance.review import trust_by_service
-from shared.models import AuditEntry, Check, Finding, IngestRun, Service
+from shared.models import AuditEntry, Check, Conflict, Finding, IngestRun, Service
 
 router = APIRouter(tags=["Dashboard"])
 
@@ -155,6 +155,9 @@ def compute_metrics(store: PgHsdsStore) -> Metrics:
             select(func.count()).select_from(Finding).where(Finding.review_state != "pending")
         )
         scores = [t.score for t in trust.values() if t.score is not None]
+        conflicts_open = s.scalar(
+            select(func.count()).select_from(Conflict).where(Conflict.status == "open")
+        )
 
     median_fix = None
     if fix_times:
@@ -191,7 +194,7 @@ def compute_metrics(store: PgHsdsStore) -> Metrics:
             median_seconds_to_fix=median_fix,
             model_ids=model_ids,
         ),
-        conflicts_open=None,  # step 4
+        conflicts_open=conflicts_open or 0,
         avg_trust_score=round(sum(scores) / len(scores), 1) if scores else None,
         cost_per_check_usd=(total_cost / checks_run) if checks_run else None,
     )

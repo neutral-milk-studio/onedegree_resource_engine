@@ -12,3 +12,8 @@ sources:
     description: 211 National Data Platform sample pages
     inputs:
       - data/samples/NDP/national-data-platform-sample-*.json
+  community:
+    module: ingest.adapters.community
+    description: Community-submitted listings (fictional demo data)
+    inputs:
+      - data/samples/COMMUNITY/*.json

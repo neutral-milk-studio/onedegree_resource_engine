@@ -36,6 +36,7 @@ from maintenance.extractor.extract import (
 )
 from maintenance.extractor.parse import html_to_text
 from maintenance.findings_store.pg_findings import PgCache, PgFindingsStore
+from maintenance.risk import assess, suspicious_finding
 from maintenance.website_source.sample import SampleWebsiteSource
 from shared.models import Check, Service
 
@@ -69,7 +70,7 @@ def website_url(source, service_id: str, doc: dict) -> str | None:
 def check_one(service_id: str, doc: dict, source, extractor) -> tuple[CheckOutcome, dict]:
     """Run one check. Returns the outcome and check metadata (url, page hash, usage)."""
     meta = {"url": None, "page_hash": None, "http_status": None, "error": None,
-            "extraction": None}  # fmt: skip
+            "extraction": None, "risk_signals": []}  # fmt: skip
     url = website_url(source, service_id, doc)
     meta["url"] = url
     if not url:
@@ -100,7 +101,17 @@ def check_one(service_id: str, doc: dict, source, extractor) -> tuple[CheckOutco
         )  # fmt: skip
         return CheckOutcome("check_failed", [draft]), meta
     meta["extraction"] = extraction
-    return compare(service_id, doc, page_text, url, extraction), meta
+    outcome = compare(service_id, doc, page_text, url, extraction)
+
+    # Scam risk signals, in the same check. Two or more -> flagged for review.
+    registered = source.domain_registered(url) if hasattr(source, "domain_registered") else None
+    signals = assess(doc, extraction.facts, page_text, registered)
+    meta["risk_signals"] = [s.code for s in signals]
+    if flag := suspicious_finding(service_id, doc, url, signals, extraction.model_id):
+        outcome.findings.insert(0, flag)
+        if outcome.category != "actively_bad":
+            outcome.category = "suspicious"
+    return outcome, meta
 
 
 def run_checks(
@@ -140,6 +151,7 @@ def run_checks(
                 output_tokens=extraction.output_tokens if extraction else 0,
                 cost_usd=extraction.cost_usd if extraction else 0.0,
                 cached=bool(extraction and extraction.cached),
+                risk_signals=meta["risk_signals"],
             )
             session.add(check)
             session.flush()

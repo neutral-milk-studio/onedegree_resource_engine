@@ -284,6 +284,15 @@ def run_ingest(
                 f"{report.quarantined} quarantined"
             ),
         )
+    # Multi-source conflict detection runs after every ingest. A failure here is logged
+    # loudly but doesn't undo the ingest that already succeeded.
+    try:
+        from ingest.pipeline.conflicts import detect_conflicts
+
+        detect_conflicts(store)
+    except Exception:
+        log.exception("conflict detection failed", extra={"source": source, "run_id": run.id})
+
     log.info(
         "ingest finished",
         extra={k: v for k, v in asdict(report).items() if k != "quarantine_reasons"},

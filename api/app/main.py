@@ -10,7 +10,7 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.app.auth import require_token
-from api.app.routers import ingest, maintenance, metrics, review, services
+from api.app.routers import conflicts, ingest, maintenance, metrics, review, services
 from shared.hsds_validation import HSDS_VERSION
 from shared.logging_setup import configure_logging
 
@@ -62,6 +62,7 @@ def create_app(init_database: bool = True) -> FastAPI:
     app.include_router(metrics.router, dependencies=protected)
     app.include_router(maintenance.router, dependencies=protected)
     app.include_router(review.router, dependencies=protected)
+    app.include_router(conflicts.router, dependencies=protected)
     return app
 
 

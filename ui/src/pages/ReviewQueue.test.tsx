@@ -24,7 +24,7 @@ describe("ReviewQueue", () => {
     const names = within(list)
       .getAllByRole("button")
       .map((b) => b.querySelector("span.font-medium")?.textContent);
-    expect(names).toEqual(["Demo Pantry", "Demo Clinic", "Demo Legal Aid"]);
+    expect(names).toEqual(["Demo Pantry", "Demo Rent Grants", "Demo Clinic", "Demo Legal Aid"]);
     expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Demo Pantry");
     expect(screen.getByText("The website looks gone.")).toBeInTheDocument();
   });
@@ -33,7 +33,7 @@ describe("ReviewQueue", () => {
     const user = userEvent.setup();
     renderWith(createMockReviewApi("Sam"));
     const filters = await screen.findByRole("group", { name: "Filter by category" });
-    expect(await within(filters).findByRole("button", { name: /All 3/ })).toHaveAttribute("aria-pressed", "true");
+    expect(await within(filters).findByRole("button", { name: /All 4/ })).toHaveAttribute("aria-pressed", "true");
     await user.click(within(filters).getByRole("button", { name: /Doesn't match website 1/ }));
     const list = screen.getByRole("region", { name: "Findings" });
     expect(await within(list).findAllByRole("button")).toHaveLength(1);
@@ -71,7 +71,7 @@ describe("ReviewQueue", () => {
     expect(apply).toHaveBeenCalledWith(expect.objectContaining({ id: "demo-1" }), "defunct", expect.any(Number));
 
     await user.click(await screen.findByRole("button", { name: "Next finding" }));
-    await user.click(within(screen.getByRole("article")).getByRole("button", { name: "Keep current" }));
+    await user.click(within(screen.getByRole("article")).getByRole("button", { name: /^Keep/ }));
     expect(await screen.findByRole("status")).toHaveTextContent("Kept the current value");
   });
 
@@ -103,6 +103,23 @@ describe("ReviewQueue", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("ReviewQueue suspicious listings", () => {
+  it("lists the risk signals as 'flagged for review' and can hide the listing", async () => {
+    const user = userEvent.setup();
+    const api = createMockReviewApi("Sam");
+    const apply = vi.spyOn(api, "apply");
+    renderWith(api);
+    await user.click(await screen.findByRole("button", { name: /Demo Rent Grants/ }));
+    const detail = screen.getByRole("article");
+    expect(detail).toHaveTextContent("Flagged for review");
+    expect(detail).toHaveTextContent("It is not proven");
+    expect(detail).not.toHaveTextContent(/is a scam/i);
+    expect(within(detail).getByText("Asks for a $99 fee before helping")).toBeInTheDocument();
+    await user.click(within(detail).getByRole("button", { name: "Hide this listing" }));
+    expect(apply).toHaveBeenCalledWith(expect.objectContaining({ id: "demo-4" }), "inactive", expect.any(Number));
   });
 });
 

@@ -36,10 +36,10 @@ def raw_store(tmp_path):
 
 @pytest.fixture
 def loaded_store(store, raw_store):
-    """The store with the ODRS and NDP samples ingested."""
+    """The store with the ODRS, NDP and (fictional) community samples ingested."""
     from ingest.adapters.registry import get_adapter
     from ingest.pipeline.run import run_ingest
 
-    for source in ("odrs", "ndp"):
+    for source in ("odrs", "ndp", "community"):
         run_ingest(get_adapter(source), store, raw_store)
     return store

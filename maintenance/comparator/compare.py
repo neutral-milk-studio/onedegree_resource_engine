@@ -36,6 +36,7 @@ FIELD_LABELS = {
     "accessibility": "Accessibility",
     "status": "Status",
     "website": "Website",
+    "listing": "Listing",
 }
 
 

@@ -1,0 +1,39 @@
+{
+  "_comment": "Fictional community-submitted listings for the Resource Engine demo. Not real organizations. Phone numbers use the reserved 555-01xx range; websites use the reserved .example domain.",
+  "submissions": [
+    {
+      "id": "c-1001",
+      "submitted_at": "2026-10-28",
+      "organization": {
+        "id": "o-501",
+        "name": "Bay Area Rent Relief Now",
+        "website": "https://bayarearentrelief-now.example",
+        "description": "Fast emergency rent grants for Bay Area tenants."
+      },
+      "service": {
+        "name": "Emergency Rent Relief Grants",
+        "description": "Get up to $5,000 to pay back rent. Approval in 24 hours.",
+        "phone": "(415) 555-0142",
+        "eligibility": "Bay Area renters behind on rent.",
+        "service_area": ["San Francisco", "San Mateo", "Alameda"]
+      }
+    },
+    {
+      "id": "c-1002",
+      "submitted_at": "2026-10-30",
+      "organization": {
+        "id": "o-502",
+        "name": "Half Moon Bay Community Fridge",
+        "website": "https://hmb-community-fridge.example",
+        "description": "A neighbor-run free food fridge outside the community garden."
+      },
+      "service": {
+        "name": "Free Community Fridge",
+        "description": "Take what you need, leave what you can. Free, no sign-up.",
+        "phone": "(650) 555-0177",
+        "eligibility": "Open to everyone.",
+        "service_area": ["Half Moon Bay"]
+      }
+    }
+  ]
+}

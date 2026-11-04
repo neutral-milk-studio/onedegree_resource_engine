@@ -7,7 +7,7 @@ import { Icon } from "../components/Icon";
 import { StatTile } from "../components/StatTile";
 import { formatCount, formatDuration, formatUsd, sourceLabel, timeAgo } from "../format";
 
-const SOURCES = ["odrs", "ndp"];
+const DEFAULT_SOURCES = ["odrs", "ndp"];
 
 export function Overview({ api }: { api: DashboardApi }) {
   const queryClient = useQueryClient();
@@ -149,7 +149,7 @@ export function Overview({ api }: { api: DashboardApi }) {
                 Sources
               </h2>
               <ul className="flex flex-col divide-y divide-[var(--border)]">
-                {SOURCES.map((source) => {
+                {[...new Set([...DEFAULT_SOURCES, ...m.last_ingest.map((run) => run.source)])].map((source) => {
                   const last = m.last_ingest.find((run) => run.source === source);
                   const running = ingest.isPending && ingest.variables === source;
                   return (

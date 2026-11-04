@@ -225,10 +225,12 @@ function Detail({
   const seconds = useElapsed(finding.id);
   const evidence = finding.evidence[0];
   const isDead = finding.category === "actively_bad";
+  const isSuspicious = finding.category === "suspicious";
+  const needsStatus = isDead || isSuspicious;
   const canApply = finding.category !== "check_failed";
 
   const apply = useMutation({
-    mutationFn: () => api.apply(finding, isDead ? status : undefined, seconds),
+    mutationFn: () => api.apply(finding, needsStatus ? status : undefined, seconds),
     onSuccess: onDecided,
   });
   const keep = useMutation({
@@ -266,7 +268,24 @@ function Detail({
         <span className="text-sm">{CATEGORY_HELP[finding.category]}</span>
       </div>
 
-      {evidence.kind === "quote" ? (
+      {isSuspicious ? (
+        <div className="flex flex-col gap-2 rounded-lg border border-urgent bg-urgent-soft px-3 py-2 text-sm text-urgent-ink">
+          <p className="font-semibold">Flagged for review: this listing shows signs of a possible scam. It is not proven.</p>
+          <ul className="list-disc pl-5">
+            {(finding.risk_signals ?? []).map((signal) => (
+              <li key={signal}>{signal}</li>
+            ))}
+          </ul>
+          <p className="text-xs">
+            Seen on{" "}
+            <a href={evidence.url} target="_blank" rel="noreferrer">
+              {evidence.url}
+              <span className="visually-hidden"> (opens in a new tab)</span>
+            </a>
+            : “{evidence.snippet}”
+          </p>
+        </div>
+      ) : evidence.kind === "quote" ? (
         <>
           <h3 className="text-sm font-semibold">{finding.field_label}: record vs. website</h3>
           <SplitDiff
@@ -304,9 +323,13 @@ function Detail({
         </div>
       )}
 
-      {isDead && (
+      {needsStatus && (
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">If you confirm it's closed, update the status to</span>
+          <span className="font-medium">
+            {isSuspicious
+              ? "If you confirm it's not legitimate, hide it from search by setting the status to"
+              : "If you confirm it's closed, update the status to"}
+          </span>
           <select value={status} onChange={(event) => setStatus(event.target.value)} className="max-w-xs">
             {STATUS_CHOICES.map((choice) => (
               <option key={choice.value} value={choice.value}>
@@ -343,11 +366,17 @@ function Detail({
       <div className="flex flex-wrap gap-2">
         {canApply && (
           <button type="button" className="primary" disabled={busy} onClick={() => apply.mutate()}>
-            {apply.isPending ? "Saving…" : isDead ? "Apply status change" : "Apply website value"}
+            {apply.isPending
+              ? "Saving…"
+              : isSuspicious
+                ? "Hide this listing"
+                : isDead
+                  ? "Apply status change"
+                  : "Apply website value"}
           </button>
         )}
         <button type="button" disabled={busy} onClick={() => keep.mutate()}>
-          {keep.isPending ? "Saving…" : "Keep current"}
+          {keep.isPending ? "Saving…" : isSuspicious ? "Keep listing (looks legitimate)" : "Keep current"}
         </button>
       </div>
     </article>

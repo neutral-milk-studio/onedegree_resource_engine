@@ -26,7 +26,7 @@ def client(loaded_store, raw_store, monkeypatch):
     app.dependency_overrides[get_store] = lambda: loaded_store
     c = TestClient(app)
     report = c.post("/maintenance/run", headers=AUTH).json()
-    assert report["checked"] == 9 and report["model_id"] == "offline-rules"
+    assert report["checked"] == 11 and report["model_id"] == "offline-rules"
     return c
 
 
@@ -51,15 +51,17 @@ def test_review_endpoints_require_token(client, method, path):
 def test_queue_is_sorted_by_harm_and_filterable(client):
     body = queue(client)
     ranks = [f["harm_rank"] for f in body["contents"]]
-    assert ranks == sorted(ranks) and body["total_items"] == 6
+    assert ranks == sorted(ranks) and body["total_items"] == 7
     assert body["contents"][0]["category"] == "actively_bad"
     assert body["contents"][-1]["category"] == "check_failed"
     assert body["counts_by_category"] == {
-        "actively_bad": 1, "discrepancy": 3, "missing_information": 1, "check_failed": 1,
+        "actively_bad": 1, "suspicious": 1, "discrepancy": 3, "missing_information": 1,
+        "check_failed": 1,
     }  # fmt: skip
     only = queue(client, category="discrepancy")["contents"]
     assert {f["category"] for f in only} == {"discrepancy"} and len(only) == 3
-    first = body["contents"][1]
+    assert body["contents"][1]["category"] == "suspicious"
+    first = body["contents"][2]
     assert first["field"] in {"phone", "hours"}  # contact discrepancies outrank the rest
     assert first["trust"]["badge"].startswith("1 open issue")
     assert first["evidence"][0]["kind"] == "quote" and first["evidence"][0]["snippet"]
@@ -186,8 +188,8 @@ def test_metrics_after_checks_and_a_fix(client):
     )
     m = client.get("/metrics", headers=AUTH).json()
     f = m["findings"]
-    assert f["checks_run"] == 9 and f["records_checked"] == 9 and f["decided"] == 1
-    assert f["open_by_category"]["discrepancy"] == 2 and f["open_total"] == 5
-    assert f["open_by_category"]["verified"] == 3
+    assert f["checks_run"] == 11 and f["records_checked"] == 11 and f["decided"] == 1
+    assert f["open_by_category"]["discrepancy"] == 2 and f["open_total"] == 6
+    assert f["open_by_category"]["verified"] == 4
     assert f["median_seconds_to_fix"] == 20 and f["model_ids"] == ["offline-rules"]
     assert m["cost_per_check_usd"] == 0.0 and 0 < m["avg_trust_score"] <= 100

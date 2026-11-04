@@ -42,6 +42,7 @@ export interface QueueFinding {
   harm_label: string;
   record_version: number;
   trust: Trust;
+  risk_signals?: string[];
   seconds_to_fix?: number | null;
 }
 
@@ -149,6 +150,23 @@ export function createMockReviewApi(actor: string): ReviewQueueApi {
     },
     {
       ...base,
+      id: "demo-4",
+      service_id: "demo-s4",
+      category: "suspicious",
+      current_value: "active",
+      proposed_value: null,
+      evidence: [{ kind: "quote", source_type: "website", url: "https://rent-relief.example", fetched_at: now, snippet: "Pay a $99 processing fee to reserve your grant." }],
+      service_name: "Demo Rent Grants",
+      organization_name: "Demo Relief Now",
+      source: "community",
+      field: "listing",
+      field_label: "Listing",
+      harm_rank: 1,
+      harm_label: "Urgent: possible scam, flagged for review",
+      risk_signals: ["Asks for a $99 fee before helping", "Website domain registered 10 days ago"],
+    },
+    {
+      ...base,
       id: "demo-2",
       service_id: "demo-s2",
       category: "discrepancy",
@@ -207,7 +225,7 @@ export function createMockReviewApi(actor: string): ReviewQueueApi {
       return { total_items: contents.length, counts_by_category: counts, contents };
     },
     async apply(finding, editedValue, seconds) {
-      if (finding.category === "actively_bad" && !editedValue) {
+      if ((finding.category === "actively_bad" || finding.category === "suspicious") && !editedValue) {
         throw new ApiError(422, "This finding has no proposed value. Choose a value to apply.", [
           { path: "status", message: "a value is required" },
         ]);

@@ -78,6 +78,13 @@ class ClosureFact(Quoted):
     closed: bool
 
 
+class FeeFact(Quoted):
+    """Payment required before the organization helps (a scam risk signal)."""
+
+    required: bool
+    amount: str | None = None
+
+
 class PageFacts(BaseModel):
     """What the page states. Absent means the page doesn't say (never a guess)."""
 
@@ -88,6 +95,8 @@ class PageFacts(BaseModel):
     eligibility: EligibilityFact | None = None
     accessibility: AccessibilityFact | None = None
     closure: ClosureFact | None = None
+    organization_name: TextFact | None = None  # the name the site uses for itself
+    fee_before_help: FeeFact | None = None
 
 
 @dataclass
@@ -144,6 +153,40 @@ def accessibility_class(text: str | None) -> bool | None:
         return False
     if _ACCESSIBLE.search(text):
         return True
+    return None
+
+
+# --- Scam-signal facts (offline) ---------------------------------------------------------
+
+_MONEY = re.compile(r"\$\s?\d[\d,]*(?:\.\d{2})?")
+_PAY_WORDS = re.compile(r"\b(fee|pay|payment|deposit|charge|gift card|wire)\b", re.I)
+_NO_FEE = re.compile(
+    r"\b(no|free of|without( any)?|never (ask|charge))\b[^.]{0,20}\b(fee|charge|cost)", re.I
+)
+
+
+def find_upfront_fee(text: str) -> FeeFact | None:
+    """A sentence asking for money with a payment word, e.g. 'Pay a $99 processing fee'."""
+    for sentence in re.split(r"(?<=[.!?])\s+|\n", text):
+        if _NO_FEE.search(sentence):
+            continue
+        money = _MONEY.search(sentence)
+        if money and _PAY_WORDS.search(sentence) and re.search(r"\b(fee|pay)\b", sentence, re.I):
+            return FeeFact(required=True, amount=money.group(0), quote=sentence.strip())
+    return None
+
+
+def page_organization_name(html: str) -> str | None:
+    """The name a page uses for itself: the header's first line, else the <title> prefix."""
+    from maintenance.extractor.parse import html_lines
+
+    lines = html_lines(html)
+    title = next((text for tag, text in lines if tag == "title"), None)
+    body = [text for tag, text in lines if tag != "title"]
+    if body and len(body[0]) <= 80:
+        return body[0]
+    if title:
+        return re.split(r"\s+[–|-]\s+", title)[0].strip()
     return None
 
 
@@ -210,6 +253,10 @@ class OfflineExtractor:
             facts.eligibility = EligibilityFact(text=lines[0], quote=lines[0])
 
         text = html_to_text(html)
+        if name := page_organization_name(html):
+            facts.organization_name = TextFact(text=name, quote=name)
+        if fee := find_upfront_fee(text):
+            facts.fee_before_help = fee
         closure = re.search(
             r"[^.\n]*\b(permanently closed|has closed|no longer (operating|open)|"
             r"closed (its|our) doors)\b[^.\n]*\.?",
@@ -235,6 +282,9 @@ Return ONLY a JSON object with any of these keys:
   "eligibility": {"text": str, "differs_from_record": bool, "difference": str|null, "quote": str}
   "accessibility": {"wheelchair_accessible": bool|null, "quote": str}
   "closure": {"closed": bool, "quote": str}
+  "organization_name": {"text": str, "quote": str}   (the name the site uses for itself)
+  "fee_before_help": {"required": bool, "amount": str|null, "quote": str}   (money asked \
+before any help is given, such as an application or processing fee)
 
 Rules:
 - Every "quote" is copied EXACTLY from the page text, character for character.

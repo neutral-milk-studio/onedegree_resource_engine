@@ -76,7 +76,7 @@ def trust_by_service(session: Session, service_ids: list[str] | None = None) -> 
 
 
 def _target_field(finding: Finding) -> str | None:
-    if finding.category == "actively_bad":
+    if finding.category in {"actively_bad", "suspicious"}:
         return "status"
     if finding.field in FIELD_LABELS and finding.field not in {"website"}:
         return finding.field

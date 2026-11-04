@@ -107,6 +107,16 @@ def apply_change(doc: dict, field: str, value: Any, current: Any = None) -> dict
         else:
             items.append({"id": _id(sid, "access"), "location_id": location["id"],
                           "description": value.strip()})  # fmt: skip
+    elif field == "email":
+        if not isinstance(value, str) or "@" not in value:
+            raise ApplyError("email must be an email address")
+        doc["email"] = value.strip()
+        if (doc.get("organization") or {}).get("email"):
+            doc["organization"]["email"] = value.strip()
+    elif field == "website":
+        if not isinstance(value, str) or not value.startswith(("http://", "https://")):
+            raise ApplyError("website must start with http:// or https://")
+        doc.setdefault("organization", {})["website"] = value.strip()
     elif field == "status":
         if value not in STATUSES:
             raise ApplyError(f"status must be one of {sorted(STATUSES)}")

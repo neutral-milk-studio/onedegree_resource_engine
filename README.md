@@ -77,6 +77,7 @@ flowchart LR
 | Store | `shared/models.py`, `api/app/store_pg.py` | `hsds.objects` (every HSDS object), `hsds.services` (nested HSDS document + key columns), `hsds.id_map`; `ops.ingest_runs`, `ops.quarantine`, `ops.audit_log`. |
 | API | `api/app/` | `GET /services`, `GET /services/{id}`, `POST /ingest/{source}`, `GET /ingest/runs`, `GET /ingest/runs/{id}/quarantine`, `GET /metrics`, `GET /audit`. |
 | AI maintenance | `maintenance/` | Website source → extractor (Amazon Bedrock Converse, or offline rules) → comparator → findings. Harm priority, trust score, apply. |
+| Conflicts | `ingest/pipeline/conflicts.py`, `api/app/routers/conflicts.py` | Cross-source matching after every ingest; resolve by choosing the winning value. |
 | Review API | `api/app/routers/review.py`, `maintenance.py` | `POST /maintenance/run`, `GET /maintenance/checks`, `GET /review/findings`, `POST /review/findings/{id}/apply`, `POST /review/findings/{id}/dismiss`, `GET /review/records/{id}/history`. |
 | Admin UI | `ui/` | React + Vite + TypeScript + Tailwind. Overview (live metrics, findings chart, sources, recent activity), plus the review screen. Light/dark/device theme. |
 
@@ -137,7 +138,7 @@ The review API contract mock still runs on its own with `make mock`.
    flagged; a page that doesn't mention a fact is not a discrepancy.
 4. **Categories**: `verified`, `discrepancy`, `missing_information`, `actively_bad` (site gone:
    NXDOMAIN, 404/410, or a closure notice), `check_failed` (blocked, timeout, unreadable).
-   `suspicious` arrives with scam detection (step 4).
+   `suspicious` when the scam check below finds two or more risk signals.
 5. **Harm priority**: actively bad > suspicious > discrepancy in phone/hours/address > other
    discrepancy > missing information > check failed.
 6. **Trust score** (0-100) with a badge like "Verified 2 days ago" or "1 open issue": verified
@@ -147,9 +148,34 @@ The review API contract mock still runs on its own with `make mock`.
    saved), saves an override so re-ingest keeps the fix, and writes the audit log (who, field,
    old, new, when, source of change). Keep current is audited too.
 
+8. **Scam detection** (same check, no extra model call). Risk signals: a fee required before
+   help, a website domain registered under 180 days ago (`RE_NEW_DOMAIN_DAYS`), the name on
+   the site not matching the listing, and the organization missing from the nonprofit
+   registry (`data/registry/nonprofit_registry.csv`, a sample built from the ODRS and NDP
+   organizations). **Two or more signals** make a `suspicious` finding, worded "flagged for
+   review", never "proven scam"; one signal alone is recorded on the check but doesn't flag
+   anything. Hiding a flagged listing sets its status to inactive (search will exclude it).
+
 ```bash
 make check                        # run website checks against the running stack
 ```
+
+## Conflicts between sources
+
+After every ingest, organizations are matched across sources by normalized name or website
+domain, and phone, email and website are compared after normalizing (so
+`http://www.coastsidehope.org` and `https://coastsidehope.org` are the same, and two sources
+sharing any phone number agree). The real samples produce one conflict: **Coastside Hope's
+email** (`admin@` in 211 NDP, `assistance@` in ODRS). On the Conflicts page a specialist picks
+one side or types another value; it is applied to every service of the organization in the
+losing source(s) with HSDS metadata, an override (re-ingest keeps it) and the audit log
+(`change_source: conflict`). API: `GET /conflicts`, `POST /conflicts/detect`,
+`POST /conflicts/{id}/resolve`.
+
+The demo also has a fictional **community submissions** source
+(`ingest/adapters/community.py` + one entry in `config/sources.yaml`), which brings in the fake
+rent relief listing and a harmless community fridge. It shows that adding a source is one
+module plus configuration.
 
 The planted problems and what each should produce are in the manifest; the test
 `test_evaluation_every_planted_problem_is_caught_and_nothing_else` asserts a 100% catch rate

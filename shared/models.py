@@ -208,6 +208,7 @@ class Check(Base):
     cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
     cached: Mapped[bool] = mapped_column(Boolean, default=False)
     findings_created: Mapped[int] = mapped_column(Integer, default=0)
+    risk_signals: Mapped[list[str]] = mapped_column(Json, default=list)
 
 
 class Finding(Base):
@@ -254,3 +255,30 @@ class LlmCache(Base):
     model_id: Mapped[str] = mapped_column(String(200))
     value: Mapped[dict[str, Any]] = mapped_column(Json)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Conflict(Base):
+    """The same organization from two sources with different values for one field."""
+
+    __tablename__ = "conflicts"
+    __table_args__ = {"schema": OPS_SCHEMA}
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    match_key: Mapped[str] = mapped_column(String(200), index=True)
+    organization_name: Mapped[str] = mapped_column(Text)
+    field: Mapped[str] = mapped_column(String(40))
+    a_source: Mapped[str] = mapped_column(String(64))
+    a_organization_id: Mapped[str] = mapped_column(String(36))
+    a_value: Mapped[Any | None] = mapped_column(Json)
+    a_values: Mapped[list[str]] = mapped_column(Json, default=list)
+    b_source: Mapped[str] = mapped_column(String(64))
+    b_organization_id: Mapped[str] = mapped_column(String(36))
+    b_value: Mapped[Any | None] = mapped_column(Json)
+    b_values: Mapped[list[str]] = mapped_column(Json, default=list)
+    status: Mapped[str] = mapped_column(String(16), default="open", index=True)
+    detected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    resolution: Mapped[str | None] = mapped_column(String(16))  # a | b | custom | now_match
+    resolved_value: Mapped[Any | None] = mapped_column(Json)
+    resolved_by: Mapped[str | None] = mapped_column(String(128))
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

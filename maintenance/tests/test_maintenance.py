@@ -174,6 +174,9 @@ def test_evaluation_every_planted_problem_is_caught_and_nothing_else(loaded_stor
                 assert fields == {site.expected["field"]}, site.planted
             if site.expected["category"] == "verified":
                 assert fields == set(), site.planted
+            assert sorted(check.risk_signals) == sorted(site.expected.get("signals", [])), (
+                site.planted
+            )
 
 
 def test_quotes_stored_verbatim_from_page(loaded_store):
@@ -193,8 +196,8 @@ def test_quotes_stored_verbatim_from_page(loaded_store):
 def test_rerun_does_not_duplicate_findings(loaded_store):
     first = run_checks(loaded_store)
     second = run_checks(loaded_store)
-    assert first.findings_created == 6
-    assert second.findings_created == 0 and second.findings_refreshed == 6
+    assert first.findings_created == 7
+    assert second.findings_created == 0 and second.findings_refreshed == 7
 
 
 def test_missing_service_is_reported_not_crashed(loaded_store):

@@ -51,6 +51,7 @@ class QueueFinding(ReviewFinding):
     harm_label: str
     record_version: int
     trust: TrustOut
+    risk_signals: list[str] = []
     decided_by: str | None = None
     decided_at: datetime | None = None
     seconds_to_fix: float | None = None
@@ -108,6 +109,7 @@ def to_view(row: Finding, service: Service, trust) -> QueueFinding:
         harm_label=harm_label(row.harm_rank),
         record_version=service.version,
         trust=TrustOut(**trust.__dict__),
+        risk_signals=row.risk_signals or [],
         decided_by=row.decided_by,
         decided_at=row.decided_at,
         seconds_to_fix=row.seconds_to_fix,

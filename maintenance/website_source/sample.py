@@ -27,6 +27,7 @@ class SampleSite:
     simulate: dict
     planted: str
     expected: dict
+    domain_registered: str | None = None
 
 
 class SampleWebsiteSource:
@@ -44,6 +45,7 @@ class SampleWebsiteSource:
                 simulate=entry.get("simulate") or {},
                 planted=entry.get("planted", ""),
                 expected=entry.get("expected") or {},
+                domain_registered=entry.get("domain_registered"),
             )
             for entry in manifest["sites"]
         ]
@@ -54,6 +56,13 @@ class SampleWebsiteSource:
 
     def service_ids(self) -> list[str]:
         return [s.service_id for s in self.sites]
+
+    def domain_registered(self, url: str) -> str | None:
+        """Registration date of the URL's domain (ISO date), or None if unknown.
+
+        Stands in for a WHOIS/RDAP lookup; the live source would query RDAP.
+        """
+        return next((s.domain_registered for s in self.sites if s.url == url), None)
 
     def get(self, url: str) -> WebsiteResult:
         site = next((s for s in self.sites if s.url == url), None)

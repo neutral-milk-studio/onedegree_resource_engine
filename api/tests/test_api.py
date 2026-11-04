@@ -114,7 +114,7 @@ def test_metrics_on_empty_store(client):
     assert body["total_records"] == 0 and body["records_by_source"] == []
     assert body["findings"]["open_total"] == 0
     assert list(body["findings"]["open_by_category"])[0] == "actively_bad"  # harm order
-    assert body["avg_trust_score"] is None and body["conflicts_open"] is None
+    assert body["avg_trust_score"] is None and body["conflicts_open"] == 0
 
 
 def test_metrics_reflect_ingest(loaded):

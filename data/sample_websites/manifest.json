@@ -1,5 +1,5 @@
 {
-  "_comment": "Sample website source (no network). Each entry maps a stored service to a fictional URL on the reserved .example domain and either a page in this folder or a simulated failure. 'planted' and 'expected' are the known truth used by the tests and the evaluation. Service ids are deterministic (uuid5), so they stay valid across re-ingests.",
+  "_comment": "Sample website source (no network). Each entry maps a stored service to a fictional URL on the reserved .example domain and either a page in this folder or a simulated failure. 'planted' and 'expected' are the known truth used by the tests and the evaluation. Service ids are deterministic (uuid5), so they stay valid across re-ingests. 'domain_registered' (optional) stands in for a WHOIS/RDAP lookup; absent means unknown, which is never a risk signal.",
   "sites": [
     {
       "service_id": "fe78f6ad-9ad7-5754-9473-f9a5fba396af",
@@ -91,6 +91,35 @@
       "planted": "Accessibility is worded differently but means the same thing (facts, not wording).",
       "expected": {
         "category": "verified"
+      }
+    },
+    {
+      "service_id": "e885691b-3136-58c2-82e5-533f924116e4",
+      "url": "https://bayarearentrelief-now.example/apply",
+      "page": "fake_rent_relief.html",
+      "domain_registered": "2026-10-20",
+      "planted": "Fake rent relief: asks for a $99 fee before helping, domain registered two weeks ago, the name on the site doesn't match the listing, not in the registry.",
+      "expected": {
+        "category": "suspicious",
+        "signals": [
+          "fee_before_help",
+          "new_domain",
+          "name_mismatch",
+          "not_in_registry"
+        ]
+      }
+    },
+    {
+      "service_id": "85241a2d-9d30-500b-9af7-372a9434c022",
+      "url": "https://hmb-community-fridge.example/",
+      "page": "hmb_community_fridge.html",
+      "domain_registered": "2019-05-01",
+      "planted": "Harmless new listing: only one signal (not in the registry), so it is not flagged.",
+      "expected": {
+        "category": "verified",
+        "signals": [
+          "not_in_registry"
+        ]
       }
     }
   ]
