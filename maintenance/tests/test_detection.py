@@ -29,7 +29,9 @@ from maintenance.comparator.compare import (
     CONFIDENCE_PHONE_MISMATCH,
     CONFIDENCE_REPEATED_FAILURE,
     CONFIDENCE_VERIFIED,
+    HIGH_CONFIDENCE,
     PRECEDENCE,
+    TRIAGE_ORDER,
     categorize,
     check_page,
     compare,
@@ -39,8 +41,10 @@ from maintenance.comparator.compare import (
     finding_id,
     income_limits,
     phone_digits,
+    rank_findings,
     same_county,
     same_phone,
+    triage_tier,
 )
 from maintenance.extractor import extract as extract_module
 from maintenance.extractor.extract import (
@@ -2565,3 +2569,141 @@ def test_a_proposal_equal_to_the_stored_value_is_never_a_finding():
         record, facts, url="https://x.org", model_id="m", checked_at=CHECKED_AT, page_text=page
     )
     assert comparison.category is Category.VERIFIED
+
+
+# --------------------------------------------------------------------------- #
+# Task 4: triage ranking
+# --------------------------------------------------------------------------- #
+
+
+def a_finding(category, confidence, name="f"):
+    return Finding(
+        id=name,
+        service_id="s",
+        field=None,
+        current_value=None,
+        proposed_value=None,
+        category=category,
+        confidence=confidence,
+        model_id="m",
+        checked_at=CHECKED_AT,
+    )
+
+
+def test_the_triage_order_and_threshold_are_pinned():
+    assert TRIAGE_ORDER == (
+        "actively_bad",
+        "confident_discrepancy",
+        "check_failed",
+        "missing_information",
+        "uncertain_discrepancy",
+        "verified",
+    )
+    assert HIGH_CONFIDENCE == 0.7
+
+
+def test_a_mixed_batch_is_ranked_most_urgent_first():
+    batch = [
+        a_finding(Category.VERIFIED, 0.9, "verified"),
+        a_finding(Category.DISCREPANCY, 0.5, "extra phone"),
+        a_finding(Category.MISSING_INFORMATION, 0.8, "missing hours"),
+        a_finding(Category.CHECK_FAILED, 1.0, "timeout"),
+        a_finding(Category.DISCREPANCY, 0.9, "wrong county"),
+        a_finding(Category.ACTIVELY_BAD, 0.8, "site gone twice"),
+        a_finding(Category.ACTIVELY_BAD, 0.9, "HTTP 404"),
+        a_finding(Category.DISCREPANCY, 0.7, "added county"),
+    ]
+    assert [f.id for f in rank_findings(batch)] == [
+        "HTTP 404",
+        "site gone twice",
+        "wrong county",
+        "added county",
+        "timeout",
+        "missing hours",
+        "extra phone",
+        "verified",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("confidence", "tier"),
+    [
+        (0.9, "confident_discrepancy"),
+        (0.7, "confident_discrepancy"),
+        (0.69, "uncertain_discrepancy"),
+        (0.5, "uncertain_discrepancy"),
+    ],
+)
+def test_the_confidence_threshold_splits_discrepancies(confidence, tier):
+    assert triage_tier(a_finding(Category.DISCREPANCY, confidence)) == TRIAGE_ORDER.index(tier)
+
+
+@pytest.mark.parametrize(
+    ("constant", "tier"),
+    [
+        ("CONFIDENCE_CONTRADICTION", "confident_discrepancy"),
+        ("CONFIDENCE_ADDITION", "confident_discrepancy"),
+        ("CONFIDENCE_PHONE_MISMATCH", "confident_discrepancy"),
+        ("CONFIDENCE_ADDITIONAL_CONTACT", "uncertain_discrepancy"),
+    ],
+)
+def test_each_discrepancy_confidence_lands_in_its_intended_tier(constant, tier):
+    # Tuning a confidence across HIGH_CONFIDENCE moves findings in the worklist; make it loud.
+    finding = a_finding(Category.DISCREPANCY, getattr(compare_module, constant))
+    assert triage_tier(finding) == TRIAGE_ORDER.index(tier)
+
+
+def test_ties_keep_their_input_order():
+    batch = [a_finding(Category.MISSING_INFORMATION, 0.8, name) for name in "abcde"]
+    assert [f.id for f in rank_findings(batch)] == list("abcde")
+
+
+def test_ranking_returns_a_new_list_and_leaves_the_input_alone():
+    batch = [a_finding(Category.VERIFIED, 0.9, "v"), a_finding(Category.ACTIVELY_BAD, 0.9, "a")]
+    ranked = rank_findings(batch)
+    assert [f.id for f in batch] == ["v", "a"]
+    assert [f.id for f in ranked] == ["a", "v"]
+    assert rank_findings([]) == []
+
+
+def test_the_seed_outcomes_rank_harbor_then_bayview_then_eastside():
+    bayview = run_compare(SEED_SERVICES[BAYVIEW_ID], bayview_page(), **json.loads(BAYVIEW_REPLY))
+    eastside = run_compare(
+        SEED_SERVICES[EASTSIDE_ID],
+        eastside_page(),
+        eligibility_income=fact("at or below 200% of the federal poverty level", EASTSIDE_INCOME),
+    )
+    harbor = check_page(
+        SEED_SERVICES[HARBOR_ID],
+        SampleWebsiteSource().get(HARBOR_URL),
+        None,
+        url=HARBOR_URL,
+        checked_at=CHECKED_AT,
+        unreachable_before=True,
+    )
+    ranked = rank_findings([*eastside.findings, *bayview.findings, *harbor.findings])
+    assert [(f.service_id, f.category, f.field) for f in ranked] == [
+        (HARBOR_ID, Category.ACTIVELY_BAD, None),
+        (BAYVIEW_ID, Category.DISCREPANCY, "eligibility_description"),
+        (BAYVIEW_ID, Category.MISSING_INFORMATION, "phones"),
+        (BAYVIEW_ID, Category.MISSING_INFORMATION, "schedules"),
+        (EASTSIDE_ID, Category.VERIFIED, None),
+    ]
+
+
+# Feature: resource-engine, Detection D5: ranking is a stable reorder by tier then confidence
+@given(
+    batch=st.lists(
+        st.tuples(finding_categories, st.sampled_from([0.3, 0.5, 0.69, 0.7, 0.8, 0.9, 1.0])),
+        max_size=15,
+    )
+)
+def test_ranking_is_a_stable_reorder_by_tier_then_confidence(batch):
+    findings = [a_finding(c, conf, str(i)) for i, (c, conf) in enumerate(batch)]
+    ranked = rank_findings(findings)
+    assert sorted(f.id for f in ranked) == sorted(f.id for f in findings)  # nothing lost or added
+    keys = [(triage_tier(f), -f.confidence, int(f.id)) for f in ranked]
+    assert keys == sorted(keys)  # ordered, and ties keep input order
+    urgent = {TRIAGE_ORDER.index("actively_bad")}
+    if any(f.category is Category.ACTIVELY_BAD for f in findings):
+        assert triage_tier(ranked[0]) in urgent  # a dead or closed listing always leads

@@ -829,6 +829,50 @@ def categorize(findings: list[Finding]) -> Category:
     return next(category for category in PRECEDENCE if category in present)
 
 
+# --------------------------------------------------------------------------- #
+# Triage
+# --------------------------------------------------------------------------- #
+
+# A discrepancy at or above this confidence is worked before failed checks; below it, after
+# missing information. 0.7 keeps contradictions (0.9), added facts and phone mismatches (0.7)
+# high, and drops an extra phone next to the stored one (0.5), which is often a fax line.
+# CONFIDENCE_ADDITION and CONFIDENCE_PHONE_MISMATCH sit exactly on this line, so tuning
+# either below it moves those findings down the worklist (a test pins the tiers).
+HIGH_CONFIDENCE = 0.7
+
+# Worklist order, most urgent first. A dead or closed listing does the most harm to a help
+# seeker, so it leads; a verified result needs no work, so it is last. This differs from
+# PRECEDENCE on purpose: PRECEDENCE picks the one category of a check (a failed check hides
+# everything else), while this orders work (a single failed check says nothing about the
+# listing, so it ranks below a confident discrepancy).
+TRIAGE_ORDER = (
+    "actively_bad",
+    "confident_discrepancy",
+    "check_failed",
+    "missing_information",
+    "uncertain_discrepancy",
+    "verified",
+)
+
+
+def triage_tier(finding: Finding) -> int:
+    """The finding's place in ``TRIAGE_ORDER``: 0 is the most urgent."""
+    if finding.category is Category.DISCREPANCY:
+        confident = finding.confidence >= HIGH_CONFIDENCE
+        return TRIAGE_ORDER.index("confident_discrepancy" if confident else "uncertain_discrepancy")
+    return TRIAGE_ORDER.index(finding.category.value)
+
+
+def rank_findings(findings: list[Finding]) -> list[Finding]:
+    """Order findings for a specialist's worklist: by tier, then by confidence.
+
+    Returns a new list. The sort is stable, so findings that tie keep their input order and
+    the worklist doesn't reshuffle between runs. ``review_state`` is not looked at: pass only
+    the findings still pending, because applied or dismissed ones would rank like new ones.
+    """
+    return sorted(findings, key=lambda finding: (triage_tier(finding), -finding.confidence))
+
+
 def failure(
     record: dict[str, Any],
     category: Category,
