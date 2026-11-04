@@ -1,0 +1,14 @@
+# Configured ingest sources. Each entry names a mapper module (see ingest/adapters/base.py)
+# and where its pages come from. Paths are relative to the repository root.
+# Adding a source = one mapper module + one entry here; the pipeline does not change.
+sources:
+  odrs:
+    module: ingest.adapters.odrs
+    description: One Degree ODRS /v1/opportunities export
+    inputs:
+      - data/samples/ODRS/*.json
+  ndp:
+    module: ingest.adapters.ndp
+    description: 211 National Data Platform sample pages
+    inputs:
+      - data/samples/NDP/national-data-platform-sample-*.json
