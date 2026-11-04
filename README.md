@@ -37,8 +37,26 @@ release tag are under [`contracts/hsds/`](contracts/hsds/README.md).
 
 ## Run it locally
 
-Local Docker Compose is the default, acceptable target (AWS deployment is
-optional — see `infra/`).
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and run the
+checks first:
+
+```bash
+make setup
+make test
+make lint
+```
+
+The review API contract can run on its own at `http://localhost:8000`, with docs at
+`/docs`. It uses the fixtures and accepts any bearer token:
+
+```bash
+make mock
+```
+
+To run the UI, use `npm install` and `npm run dev` in `ui/`.
+
+Docker Compose runs the whole stack (AWS deployment is optional — see `infra/`).
+The services are still being built, so the worker exits immediately for now.
 
 ```bash
 docker compose up --build
@@ -57,14 +75,12 @@ python -m seed.load_seed --dry-run
 ## Run the tests
 
 ```bash
-pip install pytest hypothesis jsonschema ruff
-pytest -q          # unit, integration, and property tests (Hypothesis)
-ruff check .       # lint
+make test    # Unit, integration, and property tests
+make lint    # Linting and formatting
 ```
 
-CI (`.github/workflows/ci.yml`) runs four gates on every PR — HSDS schema
-validation, secret scanning, tests, and lint — all of which must pass to merge
-into protected `main`.
+CI (`.github/workflows/ci.yml`) runs four gates on every PR: HSDS schema validation,
+secret scanning, tests, and lint.
 
 ## Team decisions
 
@@ -72,9 +88,9 @@ Recorded in [`docs/decisions.md`](docs/decisions.md). Highlights:
 
 - **Organization-description gap:** store a fallback note and flag the record as
   *missing information* (AI can later supply a real description from the website).
-- **Schedule time-zone offsets:** interpret bare local times as
-  `America/Los_Angeles` and attach the offset in effect on the schedule's date
-  (DST handled by the zone); a midday closure becomes two intervals.
+- **Schedule time-zone offsets:** store local time plus an IANA time zone, and
+  calculate the offset when a record leaves the system; a midday closure becomes two
+  intervals.
 - **Datastores:** PostgreSQL for HSDS; a separate `ops` schema for operational
   data; S3 for the raw store; OpenSearch for the search index.
 

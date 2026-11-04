@@ -1,0 +1,400 @@
+{
+  "id": "211bayarea-10595293",
+  "name": "Coastside Hope",
+  "alternateNames": [
+    "COASTSIDE OPPORTUNITY CENTER"
+  ],
+  "description": "<p>Nonprofit organization providing food distribution, housing resources, and immigration services.</p>",
+  "url": "http://www.coastsidehope.org",
+  "email": null,
+  "yearIncorporated": 1976,
+  "taxStatus": "non_profit",
+  "taxId": null,
+  "legalStatus": "non_profit",
+  "funding": null,
+  "contacts": [],
+  "phones": [
+    {
+      "id": "2979130044563211374",
+      "name": "Phone",
+      "type": "main",
+      "number": "(650) 726-9071",
+      "extension": null,
+      "description": "Main Number",
+      "isMain": false,
+      "access": null
+    },
+    {
+      "id": "3873183352852329492",
+      "name": "Fax",
+      "type": "fax",
+      "number": "(650) 726-9076",
+      "extension": null,
+      "description": null,
+      "isMain": false,
+      "access": null
+    }
+  ],
+  "services": [
+    {
+      "id": "211bayarea-10613258",
+      "idProgram": null,
+      "idOrganization": "211bayarea-10595293",
+      "name": "Rent Utility Assistance",
+      "alternateNames": [],
+      "description": "<p>Distributes financial assistance when funding is available. Provides rent payment and security deposit assistance. Offers utility assistance for gas, electric, and water services.</p>",
+      "contacts": [],
+      "phones": [
+        {
+          "id": "8831878417236276327",
+          "name": "Phone",
+          "type": "main",
+          "number": "(650) 726-9071",
+          "extension": null,
+          "description": "Main Number",
+          "isMain": false,
+          "access": null
+        }
+      ],
+      "schedules": [
+        {
+          "id": "3578239720321552649",
+          "type": null,
+          "validFrom": null,
+          "validTo": null,
+          "open": [
+            {
+              "day": "mon",
+              "opensAt": "08:30",
+              "closesAt": "17:00"
+            },
+            {
+              "day": "tue",
+              "opensAt": "08:30",
+              "closesAt": "17:00"
+            },
+            {
+              "day": "wed",
+              "opensAt": "13:00",
+              "closesAt": "17:00"
+            },
+            {
+              "day": "thu",
+              "opensAt": "08:30",
+              "closesAt": "17:00"
+            },
+            {
+              "day": "fri",
+              "opensAt": "08:30",
+              "closesAt": "17:00"
+            }
+          ],
+          "description": "Mon 8:30am - 5pm; Tue 8:30am - 5pm; Wed 1pm - 5pm; Thu 8:30am - 5pm; Fri 8:30am - 5pm; "
+        }
+      ],
+      "taxonomy": [
+        {
+          "id": "4658377762037242070",
+          "taxonomyTerm": "Rental Deposit Assistance",
+          "taxonomyCode": "BH-3800.7250",
+          "taxonomyTermLevel1": "Basic Needs",
+          "taxonomyTermLevel2": "Housing/Shelter",
+          "taxonomyTermLevel3": "Housing Expense Assistance",
+          "taxonomyTermLevel4": "Rental Deposit Assistance",
+          "taxonomyTermLevel5": null,
+          "taxonomyTermLevel6": null,
+          "targets": []
+        },
+        {
+          "id": "6359922254568513763",
+          "taxonomyTerm": "Rent Payment Assistance",
+          "taxonomyCode": "BH-3800.7000",
+          "taxonomyTermLevel1": "Basic Needs",
+          "taxonomyTermLevel2": "Housing/Shelter",
+          "taxonomyTermLevel3": "Housing Expense Assistance",
+          "taxonomyTermLevel4": "Rent Payment Assistance",
+          "taxonomyTermLevel5": null,
+          "taxonomyTermLevel6": null,
+          "targets": []
+        }
+      ],
+      "applicationProcess": "Call for appointment",
+      "interpretationServices": null,
+      "email": "admin@coastsidehope.org",
+      "url": "http://www.coastsidehope.org",
+      "waitTime": null,
+      "fees": {
+        "type": null,
+        "description": "No fee"
+      },
+      "accreditations": [],
+      "licenses": [],
+      "languages": {
+        "description": "English, Spanish",
+        "codes": []
+      },
+      "funding": null,
+      "eligibility": {
+        "description": "El Granda, Half Moon Bay, Montara, and Moss Beach income eligible residents",
+        "types": []
+      },
+      "serviceAreas": [
+        {
+          "id": "3929730058183066993",
+          "type": "locality",
+          "value": "El Granada",
+          "geoJson": null,
+          "geoComponents": [
+            {
+              "postalCode": null,
+              "locality": "El Granada",
+              "county": "San Mateo",
+              "state": "California",
+              "country": "United States"
+            }
+          ]
+        },
+        {
+          "id": "354574626597334184",
+          "type": "locality",
+          "value": "Moss Beach",
+          "geoJson": null,
+          "geoComponents": [
+            {
+              "postalCode": null,
+              "locality": "Moss Beach",
+              "county": "San Mateo",
+              "state": "California",
+              "country": "United States"
+            }
+          ]
+        },
+        {
+          "id": "6573550668048995737",
+          "type": "locality",
+          "value": "Montara",
+          "geoJson": null,
+          "geoComponents": [
+            {
+              "postalCode": null,
+              "locality": "Montara",
+              "county": "San Mateo",
+              "state": "California",
+              "country": "United States"
+            }
+          ]
+        },
+        {
+          "id": "4281852309189892100",
+          "type": "locality",
+          "value": "Half Moon Bay",
+          "geoJson": null,
+          "geoComponents": [
+            {
+              "postalCode": null,
+              "locality": "Half Moon Bay",
+              "county": "San Mateo",
+              "state": "California",
+              "country": "United States"
+            }
+          ]
+        }
+      ],
+      "documents": {
+        "description": "Photo identification, proof of address, income information",
+        "types": []
+      },
+      "locationIds": [
+        "211bayarea-10595294"
+      ],
+      "meta": {
+        "idResource": "211bayarea-10613258",
+        "tags": [],
+        "access": "public",
+        "status": "active",
+        "reasonInactive": null,
+        "lastUpdated": "2025-08-01",
+        "lastVerified": "2025-08-01",
+        "created": null,
+        "temporaryMessage": null
+      }
+    },
+    {
+      "id": "211bayarea-10613256",
+      "idProgram": null,
+      "idOrganization": null,
+      "name": "Z_ Food Pantry",
+      "alternateNames": [],
+      "description": null,
+      "contacts": [],
+      "phones": [],
+      "schedules": [],
+      "taxonomy": [],
+      "applicationProcess": null,
+      "interpretationServices": null,
+      "email": null,
+      "url": null,
+      "waitTime": null,
+      "fees": {
+        "type": null,
+        "description": null
+      },
+      "accreditations": [],
+      "licenses": [],
+      "languages": {
+        "description": null,
+        "codes": []
+      },
+      "funding": null,
+      "eligibility": {
+        "description": null,
+        "types": []
+      },
+      "serviceAreas": [],
+      "documents": {
+        "description": null,
+        "types": []
+      },
+      "locationIds": [],
+      "meta": {
+        "idResource": null,
+        "tags": [],
+        "access": null,
+        "status": "inactive",
+        "reasonInactive": null,
+        "lastUpdated": null,
+        "lastVerified": null,
+        "created": null,
+        "temporaryMessage": null
+      }
+    }
+  ],
+  "programs": [],
+  "locations": [
+    {
+      "id": "211bayarea-10595294",
+      "idOrganization": "211bayarea-10595293",
+      "name": "Main Office",
+      "alternateNames": [],
+      "description": null,
+      "contacts": [],
+      "phones": [],
+      "schedules": [],
+      "longitude": -122.4298,
+      "latitude": 37.46706,
+      "addresses": [
+        {
+          "id": "6552024821345709760",
+          "type": "physical",
+          "postalCode": "94019",
+          "street": "248 Main Street, Suite 200",
+          "city": "Half Moon Bay",
+          "county": "San Mateo",
+          "state": "CA",
+          "country": "United States",
+          "geocode": {
+            "type": "point",
+            "coordinates": [
+              -122.4298,
+              37.46706
+            ],
+            "bbox": [],
+            "properties": {
+              "type": "address",
+              "address": {
+                "addressLine": null,
+                "postalCode": null,
+                "neighborhood": null,
+                "locality": null,
+                "formattedAddress": null,
+                "state": null,
+                "county": null,
+                "country": null
+              }
+            }
+          },
+          "description": null,
+          "access": "public"
+        },
+        {
+          "id": "8820385009226434893",
+          "type": "mailing",
+          "postalCode": "94018",
+          "street": "PO Box 1089",
+          "city": "El Granada",
+          "county": null,
+          "state": "CA",
+          "country": "United States",
+          "geocode": null,
+          "description": null,
+          "access": "public"
+        }
+      ],
+      "accessibility": {
+        "description": "Fully accessible to individuals using mobility aids.",
+        "types": null
+      },
+      "transportation": null,
+      "languages": {
+        "description": null,
+        "codes": []
+      },
+      "url": null,
+      "email": null,
+      "serviceIds": [
+        "211bayarea-10613256",
+        "211bayarea-10613258"
+      ],
+      "meta": {
+        "idResource": "211bayarea-10595294",
+        "tags": [],
+        "access": "public",
+        "status": "active",
+        "reasonInactive": null,
+        "lastUpdated": "2025-08-01",
+        "lastVerified": "2025-08-01",
+        "created": "2010-09-02",
+        "temporaryMessage": null
+      }
+    }
+  ],
+  "servicesAtLocations": [
+    {
+      "id": "211bayarea-91306397",
+      "idOrganization": "211bayarea-10595293",
+      "idService": "211bayarea-10613258",
+      "idLocation": "211bayarea-10595294",
+      "contacts": [],
+      "phones": [],
+      "schedules": [],
+      "url": null,
+      "email": null,
+      "meta": {
+        "idResource": "211bayarea-91306397",
+        "tags": [],
+        "access": "public",
+        "status": "active",
+        "reasonInactive": null,
+        "lastUpdated": "2025-08-01",
+        "lastVerified": null,
+        "created": "2024-08-27",
+        "temporaryMessage": null
+      }
+    }
+  ],
+  "meta": {
+    "idResource": "211bayarea-10595293",
+    "tags": [],
+    "access": "public",
+    "status": "active",
+    "reasonInactive": null,
+    "lastUpdated": "2025-08-01",
+    "lastVerified": "2025-08-01",
+    "created": "2010-09-02",
+    "temporaryMessage": null
+  },
+  "dataOwner": "211bayarea",
+  "dataOwnerDisplayName": "211 Bay Area",
+  "dataSteward": null,
+  "dataStewardDisplayName": null
+}

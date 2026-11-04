@@ -1,0 +1,59 @@
+[
+  {
+    "id": "2be1d64b-c4a5-5864-a826-e5f786e0a159",
+    "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+    "ref": {
+      "entity_type": "service",
+      "entity_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "field": "service_areas",
+      "op": "add"
+    },
+    "category": "discrepancy",
+    "current_value": [
+      "El Granada",
+      "Moss Beach",
+      "Montara",
+      "Half Moon Bay"
+    ],
+    "proposed_value": {
+      "service_id": "f3dffb8e-55a5-5c5d-82fb-9140b2b09b6c",
+      "name": "La Honda"
+    },
+    "evidence": [
+      {
+        "kind": "quote",
+        "source_type": "website",
+        "url": "https://sample.invalid/coastside-hope/services",
+        "fetched_at": "2026-11-03T16:00:00Z",
+        "snippet": "We serve income-eligible residents of El Granada, Half Moon Bay, La Honda, Montara, and Moss Beach."
+      }
+    ],
+    "confidence": 0.9,
+    "model_id": "sample-model",
+    "created_at": "2026-11-03T16:00:00Z",
+    "review_state": "pending"
+  },
+  {
+    "id": "49689657-322b-53df-b94d-47f23e7007eb",
+    "service_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+    "ref": {
+      "entity_type": "service",
+      "entity_id": "c6f2d161-afc7-5392-989a-d5d154cf9dcc",
+      "field": "status"
+    },
+    "category": "actively_bad",
+    "current_value": "active",
+    "evidence": [
+      {
+        "kind": "http_signal",
+        "source_type": "website",
+        "url": "https://sample.invalid/coastside-hope/gone",
+        "fetched_at": "2026-11-03T16:00:00Z",
+        "http_status": 404
+      }
+    ],
+    "confidence": 0.6,
+    "created_at": "2026-11-03T16:00:00Z",
+    "review_state": "pending"
+  }
+]

@@ -1,15 +1,16 @@
-# AI maintenance worker — container built for ECS Fargate (deploy optional).
+# AI maintenance worker, built for ECS Fargate. Run from the repository root.
 FROM python:3.12-slim
 
-WORKDIR /app
+RUN pip install --no-cache-dir uv==0.5.31
 
-COPY maintenance/requirements.txt ./maintenance/requirements.txt
-RUN pip install --no-cache-dir -r maintenance/requirements.txt || true
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev
 
 COPY contracts ./contracts
 COPY shared ./shared
 COPY seed ./seed
 COPY maintenance ./maintenance
 
-# Website source defaults to the sample implementation (no network) via env.
-CMD ["python", "-m", "maintenance.worker.run_check"]
+# The website source defaults to the sample implementation (no network).
+CMD ["uv", "run", "--no-sync", "python", "-m", "maintenance.worker.run_check"]

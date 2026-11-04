@@ -74,3 +74,25 @@ Internal consistency: `total_pages == ceil(total_items / per_page)`,
 The API is REST, implemented in Python + FastAPI. Responses validate against the
 pinned HSDS v3.2.3 JSON Schema in tests, including at least one paginated list
 against the Page schema. _(Req 32.1–32.3)_
+
+## Internal review API
+
+`/review/*` and `/ingest/reports` are internal endpoints for the review tool. They may
+carry operational fields, while `/services` stays strict HSDS. The machine-readable
+contract for them is [`openapi.yaml`](openapi.yaml), generated from
+`contracts/mock_api.py` with `make openapi`. A test fails if the two differ. Run the
+mock with `make mock`.
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /review/records`, `GET /review/records/{id}` | Review queue and one record with findings, clashes, and version |
+| `PATCH /review/records/{id}` | Edit fields |
+| `GET /review/findings` | List findings |
+| `POST /review/findings/{id}/apply`, `/dismiss` | Decide on a finding |
+| `GET /review/clashes`, `POST /review/clashes/{id}/resolve` | Decide on a source clash |
+| `GET /ingest/reports` | Received, stored, and quarantined counts by source |
+
+Writes send `expected_version`. A stale version returns 409, and an invalid result
+returns 422 with field paths. Nothing is saved in either case. The reviewer's identity
+comes from the bearer token.
+

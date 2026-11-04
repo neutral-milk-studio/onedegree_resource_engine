@@ -1,6 +1,4 @@
-// REST API client — STUB (task 31).
-// The ONLY data path for the admin UI. The UI never touches a store directly.
-// Spec: Requirements 39.2, 39.3.
+// REST API client. This is the only data path for the review tool.
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
 
@@ -12,10 +10,9 @@ export interface ListParams {
   search?: string;
 }
 
-// Filled in by task 31: typed fetch wrappers for GET /services, GET /services/{id},
-// the search endpoint, and the ingest run trigger/report. Bearer token attached here.
+// Typed requests for the HSDS and review endpoints, with the bearer token, go here.
 export async function listServices(_params: ListParams = {}): Promise<unknown> {
-  throw new Error("task 31: implement REST client against the API");
+  throw new Error("Not implemented yet: REST client");
 }
 
 export { API_BASE };
