@@ -33,7 +33,11 @@ def ingest_source(
     try:
         adapter = get_adapter(source)
     except UnknownSource as exc:
-        raise HTTPException(404, str(exc.args[0])) from exc
+        from ingest.partners import partner_adapter
+
+        adapter = partner_adapter(store, source)  # a partner added through the dashboard
+        if adapter is None:
+            raise HTTPException(404, str(exc.args[0])) from exc
     try:
         report = run_ingest(adapter, store, triggered_by=user)
     except FileNotFoundError as exc:

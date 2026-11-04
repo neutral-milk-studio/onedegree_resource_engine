@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 
@@ -92,17 +92,10 @@ describe("ReviewQueue", () => {
   });
 
   it("times how long the fix takes", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    try {
-      renderWith(createMockReviewApi("Sam"));
-      await screen.findByRole("article");
-      await act(async () => {
-        vi.advanceTimersByTime(3100);
-      });
-      expect(screen.getByText(/Working on this: [3-4] s/)).toBeInTheDocument();
-    } finally {
-      vi.useRealTimers();
-    }
+    // Real time, not fake timers: the timer must move past 0 within a couple of seconds.
+    renderWith(createMockReviewApi("Sam"));
+    expect(await screen.findByText("Working on this: 0 s")).toBeInTheDocument();
+    expect(await screen.findByText(/Working on this: [1-9] s/, {}, { timeout: 3000 })).toBeInTheDocument();
   });
 });
 

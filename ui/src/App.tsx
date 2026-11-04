@@ -4,8 +4,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { Session } from "./api/client";
 import { createConflictsApi } from "./api/conflicts";
 import { createDashboardApi } from "./api/dashboard";
+import { createPartnersApi } from "./api/partners";
 import { createReviewQueueApi } from "./api/review";
 import { Login } from "./Login";
+import { AddPartner } from "./pages/AddPartner";
 import { ComingSoon } from "./pages/ComingSoon";
 import { Conflicts } from "./pages/Conflicts";
 import { Overview } from "./pages/Overview";
@@ -36,6 +38,7 @@ function saveSession(session: Session | null): void {
 function Workspace({ session, onSignOut }: { session: Session; onSignOut(): void }) {
   const review = useMemo(() => createReviewQueueApi(session), [session]);
   const conflicts = useMemo(() => createConflictsApi(session), [session]);
+  const partners = useMemo(() => createPartnersApi(session), [session]);
   const dashboard = useMemo(() => createDashboardApi(session), [session]);
   const queryClient = useMemo(
     () => new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } }),
@@ -48,13 +51,7 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut(): void
         {page === "overview" && <Overview api={dashboard} />}
         {page === "review" && <ReviewQueue api={review} />}
         {page === "conflicts" && <Conflicts api={conflicts} />}
-        {page === "partners" && (
-          <ComingSoon
-            title="Add a partner"
-            step={5}
-            description="Upload a spreadsheet, confirm the suggested column mapping, and see live counts."
-          />
-        )}
+        {page === "partners" && <AddPartner api={partners} />}
         {page === "search" && (
           <ComingSoon
             title="Search"

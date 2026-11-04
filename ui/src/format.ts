@@ -7,7 +7,9 @@ export const SOURCE_LABELS: Record<string, string> = {
   community: "Community submission",
 };
 
-export const sourceLabel = (source: string) => SOURCE_LABELS[source] ?? source;
+export const sourceLabel = (source: string) =>
+  SOURCE_LABELS[source] ??
+  (source.startsWith("partner_") ? `Partner: ${source.slice(8).replace(/-/g, " ")}` : source);
 
 export const CATEGORY_LABELS: Record<string, string> = {
   actively_bad: "Actively bad",

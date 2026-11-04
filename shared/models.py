@@ -21,7 +21,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, Integer, String, Text, func
+from sqlalchemy import JSON, Boolean, DateTime, Float, Integer, LargeBinary, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -282,3 +282,36 @@ class Conflict(Base):
     resolved_value: Mapped[Any | None] = mapped_column(Json)
     resolved_by: Mapped[str | None] = mapped_column(String(128))
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class SourceUpload(Base):
+    """A partner spreadsheet exactly as uploaded (also written to the raw store on ingest)."""
+
+    __tablename__ = "source_uploads"
+    __table_args__ = {"schema": OPS_SCHEMA}
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    filename: Mapped[str] = mapped_column(Text)
+    content: Mapped[bytes] = mapped_column(LargeBinary)
+    size: Mapped[int] = mapped_column(Integer)
+    sha256: Mapped[str] = mapped_column(String(64))
+    rows: Mapped[int] = mapped_column(Integer)
+    suggestion: Mapped[dict[str, Any]] = mapped_column(Json)
+    uploaded_by: Mapped[str] = mapped_column(String(128))
+    uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class SourceMapping(Base):
+    """A confirmed partner source: its column mapping and the upload it was confirmed on."""
+
+    __tablename__ = "source_mappings"
+    __table_args__ = {"schema": OPS_SCHEMA}
+
+    source: Mapped[str] = mapped_column(String(64), primary_key=True)
+    partner_name: Mapped[str] = mapped_column(Text)
+    upload_id: Mapped[str] = mapped_column(String(36))
+    mapping: Mapped[dict[str, str]] = mapped_column(Json)
+    suggested: Mapped[dict[str, Any]] = mapped_column(Json)
+    default_state: Mapped[str] = mapped_column(String(2), default="CA")
+    confirmed_by: Mapped[str] = mapped_column(String(128))
+    confirmed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

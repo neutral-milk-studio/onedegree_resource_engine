@@ -78,6 +78,7 @@ flowchart LR
 | API | `api/app/` | `GET /services`, `GET /services/{id}`, `POST /ingest/{source}`, `GET /ingest/runs`, `GET /ingest/runs/{id}/quarantine`, `GET /metrics`, `GET /audit`. |
 | AI maintenance | `maintenance/` | Website source → extractor (Amazon Bedrock Converse, or offline rules) → comparator → findings. Harm priority, trust score, apply. |
 | Conflicts | `ingest/pipeline/conflicts.py`, `api/app/routers/conflicts.py` | Cross-source matching after every ingest; resolve by choosing the winning value. |
+| Add a partner | `ingest/adapters/spreadsheet.py`, `ingest/mapping.py`, `ingest/partners.py`, `api/app/routers/sources.py` | Upload CSV → suggested mapping with confidence → confirm → import. |
 | Review API | `api/app/routers/review.py`, `maintenance.py` | `POST /maintenance/run`, `GET /maintenance/checks`, `GET /review/findings`, `POST /review/findings/{id}/apply`, `POST /review/findings/{id}/dismiss`, `GET /review/records/{id}/history`. |
 | Admin UI | `ui/` | React + Vite + TypeScript + Tailwind. Overview (live metrics, findings chart, sources, recent activity), plus the review screen. Light/dark/device theme. |
 
@@ -180,6 +181,31 @@ module plus configuration.
 The planted problems and what each should produce are in the manifest; the test
 `test_evaluation_every_planted_problem_is_caught_and_nothing_else` asserts a 100% catch rate
 with no false flags on that set.
+
+## Add a partner (spreadsheets)
+
+On the **Add a partner** page a specialist names the partner and uploads a CSV (up to 2 MB).
+`POST /sources/preview` stores the upload and suggests which field each column holds, with
+a confidence and a plain reason:
+
+- With `BEDROCK_MODEL_ID` set: one Bedrock Converse call sees the headers and 5 sample rows
+  and returns strict JSON, validated (every column, known fields, confidence 0-1). An invalid
+  or failed reply falls back to the offline rules and says so.
+- Otherwise: offline rules from header synonyms plus value patterns (phones, emails, ZIPs,
+  web addresses, hours, `Key: value | Key: value` packed columns).
+
+The specialist checks or changes each column (low-confidence ones are marked "please check")
+and confirms. `POST /sources/confirm` saves the mapping (`ops.source_mappings`, audited with
+what was changed) and imports the rows through the normal pipeline: raw file saved as
+uploaded, every row validated, stored or quarantined with the reason. The page shows rows
+received / stored / quarantined, parts held back with plain-language reasons, and the time
+from upload to stored. The partner then re-runs like any source: `POST /ingest/{source}`.
+
+The sample `data/samples/spreadsheet/county_food_pantries.csv` (fictional) imports as
+7 received, 7 stored, 0 quarantined, with 2 parts held back: Vacaville Mobile Pantry's address
+(no street) and Rio Vista's phone ("call the church office"). Its phones come in five formats
+and all normalize to `(707) 555-01xx`; "1st and 3rd Friday" hours stay as text instead of being
+guessed into a weekly schedule.
 
 ## Cost per record
 

@@ -9,6 +9,7 @@ dependencies = [
     "jsonschema[format-nongpl]>=4.23",
     "psycopg[binary]>=3.2",
     "pydantic>=2.9",
+    "python-multipart>=0.0.9",
     "pyyaml>=6.0",
     "sqlalchemy>=2.0",
     "tzdata>=2024.1",
