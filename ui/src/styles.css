@@ -1,16 +1,16 @@
 :root {
   color-scheme: light;
-  --series-1: #2a78d6; /* chart bars; validated against --surface (dataviz validator) */
-  --bg: #f4f5f7;
+  --series-1: #1d5ec9; /* chart bars; validated against --surface (dataviz validator) */
+  --bg: #fbfbf5; /* cream canvas, the transactional track's ground */
   --surface: #ffffff;
-  --surface-2: #f8f9fb;
+  --surface-2: #f6f6f0;
   --text: #17202a;
   --muted: #5a6572;
-  --border: #dde1e6;
-  --primary: #1d5ec9;
-  --primary-hover: #174da6;
+  --border: #e4e4e7;
+  --primary: #000000;
+  --primary-hover: #262626;
   --primary-text: #ffffff;
-  --selected: #eaf1fc;
+  --selected: #eafbf1; /* pale aloe tint, not blue -- the brand's own "chosen" color */
   --urgent: #c8261e;
   --urgent-soft: #fdecea;
   --urgent-text: #9c1a14;
@@ -25,30 +25,32 @@
   --low-text: #47515c;
   --del-bg: #ffdcd9;
   --del-text: #8a1712;
-  --ins-bg: #cdf2d6;
-  --ins-text: #0d5a22;
-  --good: #1a6a32;
-  --good-soft: #e3f4e7;
+  --ins-bg: #c1fbd4;
+  --ins-text: #0d4a28;
+  --good: #0d4a28;
+  --good-soft: #c1fbd4; /* aloe: growth / verified, the brand's featured-tier green */
+  --aloe: #c1fbd4;
+  --pistachio: #d4f9e0;
   font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 15px;
   line-height: 1.5;
 }
 
 /* Dark mode: set by src/theme.ts (and the inline script in index.html) from the viewer's
-   choice or the OS setting. */
+   choice or the OS setting. True black -- the cinematic track's own canvas. */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --series-1: #3987e5;
-  --bg: #101317;
-  --surface: #191d23;
-  --surface-2: #20252c;
-  --text: #e9ecef;
-  --muted: #a4aeb8;
-  --border: #333a43;
-  --primary: #76aaf7;
-  --primary-hover: #93bdfa;
-  --primary-text: #0b1a30;
-  --selected: #1d2c42;
+  --series-1: #76aaf7;
+  --bg: #000000;
+  --surface: #0a0a0a;
+  --surface-2: #141414;
+  --text: #f4f4f5;
+  --muted: #a1a1aa;
+  --border: #27272a;
+  --primary: #ffffff;
+  --primary-hover: #d4d4d8;
+  --primary-text: #000000;
+  --selected: #0f2419;
   --urgent: #f26a62;
   --urgent-soft: #46201e;
   --urgent-text: #ffbdb8;
@@ -59,14 +61,16 @@
   --medium-soft: #3c3210;
   --medium-text: #f2dd8d;
   --low: #8c97a3;
-  --low-soft: #2a3038;
+  --low-soft: #1e1e22;
   --low-text: #cbd2d9;
   --del-bg: #5b2320;
   --del-text: #ffc9c4;
   --ins-bg: #1b4a2a;
   --ins-text: #b6efc4;
-  --good: #93dea7;
-  --good-soft: #1b3a24;
+  --good: #a6f3c2;
+  --good-soft: #10261a;
+  --aloe: #10261a;
+  --pistachio: #16271f;
 }
 :root[data-theme="dark"] .ag-theme-quartz {
   --ag-background-color: var(--surface);
@@ -87,8 +91,9 @@ a { color: var(--primary); overflow-wrap: anywhere; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 button, select, input, textarea { font: inherit; color: inherit; }
-button { padding: 6px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+button { padding: 6px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; cursor: pointer; transition: background 140ms ease, border-color 140ms ease, transform 140ms ease; }
 button:hover:not(:disabled) { background: var(--surface-2); border-color: var(--muted); }
+button:active:not(:disabled) { transform: translateY(1px); }
 button:disabled { opacity: 0.55; cursor: not-allowed; }
 button.primary { background: var(--primary); border-color: var(--primary); color: var(--primary-text); font-weight: 600; }
 button.primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
