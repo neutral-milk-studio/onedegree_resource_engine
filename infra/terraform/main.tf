@@ -20,7 +20,7 @@ variable "app_cpu" { default = 512 }
 variable "app_memory" { default = 1024 }
 variable "db_min_acu" { default = 0.5 }
 variable "db_max_acu" { default = 4 }
-variable "db_engine_version" { default = "16.4" }
+variable "db_engine_version" { default = "16.8" }
 variable "certificate_arn" {
   description = "ACM certificate for HTTPS. Empty = HTTP only (demo)."
   default     = ""
