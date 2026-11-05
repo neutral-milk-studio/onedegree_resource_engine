@@ -883,6 +883,8 @@ components:
       - applied
       - edited
       - dismissed
+      - hidden
+      - marked_safe
       title: ReviewState
       description: Where a finding's proposal sits in the human review flow.
     SourceType:

@@ -140,7 +140,7 @@ The review API contract mock still runs on its own with `make mock`.
    flagged; a page that doesn't mention a fact is not a discrepancy.
 4. **Categories**: `verified`, `discrepancy`, `missing_information`, `actively_bad` (site gone:
    NXDOMAIN, 404/410, or a closure notice), `check_failed` (blocked, timeout, unreadable).
-   `suspicious` when the scam check below finds two or more risk signals.
+   `suspicious` when the risk check below reaches the flag threshold.
 5. **Harm priority**: actively bad > suspicious > discrepancy in phone/hours/address > other
    discrepancy > missing information > check failed.
 6. **Trust score** (0-100) with a badge like "Verified 2 days ago" or "1 open issue": verified
@@ -150,17 +150,55 @@ The review API contract mock still runs on its own with `make mock`.
    saved), saves an override so re-ingest keeps the fix, and writes the audit log (who, field,
    old, new, when, source of change). Keep current is audited too.
 
-8. **Scam detection** (same check, no extra model call). Risk signals: a fee required before
-   help, a website domain registered under 180 days ago (`RE_NEW_DOMAIN_DAYS`), the name on
-   the site not matching the listing, and the organization missing from the nonprofit
-   registry (`data/registry/nonprofit_registry.csv`, a sample built from the ODRS and NDP
-   organizations). **Two or more signals** make a `suspicious` finding, worded "flagged for
-   review", never "proven scam"; one signal alone is recorded on the check but doesn't flag
-   anything. Hiding a flagged listing sets its status to inactive (search will exclude it).
+8. **Suspicious-listing detection** (`maintenance/risk.py`, same check, no extra model call
+   required). The system never decides alone: it only ever flags a listing for a specialist
+   to review. Deterministic rules score a page 0-100 and flag it (`suspicious`) once the score
+   reaches `RE_SUSPICIOUS_THRESHOLD` (default 40, one settings file:
+   `maintenance/suspicious_settings.py`):
+   - **Strong** (40 each): a fee demanded before help; a request for sensitive data (SSN,
+     bank account, card, password).
+   - **Medium** (20 each): urgency or guaranteed-approval pressure; claims to be official or
+     government on a non-.gov domain; the page demands a fee the record doesn't have.
+   - **Weak** (10 each): the domain doesn't resemble the organization's name, is a URL
+     shortener, or is a free-hosting subdomain; the domain was registered in the last 90 days
+     (RDAP, cached, 3s timeout, fails open and is skipped offline); the organization isn't in
+     `data/registry/known_orgs.json` (absence alone never flags); contact is messaging-app or
+     free-email only with no physical address on file (a PO box counts as an address).
+
+     Phrasing like "no fee", "free of charge", "we never ask for payment", or "application fee
+     waived" is recognized and never flags. Each signal carries a plain-language reason and,
+     where it comes from the page, a short quote (never the full page, never logged beyond
+     that quote).
+   - With `BEDROCK_MODEL_ID` set, one additional Bedrock call (temperature 0, strict JSON) may
+     add extra reasons grounded in the page's own quotes -- it can never raise or lower the
+     rules score, and is skipped silently if AWS isn't configured or the call fails.
+
+   A flagged listing is excluded from every public path (search, semantic search, SMS, the
+   map, the public API) until a specialist decides; the signals themselves are never exposed
+   publicly. In the review queue, a specialist sees the score, each signal's reason, the
+   evidence quote and the page link, and picks one of three audited actions: **Hide from
+   search** (the default -- keeps it out of every public path, record unchanged), **Mark
+   safe** (requires a short note; stops future checks from re-flagging that listing or its
+   domain), or **Confirm and remove** (applies an inactive status). Everywhere -- UI, API,
+   logs, tests -- this says "flagged for review" or "suspicious", never "scam" or "fraud" as a
+   conclusion, and never names an individual.
 
 ```bash
 make check                        # run website checks against the running stack
+make eval-suspicious              # precision/recall of the rules against data/eval/suspicious_cases.json
 ```
+
+### Try it: Quick Rent Rescue
+
+1. `make up` then `make ingest` (loads the fictional "Quick Rent Rescue" community listing,
+   which asks for a fee, an SSN and guarantees approval) and `make check`.
+2. Open the review queue: **Quick Rent Rescue** appears as **Suspicious**, ranked just after
+   actively-bad listings, with its risk score, each signal's plain-language reason, the
+   evidence quote, and a link to the page.
+3. Click **Hide from search**.
+4. Search "I can't pay rent" (web search, or text it to the SMS number) -- Quick Rent Rescue
+   never appears. The control listing, **Oak Street Legal Clinic** (explicitly "no processing
+   fee... application fee waived"), stays unflagged throughout and is still searchable.
 
 ## Conflicts between sources
 

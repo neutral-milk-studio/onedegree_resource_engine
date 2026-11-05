@@ -34,6 +34,39 @@
         "eligibility": "Open to everyone.",
         "service_area": ["Half Moon Bay"]
       }
+    },
+    {
+      "id": "c-1003",
+      "submitted_at": "2026-11-01",
+      "organization": {
+        "id": "o-503",
+        "name": "Quick Rent Rescue",
+        "website": "https://quickrentrescue.example",
+        "description": "Rent assistance grants, fast."
+      },
+      "service": {
+        "name": "Emergency Rent Rescue Program",
+        "description": "Guaranteed rent assistance grants, approved in 24 hours.",
+        "eligibility": "Anyone behind on rent.",
+        "service_area": ["San Francisco", "Alameda"]
+      }
+    },
+    {
+      "id": "c-1004",
+      "submitted_at": "2026-11-01",
+      "organization": {
+        "id": "o-504",
+        "name": "Oak Street Legal Clinic",
+        "website": "https://oakstreetlegal.example",
+        "description": "Free legal consultations for low-income renters."
+      },
+      "service": {
+        "name": "Free Legal Consultations",
+        "description": "No-cost legal advice for tenants facing eviction.",
+        "phone": "(510) 555-0188",
+        "eligibility": "Low-income renters.",
+        "service_area": ["Oakland", "Berkeley"]
+      }
     }
   ]
 }

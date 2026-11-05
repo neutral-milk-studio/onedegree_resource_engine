@@ -161,6 +161,79 @@ def apply_finding(
         return Decision(finding, service, audit)
 
 
+def hide_finding(
+    store: PgHsdsStore, finding_id: str, actor: str, seconds_to_fix: float | None = None
+) -> Decision:
+    """ "Hide from search" -- the default action on a suspicious finding. Keeps the listing
+    out of every public path (search/query/search.py's ``_visible``) but leaves the record
+    itself untouched; reversible by a later "Mark safe"."""
+    with store.session() as session:
+        finding = session.get(Finding, finding_id)
+        if finding is None:
+            raise ReviewError(404, f"No finding with id {finding_id}")
+        if finding.review_state != "pending":
+            raise ReviewError(409, f"This finding was already {finding.review_state}.")
+        service = session.get(Service, finding.service_id)
+        now = datetime.now(UTC)
+        finding.review_state = "hidden"
+        finding.decided_at, finding.decided_by = now, actor
+        finding.seconds_to_fix = seconds_to_fix
+        audit = AuditEntry(
+            actor=actor,
+            action="hide_finding",
+            change_source="specialist",
+            entity_type="service",
+            entity_id=finding.service_id,
+            field=finding.field,
+            old_value=finding.current_value,
+            new_value=finding.current_value,
+            at=now,
+            summary=(
+                f"{actor} hid “{service.name if service else '?'}” from search (flagged for review)"
+            ),
+        )
+        session.add(audit)
+        session.flush()
+        return Decision(finding, service, audit)
+
+
+def mark_safe(
+    store: PgHsdsStore, finding_id: str, actor: str, note: str, seconds_to_fix: float | None = None
+) -> Decision:
+    """A specialist has looked and this listing (and its domain) is not suspicious. Stops
+    the next maintenance run from re-flagging it (maintenance/risk.py's ``is_marked_safe``)
+    and clears it from every public path again."""
+    if not note or not note.strip():
+        raise ReviewError(422, "A short note is required to mark a listing safe.")
+    with store.session() as session:
+        finding = session.get(Finding, finding_id)
+        if finding is None:
+            raise ReviewError(404, f"No finding with id {finding_id}")
+        if finding.review_state != "pending":
+            raise ReviewError(409, f"This finding was already {finding.review_state}.")
+        service = session.get(Service, finding.service_id)
+        now = datetime.now(UTC)
+        finding.review_state = "marked_safe"
+        finding.dismiss_reason = note
+        finding.decided_at, finding.decided_by = now, actor
+        finding.seconds_to_fix = seconds_to_fix
+        audit = AuditEntry(
+            actor=actor,
+            action="mark_safe",
+            change_source="specialist",
+            entity_type="service",
+            entity_id=finding.service_id,
+            field=finding.field,
+            old_value=finding.current_value,
+            new_value=finding.current_value,
+            at=now,
+            summary=f"{actor} marked “{service.name if service else '?'}” safe: {note}",
+        )
+        session.add(audit)
+        session.flush()
+        return Decision(finding, service, audit)
+
+
 def dismiss_finding(
     store: PgHsdsStore,
     finding_id: str,

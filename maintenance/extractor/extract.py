@@ -161,7 +161,10 @@ def accessibility_class(text: str | None) -> bool | None:
 _MONEY = re.compile(r"\$\s?\d[\d,]*(?:\.\d{2})?")
 _PAY_WORDS = re.compile(r"\b(fee|pay|payment|deposit|charge|gift card|wire)\b", re.I)
 _NO_FEE = re.compile(
-    r"\b(no|free of|without( any)?|never (ask|charge))\b[^.]{0,20}\b(fee|charge|cost)", re.I
+    r"\b(no|free( of)?|without( any)?|never (ask|charge|require))\b"
+    r"[^.]{0,25}\b(fee|charge|cost|payment)\b"
+    r"|\b(fee|charge|cost|payment)\b[^.]{0,20}\bwaived\b",
+    re.I,
 )
 
 

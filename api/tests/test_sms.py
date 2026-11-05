@@ -71,6 +71,15 @@ def test_webhook_disabled_when_no_token_is_configured(loaded_store, raw_store, m
     assert response.status_code == 401
 
 
+def test_reply_text_never_includes_a_flagged_listing(loaded_store, raw_store, monkeypatch):
+    """Same filter as the web search and the public API: a suspicious finding hides a
+    listing from SMS too, once maintenance has flagged it."""
+    c = client(loaded_store, raw_store, monkeypatch)
+    c.post("/maintenance/run", headers={"Authorization": "Bearer test-token"})
+    reply = reply_text(loaded_store, "I can't pay rent")
+    assert "Emergency Rent Relief Grants" not in reply
+
+
 def test_webhook_needs_no_bearer_token(loaded_store, raw_store, monkeypatch):
     """Twilio can't send one -- only the dashboard's other endpoints require it."""
     c = client(loaded_store, raw_store, monkeypatch)

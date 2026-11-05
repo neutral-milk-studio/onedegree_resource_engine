@@ -70,7 +70,7 @@ describe("ReviewQueue", () => {
     await user.click(within(detail).getByRole("button", { name: "Apply status change" }));
     expect(apply).toHaveBeenCalledWith(expect.objectContaining({ id: "demo-1" }), "defunct", expect.any(Number));
 
-    await user.click(await screen.findByRole("button", { name: "Next finding" }));
+    await user.click(await screen.findByRole("button", { name: /Demo Clinic/ }));
     await user.click(within(screen.getByRole("article")).getByRole("button", { name: /^Keep/ }));
     expect(await screen.findByRole("status")).toHaveTextContent("Kept the current value");
   });
@@ -100,18 +100,50 @@ describe("ReviewQueue", () => {
 });
 
 describe("ReviewQueue suspicious listings", () => {
-  it("lists the risk signals as 'flagged for review' and can hide the listing", async () => {
+  async function openSuspiciousDetail(api: ReviewQueueApi) {
     const user = userEvent.setup();
-    const api = createMockReviewApi("Sam");
-    const apply = vi.spyOn(api, "apply");
     renderWith(api);
     await user.click(await screen.findByRole("button", { name: /Demo Rent Grants/ }));
-    const detail = screen.getByRole("article");
+    return { user, detail: screen.getByRole("article") };
+  }
+
+  it("lists the signals and score as 'flagged for review', never 'scam'", async () => {
+    const { detail } = await openSuspiciousDetail(createMockReviewApi("Sam"));
     expect(detail).toHaveTextContent("Flagged for review");
-    expect(detail).toHaveTextContent("It is not proven");
-    expect(detail).not.toHaveTextContent(/is a scam/i);
+    expect(detail).not.toHaveTextContent(/\bscam\b/i);
+    expect(detail).not.toHaveTextContent(/\bfraud\b/i);
     expect(within(detail).getByText("Asks for a $99 fee before helping")).toBeInTheDocument();
-    await user.click(within(detail).getByRole("button", { name: "Hide this listing" }));
+  });
+
+  it("'Hide from search' calls the hide action, not apply or dismiss", async () => {
+    const api = createMockReviewApi("Sam");
+    const hide = vi.spyOn(api, "hide");
+    const { user, detail } = await openSuspiciousDetail(api);
+    await user.click(within(detail).getByRole("button", { name: "Hide from search" }));
+    expect(hide).toHaveBeenCalledWith(expect.objectContaining({ id: "demo-4" }), expect.any(Number));
+  });
+
+  it("'Mark safe' is disabled until a note is entered, then calls markSafe with it", async () => {
+    const api = createMockReviewApi("Sam");
+    const markSafe = vi.spyOn(api, "markSafe");
+    const { user, detail } = await openSuspiciousDetail(api);
+    const markSafeButton = within(detail).getByRole("button", { name: "Mark safe" });
+    expect(markSafeButton).toBeDisabled();
+    await user.type(within(detail).getByLabelText(/Note for.*Mark safe/), "Called them, this is real");
+    expect(markSafeButton).toBeEnabled();
+    await user.click(markSafeButton);
+    expect(markSafe).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "demo-4" }),
+      "Called them, this is real",
+      expect.any(Number),
+    );
+  });
+
+  it("'Confirm and remove' applies the inactive status", async () => {
+    const api = createMockReviewApi("Sam");
+    const apply = vi.spyOn(api, "apply");
+    const { user, detail } = await openSuspiciousDetail(api);
+    await user.click(within(detail).getByRole("button", { name: "Confirm and remove" }));
     expect(apply).toHaveBeenCalledWith(expect.objectContaining({ id: "demo-4" }), "inactive", expect.any(Number));
   });
 });

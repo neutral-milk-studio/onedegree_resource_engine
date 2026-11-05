@@ -90,6 +90,14 @@ def test_flagged_and_dead_listings_are_hidden_and_counted(client):
     assert DEAD_SITE not in {r["service_id"] for r in trees["results"]}
 
 
+def test_public_search_never_exposes_risk_signals(client):
+    """The public API must never expose why a listing was flagged -- only staff review does."""
+    client.post("/maintenance/run", headers=AUTH)
+    body = search(client, "emergency rent relief grants")
+    for result in body["results"]:
+        assert "risk_signals" not in result and "risk_score" not in result
+
+
 def test_inactive_listings_are_not_returned(client, loaded_store):
     from shared.models import Service
 

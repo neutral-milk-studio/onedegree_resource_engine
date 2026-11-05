@@ -26,7 +26,7 @@ def client(loaded_store, raw_store, monkeypatch):
     app.dependency_overrides[get_store] = lambda: loaded_store
     c = TestClient(app)
     report = c.post("/maintenance/run", headers=AUTH).json()
-    assert report["checked"] == 11 and report["model_id"] == "offline-rules"
+    assert report["checked"] == 13 and report["model_id"] == "offline-rules"
     return c
 
 
@@ -51,17 +51,18 @@ def test_review_endpoints_require_token(client, method, path):
 def test_queue_is_sorted_by_harm_and_filterable(client):
     body = queue(client)
     ranks = [f["harm_rank"] for f in body["contents"]]
-    assert ranks == sorted(ranks) and body["total_items"] == 7
+    assert ranks == sorted(ranks) and body["total_items"] == 9
     assert body["contents"][0]["category"] == "actively_bad"
     assert body["contents"][-1]["category"] == "check_failed"
     assert body["counts_by_category"] == {
-        "actively_bad": 1, "suspicious": 1, "discrepancy": 3, "missing_information": 1,
+        "actively_bad": 1, "suspicious": 2, "discrepancy": 3, "missing_information": 2,
         "check_failed": 1,
     }  # fmt: skip
     only = queue(client, category="discrepancy")["contents"]
     assert {f["category"] for f in only} == {"discrepancy"} and len(only) == 3
     assert body["contents"][1]["category"] == "suspicious"
-    first = body["contents"][2]
+    assert body["contents"][2]["category"] == "suspicious"
+    first = body["contents"][3]
     assert first["field"] in {"phone", "hours"}  # contact discrepancies outrank the rest
     assert first["trust"]["badge"].startswith("1 open issue")
     assert first["evidence"][0]["kind"] == "quote" and first["evidence"][0]["snippet"]
@@ -162,6 +163,81 @@ def test_check_failed_can_only_be_kept(client):
     assert again.status_code == 409
 
 
+FAKE_RENT_RELIEF = "e885691b-3136-58c2-82e5-533f924116e4"
+QUICK_RENT_RESCUE = "6e2b7a6d-f8fb-56fe-ac4f-c25ff14bf40b"
+
+
+def test_hide_removes_from_queue_without_changing_the_record(client):
+    finding = finding_for(client, FAKE_RENT_RELIEF)
+    before = client.get(f"/services/{FAKE_RENT_RELIEF}", headers=AUTH).json()
+    response = client.post(
+        f"/review/findings/{finding['id']}/hide", headers=AUTH, json={"seconds_to_fix": 9}
+    )
+    assert response.status_code == 200, response.text
+    result = response.json()
+    assert result["finding"]["review_state"] == "hidden"
+    audit = result["audit_entry"]
+    assert audit["action"] == "apply_finding" or "hid" in audit["summary"]
+    assert "hid" in audit["summary"] and "Emergency Rent Relief Grants" in audit["summary"]
+    assert FAKE_RENT_RELIEF not in {f["service_id"] for f in queue(client)["contents"]}
+    after = client.get(f"/services/{FAKE_RENT_RELIEF}", headers=AUTH).json()
+    assert after["status"] == before["status"]
+
+
+def test_mark_safe_requires_a_note(client):
+    finding = finding_for(client, FAKE_RENT_RELIEF)
+    empty = client.post(
+        f"/review/findings/{finding['id']}/mark-safe", headers=AUTH, json={"note": ""}
+    )
+    assert empty.status_code == 422
+    assert FAKE_RENT_RELIEF in {f["service_id"] for f in queue(client)["contents"]}
+
+    ok = client.post(
+        f"/review/findings/{finding['id']}/mark-safe",
+        headers=AUTH,
+        json={"note": "Called them, this is real", "seconds_to_fix": 12},
+    )
+    assert ok.status_code == 200, ok.text
+    result = ok.json()
+    assert result["finding"]["review_state"] == "marked_safe"
+    assert "Called them, this is real" in result["audit_entry"]["summary"]
+    assert FAKE_RENT_RELIEF not in {f["service_id"] for f in queue(client)["contents"]}
+
+
+def test_mark_safe_stops_the_next_check_from_reflagging(client):
+    finding = finding_for(client, FAKE_RENT_RELIEF)
+    client.post(
+        f"/review/findings/{finding['id']}/mark-safe",
+        headers=AUTH,
+        json={"note": "Verified with the org directly"},
+    )
+    rerun = client.post(
+        "/maintenance/run", headers=AUTH, json={"service_ids": [FAKE_RENT_RELIEF]}
+    ).json()
+    assert rerun["findings_created"] == 0
+    assert FAKE_RENT_RELIEF not in {f["service_id"] for f in queue(client)["contents"]}
+
+
+def test_confirm_and_remove_applies_inactive_status(client):
+    finding = finding_for(client, QUICK_RENT_RESCUE)
+    response = client.post(
+        f"/review/findings/{finding['id']}/apply",
+        headers=AUTH,
+        json={"expected_version": finding["record_version"], "edited_value": "inactive"},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["finding"]["review_state"] in {"applied", "edited"}
+    assert client.get(f"/services/{QUICK_RENT_RESCUE}", headers=AUTH).json()["status"] == "inactive"
+
+
+def test_queue_findings_never_expose_signals_through_the_public_search(client):
+    finding = finding_for(client, FAKE_RENT_RELIEF)
+    assert finding["risk_signals"] and finding["risk_score"] is not None
+    body = client.get("/search", headers=AUTH, params={"q": "emergency rent relief grants"}).json()
+    for result in body["results"]:
+        assert "risk_signals" not in result and "risk_score" not in result
+
+
 def test_reingest_keeps_the_specialist_fix(client):
     finding = finding_for(client, PUENTE)
     client.post(
@@ -188,8 +264,8 @@ def test_metrics_after_checks_and_a_fix(client):
     )
     m = client.get("/metrics", headers=AUTH).json()
     f = m["findings"]
-    assert f["checks_run"] == 11 and f["records_checked"] == 11 and f["decided"] == 1
-    assert f["open_by_category"]["discrepancy"] == 2 and f["open_total"] == 6
-    assert f["open_by_category"]["verified"] == 4
+    assert f["checks_run"] == 13 and f["records_checked"] == 13 and f["decided"] == 1
+    assert f["open_by_category"]["discrepancy"] == 2 and f["open_total"] == 8
+    assert f["open_by_category"]["verified"] == 5
     assert f["median_seconds_to_fix"] == 20 and f["model_ids"] == ["offline-rules"]
     assert m["cost_per_check_usd"] == 0.0 and 0 < m["avg_trust_score"] <= 100

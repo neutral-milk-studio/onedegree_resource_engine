@@ -26,7 +26,7 @@ def test_run_maintenance_checks_and_reports(loaded_store, monkeypatch):
     monkeypatch.setattr("shared.db.init_db", lambda *a, **k: None)
     monkeypatch.setattr("api.app.store_pg.PgHsdsStore", lambda engine: loaded_store)
     result = run_maintenance("scheduler", limit=None)
-    assert result["job"] == "maintenance" and result["checked"] == 11  # every sample site
+    assert result["job"] == "maintenance" and result["checked"] == 13  # every sample site
 
 
 def test_run_maintenance_respects_the_limit_flag(loaded_store, monkeypatch):

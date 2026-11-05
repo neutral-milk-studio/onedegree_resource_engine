@@ -1,87 +1,217 @@
-"""Scam risk signals: each signal, the two-signal threshold, and plain wording."""
+"""Suspicious-listing detection: each signal, negation handling, scoring, and the
+threshold. See maintenance/risk.py and maintenance/suspicious_settings.py."""
 
 from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
 
-from maintenance.extractor.extract import (
-    FeeFact,
-    OfflineExtractor,
-    PageFacts,
-    TextFact,
-    find_upfront_fee,
-    page_organization_name,
-)
+from maintenance.extractor.extract import find_upfront_fee
 from maintenance.extractor.parse import html_to_text
-from maintenance.risk import assess, in_registry, names_match, suspicious_finding
+from maintenance.risk import assess, in_registry, names_match, score, suspicious_finding
+from maintenance.suspicious_settings import THRESHOLD
 
 PAGES = Path(__file__).parents[2] / "data" / "sample_websites"
 TODAY = date(2026, 11, 4)
+URL = "https://quickrentrescue.example/apply"
 
 
-def doc(name="Bay Area Rent Relief Now"):
-    return {"id": "00000000-0000-4000-8000-000000000001", "name": "Grants", "status": "active",
-            "organization": {"name": name}}  # fmt: skip
-
-
-def test_upfront_fee_detection():
-    assert (
-        find_upfront_fee("Pay a one-time $99 processing fee to reserve your grant.").amount == "$99"
+def doc(name="Bay Area Rent Relief Now", fees=None, address=True):
+    locations = (
+        [{"location": {"addresses": [{"city": "Oakland", "postal_code": "94601"}]}}]
+        if address
+        else []
     )
-    assert find_upfront_fee("There is no fee. Grants up to $5,000.") is None
-    assert find_upfront_fee("We never charge a fee for help with your $20 bill.") is None
-    assert find_upfront_fee("Grants up to $5,000 for back rent.") is None  # money but no fee
+    return {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "name": "Grants",
+        "status": "active",
+        "organization": {"name": name},
+        "service_at_locations": locations,
+        "fees": fees,
+    }
 
 
-def test_page_name_comes_from_the_header_or_title():
-    page = (PAGES / "fake_rent_relief.html").read_text()
-    assert page_organization_name(page) == "California Housing Relief Center"
-    assert (
-        page_organization_name("<title>Acme Aid – Home</title><p>" + "x" * 100 + "</p>")
-        == "Acme Aid"
+# --- strong signals -----------------------------------------------------------------------
+
+
+def test_fee_before_help_signal():
+    text = "Pay a one-time $99 processing fee to reserve your grant."
+    signals = assess(doc(), text, URL, None, TODAY)
+    assert signals[0].code == "fee_before_help"
+    assert "$99" in signals[0].quote
+
+
+def test_fee_negation_phrases_never_flag():
+    for text in [
+        "There is no processing fee. Grants up to $5,000.",
+        "Help is free of charge, up to $500 in assistance.",
+        "We never ask for payment of any kind. Up to $5,000 available.",
+        "The $99 application fee is waived for qualifying families.",
+    ]:
+        assert find_upfront_fee(text) is None, text
+        assert not any(s.code == "fee_before_help" for s in assess(doc(), text, URL, None, TODAY))
+
+
+def test_sensitive_data_signal():
+    signals = assess(doc(), "To apply, give us your SSN and card number.", URL, None, TODAY)
+    assert any(s.code == "sensitive_data_request" for s in signals)
+
+
+def test_sensitive_data_negation():
+    signals = assess(doc(), "We will never ask for your SSN or bank information.", URL, None, TODAY)
+    assert not any(s.code == "sensitive_data_request" for s in signals)
+
+
+# --- medium signals ------------------------------------------------------------------------
+
+
+def test_urgency_signal():
+    signals = assess(doc(), "Guaranteed approval. Act now, limited spots!", URL, None, TODAY)
+    assert any(s.code == "urgency_pressure" for s in signals)
+
+
+def test_fake_official_signal_only_off_a_gov_domain():
+    text = "This is the official government assistance program."
+    assert any(s.code == "fake_official" for s in assess(doc(), text, URL, None, TODAY))
+    assert not any(
+        s.code == "fake_official"
+        for s in assess(doc(), text, "https://example.gov/aid", None, TODAY)
     )
 
 
-def test_name_matching_ignores_abbreviations_and_case():
-    assert names_match("Stanford Community Law Clinic", "Stanford Community Law Clinic (CLC)")
-    assert names_match("Puente de la Costa Sur", "Puente De La Costa Sur")
-    assert not names_match("California Housing Relief Center", "Bay Area Rent Relief Now")
+def test_fee_mismatch_signal_needs_both_a_fee_and_no_fee_on_record():
+    text = "Pay a $50 fee to apply."
+    assert any(s.code == "fee_mismatch" for s in assess(doc(fees=None), text, URL, None, TODAY))
+    assert not any(
+        s.code == "fee_mismatch"
+        for s in assess(doc(fees=[{"amount": "50"}]), text, URL, None, TODAY)
+    )
+
+
+# --- weak signals --------------------------------------------------------------------------
+
+
+def test_domain_mismatch_url_shortener():
+    signals = assess(doc("Coastside Hope"), "Welcome.", "https://bit.ly/abc123", None, TODAY)
+    assert any(s.code == "domain_mismatch" for s in signals)
+
+
+def test_domain_mismatch_free_hosting():
+    signals = assess(
+        doc("Coastside Hope"), "Welcome.", "https://coastsidehelp.wixsite.com/home", None, TODAY
+    )
+    assert any(s.code == "domain_mismatch" for s in signals)
+
+
+def test_domain_mismatch_unrelated_name():
+    signals = assess(
+        doc("Coastside Hope"), "Welcome.", "https://totallydifferent.example", None, TODAY
+    )
+    assert any(s.code == "domain_mismatch" for s in signals)
+    signals = assess(
+        doc("Coastside Hope"), "Welcome.", "https://coastsidehope.example", None, TODAY
+    )
+    assert not any(s.code == "domain_mismatch" for s in signals)
+
+
+def test_new_domain_signal():
+    recent = date(2026, 10, 20).isoformat()
+    assert any(
+        s.code == "new_domain" for s in assess(doc("Quick Rent Rescue"), "x", URL, recent, TODAY)
+    )
+    old = date(2015, 1, 1).isoformat()
+    assert not any(
+        s.code == "new_domain" for s in assess(doc("Quick Rent Rescue"), "x", URL, old, TODAY)
+    )
+    assert not any(
+        s.code == "new_domain" for s in assess(doc("Quick Rent Rescue"), "x", URL, None, TODAY)
+    )
+    assert not any(
+        s.code == "new_domain"
+        for s in assess(doc("Quick Rent Rescue"), "x", URL, "not a date", TODAY)
+    )
 
 
 def test_registry_lookup():
     assert in_registry("Coastside Hope")
     assert in_registry("COASTSIDE HOPE")
-    assert not in_registry("Bay Area Rent Relief Now")
+    assert not in_registry("Quick Rent Rescue")
 
 
-def test_fake_site_has_all_four_signals_and_is_flagged_for_review():
-    html = (PAGES / "fake_rent_relief.html").read_text()
-    facts = OfflineExtractor().extract(html, {}).facts
-    signals = assess(doc(), facts, html_to_text(html), "2026-10-20", TODAY)
-    assert [s.code for s in signals] == ["fee_before_help", "new_domain", "name_mismatch",
-                                         "not_in_registry"]  # fmt: skip
-    flag = suspicious_finding(doc()["id"], doc(), "https://x.example", signals, "offline-rules")
-    assert flag.category == "suspicious" and "$99" in flag.evidence_quote
-    assert all("scam" not in message.lower() for message in flag.risk_signals)
-
-
-def test_one_signal_is_not_enough():
-    signals = assess(doc("Half Moon Bay Community Fridge"), PageFacts(), "Free food.", None, TODAY)
+def test_registry_signal_alone_is_never_enough_to_flag():
+    signals = assess(doc("Quick Rent Rescue"), "Free food, no strings attached.", URL, None, TODAY)
     assert [s.code for s in signals] == ["not_in_registry"]
-    assert suspicious_finding("id", doc(), "https://x.example", signals, None) is None
+    assert score(signals) < THRESHOLD
+    assert suspicious_finding(doc()["id"], doc(), URL, signals, None) is None
 
 
-def test_old_or_unknown_domain_is_not_a_signal():
-    facts = PageFacts()
-    assert assess(doc("Coastside Hope"), facts, "", "2015-01-01", TODAY) == []
-    assert assess(doc("Coastside Hope"), facts, "", None, TODAY) == []
-    assert assess(doc("Coastside Hope"), facts, "", "not a date", TODAY) == []
-
-
-def test_signal_quotes_must_be_on_the_page():
-    facts = PageFacts(
-        fee_before_help=FeeFact(required=True, amount="$99", quote="Pay $99 now"),
-        organization_name=TextFact(text="Other Name", quote="Other Name"),
+def test_messaging_only_contact_signal():
+    signals = assess(
+        doc("Quick Rent Rescue", address=False),
+        "Message us at wa.me/15551234567.",
+        URL,
+        None,
+        TODAY,
     )
-    assert assess(doc("Coastside Hope"), facts, "Welcome to Coastside Hope", None, TODAY) == []
+    assert any(s.code == "messaging_only_contact" for s in signals)
+
+
+def test_po_box_still_counts_as_a_physical_address():
+    doc_with_po_box = doc("Quick Rent Rescue", address=True)
+    doc_with_po_box["service_at_locations"] = [
+        {"location": {"addresses": [{"address_1": "PO Box 123", "city": "Oakland"}]}}
+    ]
+    signals = assess(doc_with_po_box, "Message us at wa.me/15551234567.", URL, None, TODAY)
+    assert not any(s.code == "messaging_only_contact" for s in signals)
+
+
+# --- scoring and the threshold --------------------------------------------------------------
+
+
+def test_names_match_ignores_abbreviations_and_case():
+    assert names_match("Stanford Community Law Clinic", "Stanford Community Law Clinic (CLC)")
+    assert names_match("Puente de la Costa Sur", "Puente De La Costa Sur")
+    assert not names_match("California Housing Relief Center", "Bay Area Rent Relief Now")
+
+
+def test_fake_site_scores_above_threshold_and_is_flagged():
+    html = (PAGES / "quick-rent-rescue.html").read_text()
+    text = html_to_text(html)
+    signals = assess(doc("Quick Rent Rescue"), text, URL, date(2026, 10, 20).isoformat(), TODAY)
+    codes = {s.code for s in signals}
+    assert {
+        "fee_before_help",
+        "sensitive_data_request",
+        "urgency_pressure",
+        "fake_official",
+    } <= codes
+    assert score(signals) >= THRESHOLD
+    flag = suspicious_finding(doc()["id"], doc(), URL, signals, "offline-rules")
+    assert flag is not None and flag.category == "suspicious"
+    assert all("scam" not in message.lower() for message in flag.risk_signals)
+    assert all("fraud" not in message.lower() for message in flag.risk_signals)
+
+
+def test_control_page_stays_unflagged():
+    html = (PAGES / "oak-street-legal-control.html").read_text()
+    text = html_to_text(html)
+    signals = assess(
+        doc("Oak Street Legal Clinic"), text, "https://oakstreetlegal.example", None, TODAY
+    )
+    assert score(signals) < THRESHOLD
+    assert (
+        suspicious_finding(doc()["id"], doc(), "https://oakstreetlegal.example", signals, None)
+        is None
+    )
+
+
+def test_extra_bedrock_reasons_never_change_the_score():
+    signals = assess(doc(), "Guaranteed approval! Act now.", URL, None, TODAY)
+    before = score(signals)
+    flag = suspicious_finding(
+        doc()["id"], doc(), URL, signals, None, extra_reasons=["An extra grounded reason"]
+    )
+    assert score(signals) == before  # the score computed before grounding is unchanged
+    if flag:
+        assert "An extra grounded reason" in flag.risk_signals

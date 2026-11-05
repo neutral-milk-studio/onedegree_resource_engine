@@ -28,7 +28,7 @@ def harm_rank(category: str, field: str | None) -> int:
 def harm_label(rank: int) -> str:
     return {
         0: "Urgent: people may be sent to a closed or dead service",
-        1: "Urgent: possible scam, flagged for review",
+        1: "Urgent: flagged for review as suspicious",
         2: "High: people may call or arrive at the wrong time or number",
         3: "Medium: a stated fact differs",
         4: "Low: information is missing",
