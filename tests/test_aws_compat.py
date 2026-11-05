@@ -49,7 +49,20 @@ class TestDatabaseUrl:
             database_url()
 
     def test_terraform_shaped_url_actually_connects(self, monkeypatch):
-        """Not just string-building: the resulting URL must work as a real DSN."""
+        """Not just string-building: the resulting URL must work as a real DSN.
+
+        Needs a running local Postgres on 5432 (``docker compose up -d postgres``), same
+        user/db as docker-compose.yml. Skipped automatically if it isn't reachable -- CI
+        doesn't run a Postgres service for this job, so the default run is unaffected.
+        """
+        import socket
+
+        try:
+            with socket.create_connection(("localhost", 5432), timeout=1):
+                pass
+        except OSError as exc:
+            pytest.skip(f"Postgres not reachable at localhost:5432: {exc}")
+
         monkeypatch.delenv("RE_DATABASE_URL", raising=False)
         monkeypatch.setenv("DB_HOST", "localhost")
         monkeypatch.setenv("DB_USER", "resource_engine")
