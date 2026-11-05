@@ -31,7 +31,7 @@ def loaded(client):
 @pytest.mark.parametrize(
     "method, path",
     [
-        ("get", "/"),
+        ("get", "/api/info"),
         ("get", "/services"),
         ("get", "/services/00000000-0000-0000-0000-000000000000"),
         ("post", "/ingest/odrs"),
@@ -47,6 +47,18 @@ def test_every_endpoint_requires_the_bearer_token(client, method, path, headers)
     response = getattr(client, method)(path, headers=headers)
     assert response.status_code in {401, 403}
     assert "contents" not in response.text
+
+
+def test_root_serves_the_ui_without_a_token_when_built(client):
+    """ "/" is the UI's login page (ui/dist, built into the AWS deploy's image) -- it must
+    stay reachable with no bearer token, since that's where someone gets the token from."""
+    response = client.get("/")
+    assert response.status_code in {
+        200,
+        404,
+    }  # 404 only when ui/dist wasn't built (local API-only dev)
+    if response.status_code == 200:
+        assert '<div id="root">' in response.text
 
 
 def test_missing_server_token_rejects_everyone(client, monkeypatch):

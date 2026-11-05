@@ -74,7 +74,7 @@ def test_app_starts_and_enforces_auth(monkeypatch):
     monkeypatch.setenv("RE_BEARER_TOKEN", "secret")
     client = TestClient(create_app())
     assert client.get("/health").json() == {"status": "ok"}
-    assert client.get("/").status_code == 401
-    assert client.get("/", headers={"Authorization": "Bearer wrong"}).status_code == 401
-    response = client.get("/", headers={"Authorization": "Bearer secret"})
+    assert client.get("/api/info").status_code == 401
+    assert client.get("/api/info", headers={"Authorization": "Bearer wrong"}).status_code == 401
+    response = client.get("/api/info", headers={"Authorization": "Bearer secret"})
     assert response.json()["version"] == "3.2.3"
