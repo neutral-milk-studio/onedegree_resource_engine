@@ -14,6 +14,7 @@ COPY config ./config
 COPY ingest ./ingest
 COPY api ./api
 COPY maintenance ./maintenance
+COPY search ./search
 COPY data/samples ./data/samples
 COPY data/sample_websites ./data/sample_websites
 COPY data/registry ./data/registry

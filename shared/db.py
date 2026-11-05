@@ -27,16 +27,29 @@ OPS_SCHEMA = os.environ.get("RE_OPS_SCHEMA", "ops")
 def database_url() -> str:
     """Return the Postgres connection URL from the environment.
 
-    Never hard-code credentials. In local Docker Compose this points at the
-    `postgres` service; in AWS it comes from Secrets Manager via the task env.
+    Never hard-code credentials. In local Docker Compose this is ``RE_DATABASE_URL``
+    directly, pointing at the `postgres` service. On the AWS deploy
+    (``infra/terraform``), the ECS task gets the Aurora endpoint and credentials as
+    separate variables instead (``DB_HOST``/``DB_NAME``/``DB_USER``/``DB_PASSWORD``,
+    the last two injected from Secrets Manager) — this assembles the same URL shape
+    from those so nothing else in the app needs to know which environment it's in.
     """
     url = os.environ.get("RE_DATABASE_URL")
-    if not url:
-        raise RuntimeError(
-            "RE_DATABASE_URL is not set. Configure it in the environment "
-            "(docker-compose provides it locally)."
-        )
-    return url
+    if url:
+        return url
+    host = os.environ.get("DB_HOST")
+    if host:
+        from urllib.parse import quote
+
+        user = quote(os.environ.get("DB_USER", ""), safe="")
+        password = quote(os.environ.get("DB_PASSWORD", ""), safe="")
+        name = os.environ.get("DB_NAME", "resource_engine")
+        port = os.environ.get("DB_PORT", "5432")
+        return f"postgresql://{user}:{password}@{host}:{port}/{name}"
+    raise RuntimeError(
+        "No database configured: set RE_DATABASE_URL (local), or DB_HOST (+ DB_USER / "
+        "DB_PASSWORD / DB_NAME) for the AWS deploy."
+    )
 
 
 @contextmanager

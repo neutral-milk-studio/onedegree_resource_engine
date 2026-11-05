@@ -16,11 +16,18 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 _bearer = HTTPBearer(auto_error=False)
 
 
+def expected_token() -> str | None:
+    """``RE_BEARER_TOKEN`` if set; otherwise the AWS deploy's provisioned app secret
+    (``JWT_SECRET``, from Secrets Manager via infra/terraform/data.tf's ``random_password``),
+    so a deployed instance has a real token without a second value to configure by hand."""
+    return os.environ.get("RE_BEARER_TOKEN") or os.environ.get("JWT_SECRET")
+
+
 def require_token(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
 ) -> str:
     """Return the caller's identity, or respond with 401."""
-    expected = os.environ.get("RE_BEARER_TOKEN")
+    expected = expected_token()
     token = credentials.credentials if credentials else ""
     if not expected or not secrets.compare_digest(token, expected):
         raise HTTPException(

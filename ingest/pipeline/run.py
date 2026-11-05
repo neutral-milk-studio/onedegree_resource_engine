@@ -30,6 +30,7 @@ from datetime import UTC, datetime
 from api.app.store_pg import PgHsdsStore
 from ingest.adapters.base import ModuleAdapter
 from ingest.adapters.registry import get_adapter, source_names
+from ingest.raw_store import get_raw_store
 from ingest.raw_store.local import LocalRawStore
 from ingest.transformer.assemble import MemoryIndex, assemble_service, served
 from ingest.transformer.hsds import parents, validate
@@ -145,11 +146,16 @@ def _native_id(adapter: ModuleAdapter, record: dict, seq: int) -> str:
 def run_ingest(
     adapter: ModuleAdapter,
     store: PgHsdsStore,
-    raw_store: LocalRawStore | None = None,
+    raw_store: LocalRawStore | object | None = None,
     triggered_by: str = "system",
 ) -> IngestReport:
-    """Run one ingest for ``adapter`` and return reconciled counts. Re-runs update in place."""
-    raw_store = raw_store or LocalRawStore()
+    """Run one ingest for ``adapter`` and return reconciled counts. Re-runs update in place.
+
+    ``raw_store`` defaults to :func:`ingest.raw_store.get_raw_store`: local folder unless an
+    S3 bucket is configured (the AWS deploy sets one), so the same call works unmodified in
+    both places. Tests pass an explicit ``LocalRawStore`` pointed at a temp directory.
+    """
+    raw_store = raw_store or get_raw_store()
     source = adapter.name
     started = time.monotonic()
     fetched_at = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")

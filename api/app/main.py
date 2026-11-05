@@ -56,6 +56,12 @@ def create_app(init_database: bool = True) -> FastAPI:
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
+    @app.get("/api/health", include_in_schema=False)
+    def health_alias() -> dict[str, str]:
+        """Alias for the AWS deploy's load-balancer health check (infra/terraform/compute.tf
+        checks this exact path); identical to /health, used locally."""
+        return {"status": "ok"}
+
     @app.get("/", dependencies=[Depends(require_token)])
     def api_info() -> dict[str, str]:
         return {
