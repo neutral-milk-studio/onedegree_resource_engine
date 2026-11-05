@@ -44,3 +44,25 @@ def rebuild_index(store) -> int:
                 row.search_text = text
                 count += 1
     return count
+
+
+def rebuild_embeddings(store, embedder=None) -> int:
+    """Recompute embeddings for services with none, or embedded by a since-changed model.
+
+    Standalone counterpart to :func:`rebuild_index`, for backfilling a store after
+    ``search/embeddings`` is turned on or its model changes -- normal ingest already embeds
+    every record it creates or changes (``api/app/store_pg.py``).
+    """
+    from search.embeddings.embed import get_embedder
+    from shared.models import Service
+
+    embedder = embedder or get_embedder()
+    count = 0
+    with store.session() as session:
+        for row in session.scalars(select(Service)):
+            if row.embedding is not None and row.embedding_model_id == embedder.model_id:
+                continue
+            row.embedding = embedder.embed(search_text(row.document) or row.name)
+            row.embedding_model_id = embedder.model_id
+            count += 1
+    return count

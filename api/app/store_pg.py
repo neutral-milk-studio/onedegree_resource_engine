@@ -31,6 +31,18 @@ def content_hash(obj: Any) -> str:
     return hashlib.sha256(json.dumps(obj, sort_keys=True, default=str).encode()).hexdigest()
 
 
+def embedding_columns(search_text: str, name: str) -> dict:
+    """Only called when a record is created or actually changed, never on every re-ingest --
+    unlike ``search_text`` (free), embedding a record can be a real Bedrock call."""
+    from search.embeddings.embed import get_embedder
+
+    embedder = get_embedder()
+    return {
+        "embedding": embedder.embed(search_text or name),
+        "embedding_model_id": embedder.model_id,
+    }
+
+
 def reapply_overrides(doc: dict, overrides: dict, metadata: list | None) -> dict:
     """Re-apply saved specialist changes to a freshly ingested document."""
     from maintenance.apply import ApplyError, apply_change
@@ -138,6 +150,7 @@ class PgHsdsStore:
                     content_hash=digest,
                     version=1,
                     **columns,
+                    **embedding_columns(columns["search_text"], doc.get("name", "")),
                 )
             )
             return True
@@ -145,6 +158,8 @@ class PgHsdsStore:
             return False
         row.document, row.content_hash, row.version = doc, digest, row.version + 1
         for field, value in columns.items():
+            setattr(row, field, value)
+        for field, value in embedding_columns(columns["search_text"], doc.get("name", "")).items():
             setattr(row, field, value)
         return True
 
