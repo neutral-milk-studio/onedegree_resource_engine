@@ -48,6 +48,16 @@ class TrustOut(BaseModel):
     checked_at: datetime | None
 
 
+class RiskSignalOut(BaseModel):
+    """One suspicious-listing signal: its weight and, where it comes from the page, the
+    quote it was found in (maintenance/risk.py's ``RiskSignal``)."""
+
+    code: str
+    weight: int
+    message: str
+    quote: str | None = None
+
+
 class QueueFinding(ReviewFinding):
     service_name: str
     organization_name: str | None
@@ -58,7 +68,7 @@ class QueueFinding(ReviewFinding):
     harm_label: str
     record_version: int
     trust: TrustOut
-    risk_signals: list[str] = []
+    risk_signals: list[RiskSignalOut] = []
     risk_score: int | None = None
     decided_by: str | None = None
     decided_at: datetime | None = None

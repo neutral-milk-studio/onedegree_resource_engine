@@ -22,6 +22,15 @@ export interface QueueEvidence {
   error?: string | null;
 }
 
+/** One suspicious-listing signal: its weight and, where it comes from the page, the quote
+ * it was found in. */
+export interface RiskSignal {
+  code: string;
+  weight: number;
+  message: string;
+  quote?: string | null;
+}
+
 export interface QueueFinding {
   id: string;
   service_id: string;
@@ -42,7 +51,7 @@ export interface QueueFinding {
   harm_label: string;
   record_version: number;
   trust: Trust;
-  risk_signals?: string[];
+  risk_signals?: RiskSignal[];
   risk_score?: number | null;
   seconds_to_fix?: number | null;
 }
@@ -172,7 +181,12 @@ export function createMockReviewApi(actor: string): ReviewQueueApi {
       field_label: "Listing",
       harm_rank: 1,
       harm_label: "Urgent: flagged for review as suspicious",
-      risk_signals: ["Asks for a $99 fee before helping", "Website domain registered 10 days ago"],
+      risk_signals: [
+        { code: "fee_before_help", weight: 40, message: "Asks for a $99 fee before helping", quote: "Pay a $99 processing fee to reserve your grant." },
+        { code: "urgency_pressure", weight: 20, message: "Uses guaranteed-approval or urgency language", quote: "Apply now — limited spots left this month." },
+        { code: "new_domain", weight: 10, message: "Website domain registered 10 days ago", quote: null },
+      ],
+      risk_score: 70,
     },
     {
       ...base,

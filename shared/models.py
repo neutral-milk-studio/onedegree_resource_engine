@@ -241,7 +241,8 @@ class Finding(Base):
     confidence: Mapped[float] = mapped_column(Float)
     model_id: Mapped[str | None] = mapped_column(String(200))
     harm_rank: Mapped[int] = mapped_column(Integer, index=True)
-    risk_signals: Mapped[list[str]] = mapped_column(Json, default=list)
+    # suspicious findings only: [{"code","weight","message","quote"}, ...] (maintenance/risk.py).
+    risk_signals: Mapped[list[dict]] = mapped_column(Json, default=list)
     # 0-100, suspicious findings only (maintenance/risk.py); null for every other category.
     risk_score: Mapped[int | None] = mapped_column(Integer)
     review_state: Mapped[str] = mapped_column(String(16), default="pending", index=True)

@@ -337,7 +337,13 @@ def suspicious_finding(
     if total < THRESHOLD:
         return None
     quoted = next((s for s in signals if s.quote), None)
-    reasons = [s.message for s in signals] + list(extra_reasons or [])
+    reasons = [
+        {"code": s.code, "weight": s.weight, "message": s.message, "quote": s.quote}
+        for s in signals
+    ] + [
+        {"code": "ai_grounding", "weight": 0, "message": r, "quote": None}
+        for r in (extra_reasons or [])
+    ]
     return FindingDraft(
         category="suspicious",
         field="listing",
