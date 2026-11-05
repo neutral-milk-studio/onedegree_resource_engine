@@ -127,3 +127,17 @@ def test_no_results_and_bad_input(client):
 
 def test_rebuild_index_is_idempotent(loaded_store):
     assert rebuild_index(loaded_store) == 0  # every save already keeps search text current
+
+
+def test_get_backend_honors_re_search_backend(loaded_store, monkeypatch):
+    from search.query.search import PostgresSearch, SimpleSearch, get_backend
+    from search.query.semantic import SemanticSearch
+
+    monkeypatch.setenv("RE_SEARCH_BACKEND", "semantic")
+    assert isinstance(get_backend(loaded_store), SemanticSearch)
+    monkeypatch.setenv("RE_SEARCH_BACKEND", "simple")
+    assert isinstance(get_backend(loaded_store), SimpleSearch)
+    monkeypatch.delenv("RE_SEARCH_BACKEND")
+    backend = get_backend(loaded_store)
+    expected = PostgresSearch if loaded_store.engine.dialect.name == "postgresql" else SimpleSearch
+    assert isinstance(backend, expected)

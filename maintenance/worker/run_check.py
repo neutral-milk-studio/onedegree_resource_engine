@@ -37,7 +37,7 @@ from maintenance.extractor.extract import (
 from maintenance.extractor.parse import html_to_text
 from maintenance.findings_store.pg_findings import PgCache, PgFindingsStore
 from maintenance.risk import assess, suspicious_finding
-from maintenance.website_source.sample import SampleWebsiteSource
+from maintenance.website_source import get_website_source
 from shared.models import Check, Service
 
 log = logging.getLogger(__name__)
@@ -123,7 +123,7 @@ def run_checks(
 ) -> MaintenanceReport:
     """Check ``service_ids`` (default: every record the website source has a page for)."""
     started = time.monotonic()
-    source = website_source or SampleWebsiteSource()
+    source = website_source or get_website_source(store)
     if extractor is None:
         extractor = get_extractor(cache=PgCache(store.session))
     report = MaintenanceReport(model_id=getattr(extractor, "model_id", ""))

@@ -101,6 +101,11 @@ class Service(Timestamped, Base):
     overrides: Mapped[dict[str, Any]] = mapped_column(Json, default=dict)
     # Derived from the document (search/indexer/build_index.py); rebuilt on every save.
     search_text: Mapped[str | None] = mapped_column(Text)
+    # Semantic search vector (search/embeddings/embed.py), with the model that produced it,
+    # so a model change (offline <-> Bedrock) re-embeds instead of comparing incompatible
+    # vectors. Rebuilt on every save that changes the record.
+    embedding: Mapped[list[float] | None] = mapped_column(Json)
+    embedding_model_id: Mapped[str | None] = mapped_column(String(64))
 
 
 class IdMap(Base):

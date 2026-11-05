@@ -135,6 +135,7 @@ def init_db(engine, retries: int = 1, delay: float = 2.0) -> None:
                         "USING gin (to_tsvector('english', coalesce(search_text, '')))"
                     ))  # fmt: skip
             _backfill_search_text(engine)
+            _backfill_embeddings(engine)
             return
         except OperationalError as exc:
             if attempt == retries:
@@ -176,4 +177,38 @@ def _backfill_search_text(engine) -> None:
                 update(Service)
                 .where(Service.id == service_id)
                 .values(search_text=search_text(document))
+            )
+
+
+def _backfill_embeddings(engine) -> None:
+    """Fill embeddings for rows saved before the column existed, or by a stale model.
+
+    Normal ingest already embeds every record it creates or changes
+    (``api/app/store_pg.py``); this only catches rows from before that, or a model switch.
+    """
+    from sqlalchemy import select, update
+
+    from search.embeddings.embed import get_embedder
+    from search.indexer.build_index import search_text
+    from shared.models import Service
+
+    embedder = get_embedder()
+    with engine.begin() as conn:
+        rows = conn.execute(
+            select(
+                Service.id,
+                Service.document,
+                Service.name,
+                Service.embedding,
+                Service.embedding_model_id,
+            )  # fmt: skip
+        ).all()
+        for service_id, document, name, embedding, model_id in rows:
+            if embedding is not None and model_id == embedder.model_id:
+                continue
+            vector = embedder.embed(search_text(document) or name)
+            conn.execute(
+                update(Service)
+                .where(Service.id == service_id)
+                .values(embedding=vector, embedding_model_id=embedder.model_id)
             )

@@ -8,12 +8,14 @@ Backends:
 - ``PostgresSearch`` (default): full-text search with a GIN index, prefix matching, the
   person's own words ranked above added ones, and highlighted snippets.
 - ``SimpleSearch``: in-Python term matching for SQLite (unit tests and quick local runs).
-- OpenSearch / semantic (Bedrock embeddings): implement ``SearchBackend`` and select it with
-  ``RE_SEARCH_BACKEND``; the API and UI don't change.
+- ``SemanticSearch`` (``search/query/semantic.py``): cosine similarity over precomputed
+  Bedrock (or offline) embeddings. Select any backend with ``RE_SEARCH_BACKEND``; the API
+  and UI don't change.
 """
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass, field
 from typing import Protocol
@@ -173,6 +175,17 @@ def _hit(row: Service, snippet: str, score: float) -> SearchHit:
 
 
 def get_backend(store) -> SearchBackend:
+    """``RE_SEARCH_BACKEND`` ("postgres" | "simple" | "semantic") picks explicitly;
+    otherwise full-text search, backend chosen by dialect (Postgres FTS vs. in-Python)."""
+    choice = os.environ.get("RE_SEARCH_BACKEND", "").strip().lower()
+    if choice == "semantic":
+        from search.query.semantic import SemanticSearch
+
+        return SemanticSearch(store)
+    if choice == "postgres":
+        return PostgresSearch(store)
+    if choice == "simple":
+        return SimpleSearch(store)
     dialect = store.engine.dialect.name
     return PostgresSearch(store) if dialect == "postgresql" else SimpleSearch(store)
 
