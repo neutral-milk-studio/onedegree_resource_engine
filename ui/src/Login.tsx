@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 
 import { ApiError, signIn, type Session } from "./api/client";
+import { cognitoConfigured } from "./api/cognito";
 import { DEMO_ACCOUNTS } from "./api/mock";
 
 const isDemo = import.meta.env.VITE_API_MODE !== "live";
@@ -30,7 +31,11 @@ export function Login({ onSignedIn }: { onSignedIn(session: Session): void }) {
           RE
         </p>
         <h1>Resource Engine</h1>
-        <p className="muted">Sign in to review community resource records.</p>
+        <p className="muted">
+          {isDemo || cognitoConfigured
+            ? "Sign in to review community resource records."
+            : "Sign in with the shared reviewer token (as the password) to review community resource records."}
+        </p>
         <form onSubmit={(event) => void submit(event)}>
           <label htmlFor="email">Email</label>
           <input

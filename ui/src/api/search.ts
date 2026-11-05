@@ -12,6 +12,8 @@ export interface SearchResult {
   website: string | null;
   source: string;
   score: number;
+  latitude: number | null;
+  longitude: number | null;
   trust: Trust;
 }
 
@@ -61,13 +63,14 @@ export function createMockSearchApi(): SearchApi {
     {
       service_id: "demo-1", name: "Help paying rent", organization_name: "Demo Housing Help", city: "Oakland",
       snippet: "Emergency «rent» and «financial» «assistance» for tenants behind on «rent».", phone: "(510) 555-0100",
-      website: "https://housing.example", source: "odrs", score: 9,
+      website: "https://housing.example", source: "odrs", score: 9, latitude: 37.8044, longitude: -122.2712,
       trust: { score: 98, level: "high", badge: "Verified today", checked_at: now },
     },
     {
       service_id: "demo-2", name: "Job center", organization_name: "Demo Works", city: "Oakland",
       snippet: "Free «employment» services and «unemployment» benefits help.", phone: null, website: null,
-      source: "ndp", score: 4, trust: { score: null, level: "unknown", badge: "Not checked yet", checked_at: null },
+      source: "ndp", score: 4, latitude: 37.8, longitude: -122.27,
+      trust: { score: null, level: "unknown", badge: "Not checked yet", checked_at: null },
     },
   ];
   return {

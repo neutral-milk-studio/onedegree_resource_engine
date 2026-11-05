@@ -12,12 +12,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.app.auth import require_token
 from api.app.routers import (
     conflicts,
+    coverage,
     ingest,
     maintenance,
     metrics,
     review,
     search,
     services,
+    sms,
     sources,
 )
 from shared.hsds_validation import HSDS_VERSION
@@ -80,6 +82,8 @@ def create_app(init_database: bool = True) -> FastAPI:
     app.include_router(conflicts.router, dependencies=protected)
     app.include_router(sources.router, dependencies=protected)
     app.include_router(search.router, dependencies=protected)
+    app.include_router(coverage.router, dependencies=protected)
+    app.include_router(sms.router)  # its own webhook-token check, not the dashboard's bearer token
     return app
 
 
