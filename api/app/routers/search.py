@@ -27,6 +27,8 @@ class ResultOut(BaseModel):
     website: str | None
     source: str
     score: float
+    latitude: float | None
+    longitude: float | None
     trust: TrustOut
 
 

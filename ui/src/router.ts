@@ -7,6 +7,7 @@ export const PAGES = [
   { id: "conflicts", label: "Conflicts" },
   { id: "partners", label: "Add a partner" },
   { id: "search", label: "Search" },
+  { id: "coverage", label: "Coverage" },
 ] as const;
 export type PageId = (typeof PAGES)[number]["id"];
 

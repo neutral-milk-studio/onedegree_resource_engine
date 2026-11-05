@@ -129,6 +129,15 @@ def test_rebuild_index_is_idempotent(loaded_store):
     assert rebuild_index(loaded_store) == 0  # every save already keeps search text current
 
 
+def test_results_carry_coordinates_when_the_location_has_them(client):
+    body = search(client, "street tree planting")
+    with_coords = [r for r in body["results"] if r["latitude"] is not None]
+    assert with_coords  # NDP sample data includes real coordinates
+    for result in with_coords:
+        assert -90 <= result["latitude"] <= 90
+        assert -180 <= result["longitude"] <= 180
+
+
 def test_get_backend_honors_re_search_backend(loaded_store, monkeypatch):
     from search.query.search import PostgresSearch, SimpleSearch, get_backend
     from search.query.semantic import SemanticSearch

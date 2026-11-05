@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import type { Session } from "./api/client";
 import { createConflictsApi } from "./api/conflicts";
+import { createCoverageApi } from "./api/coverage";
 import { createDashboardApi } from "./api/dashboard";
 import { createPartnersApi } from "./api/partners";
 import { createReviewQueueApi } from "./api/review";
@@ -10,6 +11,7 @@ import { createSearchApi } from "./api/search";
 import { Login } from "./Login";
 import { AddPartner } from "./pages/AddPartner";
 import { Conflicts } from "./pages/Conflicts";
+import { Coverage } from "./pages/Coverage";
 import { Overview } from "./pages/Overview";
 import { ReviewQueue } from "./pages/ReviewQueue";
 import { Search } from "./pages/Search";
@@ -41,6 +43,7 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut(): void
   const conflicts = useMemo(() => createConflictsApi(session), [session]);
   const partners = useMemo(() => createPartnersApi(session), [session]);
   const search = useMemo(() => createSearchApi(session), [session]);
+  const coverage = useMemo(() => createCoverageApi(session), [session]);
   const dashboard = useMemo(() => createDashboardApi(session), [session]);
   const queryClient = useMemo(
     () => new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } }),
@@ -55,6 +58,7 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut(): void
         {page === "conflicts" && <Conflicts api={conflicts} />}
         {page === "partners" && <AddPartner api={partners} />}
         {page === "search" && <Search api={search} />}
+        {page === "coverage" && <Coverage api={coverage} />}
       </Shell>
     </QueryClientProvider>
   );

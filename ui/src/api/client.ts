@@ -1,5 +1,6 @@
 // REST API client. This is the only data path for the review tool.
 import type { components } from "./schema";
+import { cognitoConfigured, cognitoSignIn } from "./cognito";
 import { createLiveApi, liveSignIn } from "./live";
 import { createMockApi, mockSignIn } from "./mock";
 
@@ -94,7 +95,10 @@ export function createApi(session: Session): ReviewApi {
   return isLive() ? createLiveApi(session.token) : createMockApi(session.name);
 }
 
-/** Signs a reviewer in. Throws an ApiError with status 401 for bad credentials. */
+/** Signs a reviewer in -- with their own Cognito account when the deploy is configured
+ * for it (VITE_COGNITO_CLIENT_ID), otherwise the shared token (password = token).
+ * Throws an ApiError with status 401 for bad credentials. */
 export async function signIn(email: string, password: string): Promise<Session> {
-  return isLive() ? liveSignIn(email, password) : mockSignIn(email, password);
+  if (!isLive()) return mockSignIn(email, password);
+  return cognitoConfigured ? cognitoSignIn(email, password) : liveSignIn(email, password);
 }

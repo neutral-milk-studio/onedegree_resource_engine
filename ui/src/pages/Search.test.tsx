@@ -30,6 +30,7 @@ describe("Search", () => {
       query: "x", needs: [], own_terms: ["x"], added_terms: [], total: 1, hidden: 0, backend: "demo",
       results: [{
         service_id: "s", name: "S", organization_name: null, city: null, phone: null, website: null, source: "ndp", score: 1,
+        latitude: null, longitude: null,
         snippet: "<img src=x onerror=alert(1)> «food»", trust: { score: null, level: "unknown", badge: "Not checked yet", checked_at: null },
       }],
     });
@@ -38,6 +39,13 @@ describe("Search", () => {
     const article = await screen.findByRole("article");
     expect(article.querySelector("img")).toBeNull();
     expect(article).toHaveTextContent("<img src=x onerror=alert(1)>");
+  });
+
+  it("shows a map when results have coordinates", async () => {
+    const user = userEvent.setup();
+    render(<Search api={createMockSearchApi()} />);
+    await user.click(screen.getByRole("button", { name: "I just lost my job and can't pay rent" }));
+    expect(await screen.findByRole("group", { name: /Map of 2 results/ })).toBeInTheDocument();
   });
 
   it("requires at least two letters", async () => {

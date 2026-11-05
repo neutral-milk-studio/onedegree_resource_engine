@@ -39,6 +39,8 @@ class SearchHit:
     website: str | None
     source: str
     score: float
+    latitude: float | None = None
+    longitude: float | None = None
 
 
 @dataclass
@@ -160,7 +162,19 @@ class SimpleSearch:
         return SearchResults(len(scored), hidden, scored[offset : offset + limit], self.name)
 
 
+def _coordinates(doc: dict) -> tuple[float | None, float | None]:
+    """Lat/lon of the service's first located address, if it has one and the address
+    carries coordinates -- not every HSDS location does."""
+    for sal in doc.get("service_at_locations") or []:
+        location = sal.get("location") or {}
+        lat, lon = location.get("latitude"), location.get("longitude")
+        if lat is not None and lon is not None:
+            return float(lat), float(lon)
+    return None, None
+
+
 def _hit(row: Service, snippet: str, score: float) -> SearchHit:
+    latitude, longitude = _coordinates(row.document)
     return SearchHit(
         service_id=row.id,
         name=row.name,
@@ -171,6 +185,8 @@ def _hit(row: Service, snippet: str, score: float) -> SearchHit:
         website=row.website,
         source=row.source,
         score=round(score, 4),
+        latitude=latitude,
+        longitude=longitude,
     )
 
 
