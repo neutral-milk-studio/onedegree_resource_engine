@@ -1,10 +1,14 @@
-.PHONY: setup test lint format mock openapi up down ingest check api
+.PHONY: setup test eval-suspicious lint format mock openapi up down ingest check api
 
 setup:
 	uv sync
 
 test:
 	uv run pytest
+
+# Precision/recall of the suspicious-listing rules against data/eval/suspicious_cases.json.
+eval-suspicious:
+	uv run python -m maintenance.eval_suspicious
 
 lint:
 	uv run ruff check .

@@ -242,6 +242,8 @@ class Finding(Base):
     model_id: Mapped[str | None] = mapped_column(String(200))
     harm_rank: Mapped[int] = mapped_column(Integer, index=True)
     risk_signals: Mapped[list[str]] = mapped_column(Json, default=list)
+    # 0-100, suspicious findings only (maintenance/risk.py); null for every other category.
+    risk_score: Mapped[int | None] = mapped_column(Integer)
     review_state: Mapped[str] = mapped_column(String(16), default="pending", index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

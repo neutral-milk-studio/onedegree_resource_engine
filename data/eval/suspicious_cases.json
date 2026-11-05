@@ -1,0 +1,169 @@
+{
+  "_comment": "Eval cases for maintenance/risk.py's assess()/score(). 'domain_age_days' is resolved against today when the eval runs (null = not registered recently / offline). expect_flagged is whether score(signals) >= THRESHOLD (default 40). Run with `make eval-suspicious`.",
+  "cases": [
+    {
+      "id": "pos-fee-and-ssn",
+      "expect_flagged": true,
+      "note": "Strong signals alone: fee before help + sensitive data request.",
+      "org_name": "Rent Relief Now",
+      "url": "https://rent-relief-now.example",
+      "domain_age_days": null,
+      "doc": {"organization": {"name": "Rent Relief Now"}, "status": "active"},
+      "page_text": "Pay a $99 processing fee to reserve your grant. We will need your Social Security number to verify eligibility."
+    },
+    {
+      "id": "pos-fee-alone",
+      "expect_flagged": true,
+      "note": "A single strong signal (fee before help, weight 40) reaches the threshold on its own.",
+      "org_name": "Helping Hands Housing",
+      "url": "https://helpinghandshousing.example",
+      "domain_age_days": null,
+      "doc": {"organization": {"name": "Helping Hands Housing"}, "status": "active"},
+      "page_text": "A $50 processing fee is required before we can start your application."
+    },
+    {
+      "id": "pos-sensitive-data-alone",
+      "expect_flagged": true,
+      "note": "A single strong signal (sensitive data request, weight 40) reaches the threshold on its own.",
+      "org_name": "Community Legal Aid",
+      "url": "https://communitylegalaid.example",
+      "domain_age_days": null,
+      "doc": {"organization": {"name": "Community Legal Aid"}, "status": "active"},
+      "page_text": "To get started, please provide your bank account number and routing number so we can set up direct deposit."
+    },
+    {
+      "id": "pos-medium-signals-stack",
+      "expect_flagged": true,
+      "note": "Three medium signals (urgency, fake official, fee mismatch) stack to 60 with no strong signal.",
+      "org_name": "Family Food Pantry",
+      "url": "https://familyfoodpantry-help.example",
+      "domain_age_days": null,
+      "doc": {"organization": {"name": "Family Food Pantry"}, "status": "active", "fees": []},
+      "page_text": "Act now -- guaranteed approval for official government-recognized food assistance. A $25 application fee applies."
+    },
+    {
+      "id": "pos-weak-signals-stack",
+      "expect_flagged": true,
+      "note": "Four weak signals (domain mismatch, new domain, not in registry, messaging-only contact) stack to 40.",
+      "org_name": "Bay Area Outreach Center",
+      "url": "https://quick-grants-4u.example",
+      "domain_age_days": 10,
+      "doc": {"organization": {"name": "Bay Area Outreach Center"}, "status": "active"},
+      "page_text": "Message us on WhatsApp at wa.me/15555550100 to apply. Email us at grants@gmail.com."
+    },
+    {
+      "id": "pos-full-combo",
+      "expect_flagged": true,
+      "note": "Mirrors the Quick Rent Rescue demo listing: strong, medium and weak signals together.",
+      "org_name": "Quick Rent Rescue",
+      "url": "https://quickrentrescue.example/apply",
+      "domain_age_days": 10,
+      "doc": {"organization": {"name": "Quick Rent Rescue"}, "status": "active", "fees": []},
+      "page_text": "Act now for guaranteed approval! Pay a $99 processing fee to reserve your grant. We are an official government-recognized program. We'll need your Social Security number and bank account number to verify eligibility. Message us on WhatsApp at wa.me/15555550199."
+    },
+    {
+      "id": "pos-fee-and-domain-mismatch",
+      "expect_flagged": true,
+      "note": "Strong + weak signal (fee before help 40, domain mismatch 10) clears the threshold.",
+      "org_name": "Sunrise Family Services",
+      "url": "https://totallylegitgrants.example",
+      "domain_age_days": null,
+      "doc": {"organization": {"name": "Sunrise Family Services"}, "status": "active"},
+      "page_text": "A $75 processing fee must be paid before we can release your grant funds."
+    },
+    {
+      "id": "pos-sensitive-and-urgency",
+      "expect_flagged": true,
+      "note": "Strong + medium signal (sensitive data 40, urgency 20) clears the threshold.",
+      "org_name": "Metro Assistance Network",
+      "url": "https://metroassistancenetwork.example",
+      "domain_age_days": null,
+      "doc": {"organization": {"name": "Metro Assistance Network"}, "status": "active"},
+      "page_text": "Limited spots! Apply immediately and provide your card number to hold your place in line."
+    },
+    {
+      "id": "neg-clean-listing",
+      "expect_flagged": false,
+      "note": "No signals at all.",
+      "org_name": "Coastside Hope",
+      "url": "https://coastsidehope.example",
+      "domain_age_days": null,
+      "doc": {"organization": {"name": "Coastside Hope"}, "status": "active", "fees": []},
+      "page_text": "We provide free rental assistance counseling to families in our community."
+    },
+    {
+      "id": "neg-no-fee-phrasing",
+      "expect_flagged": false,
+      "note": "Tricky negative: explicit 'no fee' phrasing must not trip fee_before_help.",
+      "org_name": "Oak Street Legal Clinic",
+      "url": "https://oakstreetlegal.example",
+      "domain_age_days": null,
+      "doc": {"organization": {"name": "Oak Street Legal Clinic"}, "status": "active", "fees": []},
+      "page_text": "There is no fee for our intake appointments or legal consultations."
+    },
+    {
+      "id": "neg-never-ask-for-payment",
+      "expect_flagged": false,
+      "note": "Tricky negative: 'we never ask for payment' must not trip fee_before_help.",
+      "org_name": "Oak Street Legal Clinic",
+      "url": "https://oakstreetlegal.example",
+      "domain_age_days": null,
+      "doc": {"organization": {"name": "Oak Street Legal Clinic"}, "status": "active", "fees": []},
+      "page_text": "We never ask for payment of any kind. All of our services are free of charge."
+    },
+    {
+      "id": "neg-application-fee-waived",
+      "expect_flagged": false,
+      "note": "Tricky negative: 'application fee waived' must not trip fee_before_help.",
+      "org_name": "Oak Street Legal Clinic",
+      "url": "https://oakstreetlegal.example",
+      "domain_age_days": null,
+      "doc": {"organization": {"name": "Oak Street Legal Clinic"}, "status": "active", "fees": []},
+      "page_text": "The usual application fee is waived for everyone who contacts our office this year."
+    },
+    {
+      "id": "neg-never-ask-for-ssn",
+      "expect_flagged": false,
+      "note": "Tricky negative: explicitly disclaiming an SSN/bank/password request must not trip sensitive_data_request.",
+      "org_name": "Riverside Community Clinic",
+      "url": "https://riversidecommunityclinic.example",
+      "domain_age_days": null,
+      "doc": {"organization": {"name": "Riverside Community Clinic"}, "status": "active"},
+      "page_text": "We will never ask for your Social Security number, bank account, or password over the phone or online."
+    },
+    {
+      "id": "neg-not-in-registry-alone",
+      "expect_flagged": false,
+      "note": "A brand-new small nonprofit that just isn't in our registry yet. Absence alone must never flag.",
+      "org_name": "Neighborhood Mutual Aid Collective",
+      "url": "https://neighborhoodmutualaid.example",
+      "domain_age_days": null,
+      "doc": {"organization": {"name": "Neighborhood Mutual Aid Collective"}, "status": "active"},
+      "page_text": "We coordinate volunteer-run mutual aid for our neighborhood."
+    },
+    {
+      "id": "neg-po-box-only-contact",
+      "expect_flagged": false,
+      "note": "Tricky negative: a PO box on file counts as a physical address, so messaging-only contact must not flag.",
+      "org_name": "Valley Senior Services",
+      "url": "https://valleyseniorservices.example",
+      "domain_age_days": null,
+      "doc": {
+        "organization": {"name": "Valley Senior Services"},
+        "status": "active",
+        "service_at_locations": [{"location": {"addresses": [{"address_1": "PO Box 221", "city": "Anytown"}]}}]
+      },
+      "page_text": "Reach us on WhatsApp at wa.me/15555550111 or by email at info@gmail.com."
+    },
+    {
+      "id": "neg-weak-signals-below-threshold",
+      "expect_flagged": false,
+      "note": "Two weak signals (domain mismatch + new domain = 20) stay well under the 40 threshold.",
+      "org_name": "Harbor View Shelter",
+      "url": "https://quickhelp4you.example",
+      "domain_age_days": 10,
+      "doc": {"organization": {"name": "Harbor View Shelter"}, "status": "active"},
+      "page_text": "We provide emergency shelter beds and case management."
+    }
+  ]
+}

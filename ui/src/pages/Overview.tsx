@@ -101,6 +101,12 @@ export function Overview({ api }: { api: DashboardApi }) {
               }
             />
             <StatTile
+              label="Flagged for review"
+              value={formatCount(m.findings.open_by_category.suspicious ?? 0)}
+              tone={(m.findings.open_by_category.suspicious ?? 0) > 0 ? "attention" : "default"}
+              hint="Listings whose website shows signs worth a specialist's review, not proven. Hidden from search until decided."
+            />
+            <StatTile
               label="Conflicts between sources"
               value={m.conflicts_open === null ? null : formatCount(m.conflicts_open)}
               hint={m.conflicts_open === null ? "Not checked yet." : "Same organization, different values."}

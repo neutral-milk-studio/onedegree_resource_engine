@@ -33,6 +33,8 @@ class ReviewState(str, Enum):  # noqa: UP042 - str+Enum is intentional for JSON 
     APPLIED = "applied"
     EDITED = "edited"
     DISMISSED = "dismissed"
+    HIDDEN = "hidden"
+    MARKED_SAFE = "marked_safe"
 
 
 @dataclass

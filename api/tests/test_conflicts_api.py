@@ -101,9 +101,9 @@ def test_conflict_endpoints_require_token(client):
 def test_suspicious_listing_in_review_queue_can_be_hidden(client):
     client.post("/maintenance/run", headers=AUTH)
     queue = client.get("/review/findings?category=suspicious", headers=AUTH).json()["contents"]
-    [flag] = queue
-    assert flag["service_name"] == "Emergency Rent Relief Grants"
-    assert len(flag["risk_signals"]) == 4 and flag["harm_rank"] == 1
+    assert len(queue) == 2  # the fake rent relief listing and Quick Rent Rescue
+    [flag] = [f for f in queue if f["service_name"] == "Emergency Rent Relief Grants"]
+    assert len(flag["risk_signals"]) == 5 and flag["harm_rank"] == 1
     body = {"expected_version": flag["record_version"], "edited_value": "inactive"}
     result = client.post(f"/review/findings/{flag['id']}/apply", headers=AUTH, json=body)
     assert result.status_code == 200

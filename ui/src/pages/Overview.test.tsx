@@ -78,6 +78,7 @@ describe("Overview", () => {
     const tiles = await screen.findByRole("region", { name: "Key numbers" });
     expect(within(tiles).getByText("Total records").parentElement).toHaveTextContent("86");
     expect(within(tiles).getByText("One Degree (ODRS)")).toBeInTheDocument();
+    expect(within(tiles).getByText("Flagged for review").parentElement).toHaveTextContent("1");
     expect(within(tiles).getByText("Conflicts between sources").parentElement).toHaveTextContent("2");
     expect(within(tiles).getByText("Average trust score").parentElement).toHaveTextContent("72 / 100");
     expect(within(tiles).getByText("Cost per AI check").parentElement).toHaveTextContent("$0.0031");

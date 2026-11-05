@@ -32,7 +32,7 @@ export interface QueueFinding {
   confidence: number;
   model_id: string | null;
   created_at: string;
-  review_state: "pending" | "applied" | "edited" | "dismissed";
+  review_state: "pending" | "applied" | "edited" | "dismissed" | "hidden" | "marked_safe";
   service_name: string;
   organization_name: string | null;
   source: string;
@@ -43,6 +43,7 @@ export interface QueueFinding {
   record_version: number;
   trust: Trust;
   risk_signals?: string[];
+  risk_score?: number | null;
   seconds_to_fix?: number | null;
 }
 
@@ -75,6 +76,10 @@ export interface ReviewQueueApi {
   listQueue(category?: QueueCategory): Promise<QueueList>;
   apply(finding: QueueFinding, editedValue: unknown, secondsToFix: number): Promise<Decided>;
   dismiss(finding: QueueFinding, reason: string | undefined, secondsToFix: number): Promise<Decided>;
+  /** "Hide from search" -- the default action on a suspicious finding. */
+  hide(finding: QueueFinding, secondsToFix: number): Promise<Decided>;
+  /** "Mark safe" -- requires a short note; stops future checks from re-flagging it. */
+  markSafe(finding: QueueFinding, note: string, secondsToFix: number): Promise<Decided>;
   runChecks(): Promise<MaintenanceReport>;
 }
 
@@ -113,6 +118,10 @@ export function createLiveReviewApi(token: string): ReviewQueueApi {
       }),
     dismiss: (finding, reason, seconds) =>
       post<Decided>(`/review/findings/${finding.id}/dismiss`, { reason: reason ?? null, seconds_to_fix: seconds }),
+    hide: (finding, seconds) =>
+      post<Decided>(`/review/findings/${finding.id}/hide`, { seconds_to_fix: seconds }),
+    markSafe: (finding, note, seconds) =>
+      post<Decided>(`/review/findings/${finding.id}/mark-safe`, { note, seconds_to_fix: seconds }),
     runChecks: () => post<MaintenanceReport>("/maintenance/run", {}),
   };
 }
@@ -162,7 +171,7 @@ export function createMockReviewApi(actor: string): ReviewQueueApi {
       field: "listing",
       field_label: "Listing",
       harm_rank: 1,
-      harm_label: "Urgent: possible scam, flagged for review",
+      harm_label: "Urgent: flagged for review as suspicious",
       risk_signals: ["Asks for a $99 fee before helping", "Website domain registered 10 days ago"],
     },
     {
@@ -234,6 +243,15 @@ export function createMockReviewApi(actor: string): ReviewQueueApi {
     },
     async dismiss(finding) {
       return decide(finding, "dismissed", `${actor} kept the current ${finding.field_label.toLowerCase()} on “${finding.service_name}”`);
+    },
+    async hide(finding) {
+      return decide(finding, "hidden", `${actor} hid “${finding.service_name}” from search (flagged for review)`);
+    },
+    async markSafe(finding, note) {
+      if (!note.trim()) {
+        throw new ApiError(422, "A short note is required to mark a listing safe.");
+      }
+      return decide(finding, "marked_safe", `${actor} marked “${finding.service_name}” safe: ${note}`);
     },
     async runChecks() {
       return { checked: 3, by_category: { discrepancy: 1 }, findings_created: 0, findings_refreshed: 3, model_calls: 0, cached: 0, cost_usd: 0, model_id: "offline-rules", elapsed_ms: 50 };

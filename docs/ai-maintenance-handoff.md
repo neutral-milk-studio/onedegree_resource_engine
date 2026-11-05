@@ -32,7 +32,7 @@ Every finding needs at least one evidence entry with a URL and a non-empty snipp
 | `verified` | The record matches the page | Optional | Not allowed | Quote from the page | Set if a model ran |
 | `actively_bad` | The site is gone, its certificate has expired, or the organization appears closed | Optional | Optional | Failure, such as `HTTP 404`, or a quote about the closure | Set if a model ran |
 | `check_failed` | The check couldn't complete | Optional | Not used | Failure, such as `Timeout` | Set if a model ran |
-| `suspicious` | Two or more scam risk signals: fee before help, very new domain, name on the site doesn't match, not in the registry. Worded "flagged for review", never "scam" | Optional | Not used | Quote from the page for the strongest signal | Set if a model ran |
+| `suspicious` | Risk score (`maintenance/risk.py`, weighted signals: fee before help, sensitive data request, urgency, fake official, fee mismatch, domain mismatch, new domain, not in registry, messaging-only contact) reaches `RE_SUSPICIOUS_THRESHOLD`. Worded "flagged for review", never "scam" or "fraud" | Optional | Not used | Quote from the page for the strongest signal | Set if a model ran |
 
 Rules for detection:
 - A quote must appear exactly in the fetched page. Check this in code, and don't store a finding when it doesn't.
@@ -80,4 +80,4 @@ Reviewers change records only through the internal review API, defined in `contr
 
 1. **Requirements:** the code cites `.kiro/specs/resource-engine/`, which isn't in the repository. It should be shared so these rules can be checked against it.
 2. **HSDS store:** `PgHsdsStore` is still a stub with no confirmed owner, and apply depends on it. Review uses an in-memory store until it's ready.
-3. **Categories:** One Degree's final category list is still pending. The working list is in `contracts/findings.py` (`suspicious` added for scam detection).
+3. **Categories:** One Degree's final category list is still pending. The working list is in `contracts/findings.py` (`suspicious` added for suspicious-listing detection).

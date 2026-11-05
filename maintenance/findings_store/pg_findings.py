@@ -63,6 +63,7 @@ class PgFindingsStore:
             if row.field == draft.field and row.proposed_value == draft.proposed_value:
                 row.last_seen_at, row.check_id = now, check_id
                 row.evidence_quote, row.evidence_url = draft.evidence_quote, draft.evidence_url
+                row.risk_signals, row.risk_score = draft.risk_signals, draft.risk_score
                 return row.id, False
         row = Finding(
             service_id=service_id,
@@ -82,6 +83,7 @@ class PgFindingsStore:
             model_id=draft.model_id,
             harm_rank=harm_rank(draft.category, draft.field),
             risk_signals=draft.risk_signals,
+            risk_score=draft.risk_score,
             created_at=now,
             last_seen_at=now,
         )

@@ -36,7 +36,9 @@ from maintenance.extractor.extract import (
 )
 from maintenance.extractor.parse import html_to_text
 from maintenance.findings_store.pg_findings import PgCache, PgFindingsStore
-from maintenance.risk import assess, suspicious_finding
+from maintenance.risk import assess, is_marked_safe, score, suspicious_finding
+from maintenance.suspicious_bedrock import ground_reasons
+from maintenance.suspicious_settings import THRESHOLD
 from maintenance.website_source import get_website_source
 from shared.models import Check, Service
 
@@ -67,7 +69,9 @@ def website_url(source, service_id: str, doc: dict) -> str | None:
     return (doc.get("organization") or {}).get("website") or doc.get("url")
 
 
-def check_one(service_id: str, doc: dict, source, extractor) -> tuple[CheckOutcome, dict]:
+def check_one(
+    service_id: str, doc: dict, source, extractor, session=None, bedrock_cache=None
+) -> tuple[CheckOutcome, dict]:
     """Run one check. Returns the outcome and check metadata (url, page hash, usage)."""
     meta = {"url": None, "page_hash": None, "http_status": None, "error": None,
             "extraction": None, "risk_signals": []}  # fmt: skip
@@ -103,14 +107,19 @@ def check_one(service_id: str, doc: dict, source, extractor) -> tuple[CheckOutco
     meta["extraction"] = extraction
     outcome = compare(service_id, doc, page_text, url, extraction)
 
-    # Scam risk signals, in the same check. Two or more -> flagged for review.
+    # Suspicious-listing signals, in the same check (maintenance/risk.py). Flagged once a
+    # specialist hasn't already marked this listing or its domain safe.
     registered = source.domain_registered(url) if hasattr(source, "domain_registered") else None
-    signals = assess(doc, extraction.facts, page_text, registered)
+    signals = assess(doc, page_text, url, registered)
     meta["risk_signals"] = [s.code for s in signals]
-    if flag := suspicious_finding(service_id, doc, url, signals, extraction.model_id):
-        outcome.findings.insert(0, flag)
-        if outcome.category != "actively_bad":
-            outcome.category = "suspicious"
+    already_marked_safe = session is not None and is_marked_safe(session, service_id, url)
+    if not already_marked_safe and score(signals) >= THRESHOLD:
+        extra_reasons = ground_reasons(page_text, cache=bedrock_cache)
+        flag = suspicious_finding(service_id, doc, url, signals, extraction.model_id, extra_reasons)
+        if flag:
+            outcome.findings.insert(0, flag)
+            if outcome.category != "actively_bad":
+                outcome.category = "suspicious"
     return outcome, meta
 
 
@@ -129,6 +138,7 @@ def run_checks(
     report = MaintenanceReport(model_id=getattr(extractor, "model_id", ""))
     ids = service_ids or (source.service_ids() if hasattr(source, "service_ids") else [])
     categories: Counter[str] = Counter()
+    bedrock_cache = PgCache(store.session)
 
     for service_id in ids:
         with store.session() as session:
@@ -137,7 +147,9 @@ def run_checks(
                 report.not_found.append(service_id)
                 log.warning("check skipped: no such service", extra={"service_id": service_id})
                 continue
-            outcome, meta = check_one(service_id, row.document, source, extractor)
+            outcome, meta = check_one(
+                service_id, row.document, source, extractor, session, bedrock_cache
+            )
             extraction: Extraction | None = meta["extraction"]
             check = Check(
                 service_id=service_id,

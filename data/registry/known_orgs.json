@@ -1,0 +1,245 @@
+{
+  "_comment": "Known, already-verified organizations for the suspicious-listing registry signal (maintenance/risk.py). Absence from this list alone is never a flag; it only contributes a weak signal when combined with others. Migrated from nonprofit_registry.csv (the ODRS/211 sample orgs); domain is optional and null where unknown. Replace with the IRS Exempt Organizations Business Master File or a state charity registry for real use.",
+  "organizations": [
+    {
+      "name": "Alameda County Housing and Community Development Department (HCD)",
+      "domain": null
+    },
+    {
+      "name": "Alameda County Social Services Agency",
+      "domain": null
+    },
+    {
+      "name": "American Red Cross of the Bay Area",
+      "domain": null
+    },
+    {
+      "name": "Bay Area Community Services (BACS)",
+      "domain": null
+    },
+    {
+      "name": "Bay Area Housing Finance Authority (BAHFA)",
+      "domain": null
+    },
+    {
+      "name": "Benicia Community Action Council (Benicia CAC)",
+      "domain": null
+    },
+    {
+      "name": "Catholic Worker Hospitality House",
+      "domain": null
+    },
+    {
+      "name": "City and County of San Francisco",
+      "domain": null
+    },
+    {
+      "name": "City of Albany",
+      "domain": null
+    },
+    {
+      "name": "City of Pleasanton",
+      "domain": null
+    },
+    {
+      "name": "City of Vacaville",
+      "domain": null
+    },
+    {
+      "name": "Coastside Hope",
+      "domain": null
+    },
+    {
+      "name": "Committee on the Shelterless (COTS)",
+      "domain": null
+    },
+    {
+      "name": "Community Action Marin",
+      "domain": null
+    },
+    {
+      "name": "Community Resource Center of the YMCA",
+      "domain": null
+    },
+    {
+      "name": "Community Services Agency of Mountain View, Los Altos & Los Altos Hills (CSA)",
+      "domain": null
+    },
+    {
+      "name": "Community Works West",
+      "domain": null
+    },
+    {
+      "name": "Commute.org",
+      "domain": null
+    },
+    {
+      "name": "Compass Family Services",
+      "domain": null
+    },
+    {
+      "name": "County Of San Mateo - Planning And Building Department",
+      "domain": null
+    },
+    {
+      "name": "County of Marin Department of Health and Human Services (HHS)",
+      "domain": null
+    },
+    {
+      "name": "County of San Mateo Department of Housing",
+      "domain": null
+    },
+    {
+      "name": "Covenant House California (CHC) - Northern California",
+      "domain": null
+    },
+    {
+      "name": "Daly City Community Service Center",
+      "domain": null
+    },
+    {
+      "name": "East Oakland Community Project (EOCP)",
+      "domain": null
+    },
+    {
+      "name": "Eden Housing",
+      "domain": null
+    },
+    {
+      "name": "Extra Food",
+      "domain": null
+    },
+    {
+      "name": "First Baptist Church Of Fairfield",
+      "domain": null
+    },
+    {
+      "name": "First Baptist Church Vallejo",
+      "domain": null
+    },
+    {
+      "name": "First Community Housing (FCH)",
+      "domain": null
+    },
+    {
+      "name": "Florence Douglas Center",
+      "domain": null
+    },
+    {
+      "name": "Food Bank Of Contra Costa And Solano (FBCCS)",
+      "domain": null
+    },
+    {
+      "name": "Free The Need",
+      "domain": null
+    },
+    {
+      "name": "Friends Of The Urban Forest",
+      "domain": null
+    },
+    {
+      "name": "Friendship House Association Of American Indians",
+      "domain": null
+    },
+    {
+      "name": "Friendship Missionary Baptist Church (FMBC)",
+      "domain": null
+    },
+    {
+      "name": "HealthRIGHT 360",
+      "domain": null
+    },
+    {
+      "name": "HomeFirst Services",
+      "domain": null
+    },
+    {
+      "name": "Housing Authority of Richmond",
+      "domain": null
+    },
+    {
+      "name": "Housing Authority of the County of Alameda (HACA)",
+      "domain": null
+    },
+    {
+      "name": "Housing Authority of the County of Contra Costa",
+      "domain": null
+    },
+    {
+      "name": "Insight Housing (formerly Berkeley Food and Housing Project)",
+      "domain": null
+    },
+    {
+      "name": "Midpen Housing Corporation",
+      "domain": null
+    },
+    {
+      "name": "Napa Valley Community Housing",
+      "domain": null
+    },
+    {
+      "name": "Nar Anon Northern California Region",
+      "domain": null
+    },
+    {
+      "name": "New Bridge Foundation",
+      "domain": null
+    },
+    {
+      "name": "Northern California Land Trust (NCLT)",
+      "domain": null
+    },
+    {
+      "name": "Oakland Housing Authority (OHA)",
+      "domain": null
+    },
+    {
+      "name": "Pacifica School District (PSD)",
+      "domain": null
+    },
+    {
+      "name": "Pathway Society Inc.",
+      "domain": null
+    },
+    {
+      "name": "Puente De La Costa Sur",
+      "domain": null
+    },
+    {
+      "name": "Rahima Foundation",
+      "domain": null
+    },
+    {
+      "name": "San Francisco Food Not Bombs",
+      "domain": null
+    },
+    {
+      "name": "Sequoia District Adult School",
+      "domain": null
+    },
+    {
+      "name": "St. Raymond Catholic Church",
+      "domain": null
+    },
+    {
+      "name": "Stanford Community Law Clinic (CLC)",
+      "domain": null
+    },
+    {
+      "name": "Swiss Benevolent Society of San Francisco (SBSSF)",
+      "domain": null
+    },
+    {
+      "name": "The HIV Education and Prevention Project of Alameda County (HEPPAC)",
+      "domain": null
+    },
+    {
+      "name": "The Ronald McDonald House at Stanford",
+      "domain": null
+    },
+    {
+      "name": "Tri-Valley REACH",
+      "domain": null
+    }
+  ]
+}

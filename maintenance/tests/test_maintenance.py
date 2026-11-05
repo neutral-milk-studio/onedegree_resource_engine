@@ -196,8 +196,8 @@ def test_quotes_stored_verbatim_from_page(loaded_store):
 def test_rerun_does_not_duplicate_findings(loaded_store):
     first = run_checks(loaded_store)
     second = run_checks(loaded_store)
-    assert first.findings_created == 7
-    assert second.findings_created == 0 and second.findings_refreshed == 7
+    assert first.findings_created == 9
+    assert second.findings_created == 0 and second.findings_refreshed == 9
 
 
 def test_missing_service_is_reported_not_crashed(loaded_store):

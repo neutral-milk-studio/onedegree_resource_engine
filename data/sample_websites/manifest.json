@@ -98,13 +98,14 @@
       "url": "https://bayarearentrelief-now.example/apply",
       "page": "fake_rent_relief.html",
       "domain_registered": "2026-10-20",
-      "planted": "Fake rent relief: asks for a $99 fee before helping, domain registered two weeks ago, the name on the site doesn't match the listing, not in the registry.",
+      "planted": "Fake rent relief: asks for a $99 fee before helping, uses urgency pressure, the record has no fee on file, domain registered two weeks ago, not in the registry.",
       "expected": {
         "category": "suspicious",
         "signals": [
           "fee_before_help",
+          "urgency_pressure",
+          "fee_mismatch",
           "new_domain",
-          "name_mismatch",
           "not_in_registry"
         ]
       }
@@ -115,6 +116,38 @@
       "page": "hmb_community_fridge.html",
       "domain_registered": "2019-05-01",
       "planted": "Harmless new listing: only one signal (not in the registry), so it is not flagged.",
+      "expected": {
+        "category": "verified",
+        "signals": [
+          "not_in_registry"
+        ]
+      }
+    },
+    {
+      "service_id": "6e2b7a6d-f8fb-56fe-ac4f-c25ff14bf40b",
+      "url": "https://quickrentrescue.example/apply",
+      "page": "quick-rent-rescue.html",
+      "domain_registered": "2026-10-20",
+      "planted": "Quick Rent Rescue: fee demanded before help, asks for an SSN and bank account, guaranteed-approval/urgency language, falsely claims to be an official government program, messaging-app-only contact, new domain, not in the registry.",
+      "expected": {
+        "category": "suspicious",
+        "signals": [
+          "fee_before_help",
+          "sensitive_data_request",
+          "urgency_pressure",
+          "fake_official",
+          "fee_mismatch",
+          "messaging_only_contact",
+          "new_domain",
+          "not_in_registry"
+        ]
+      }
+    },
+    {
+      "service_id": "b2b72b00-bc8f-5fb4-bfc2-41a8ed795f3d",
+      "url": "https://oakstreetlegal.example/",
+      "page": "oak-street-legal-control.html",
+      "planted": "Control: legitimate free legal clinic that explicitly says no fee, never asks for payment, and waives its workshop fee -- must not be flagged despite the fee-related wording.",
       "expected": {
         "category": "verified",
         "signals": [

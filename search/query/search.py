@@ -58,9 +58,13 @@ class SearchBackend(Protocol):
 
 
 def _visible(query):
+    # "pending": not yet reviewed. "hidden": a specialist chose to hide it from search --
+    # still open in the review queue's sense, but a deliberate decision, not a default.
+    # "marked_safe" and "dismissed"/"applied"/"edited" are NOT in this list on purpose: a
+    # decision clears the flag and makes the listing visible again.
     flagged = exists().where(
         Finding.service_id == Service.id,
-        Finding.review_state == "pending",
+        Finding.review_state.in_(("pending", "hidden")),
         Finding.category.in_(HIDDEN_CATEGORIES),
     )
     return query.where(Service.status == "active", ~flagged)

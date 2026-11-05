@@ -28,7 +28,14 @@ from contracts.review import (
 )
 from maintenance.comparator.compare import FIELD_LABELS
 from maintenance.priority import harm_label
-from maintenance.review import ReviewError, apply_finding, dismiss_finding, trust_by_service
+from maintenance.review import (
+    ReviewError,
+    apply_finding,
+    dismiss_finding,
+    hide_finding,
+    mark_safe,
+    trust_by_service,
+)
 from shared.models import Finding, Service
 
 router = APIRouter(prefix="/review", tags=["Review"])
@@ -52,6 +59,7 @@ class QueueFinding(ReviewFinding):
     record_version: int
     trust: TrustOut
     risk_signals: list[str] = []
+    risk_score: int | None = None
     decided_by: str | None = None
     decided_at: datetime | None = None
     seconds_to_fix: float | None = None
@@ -74,6 +82,15 @@ class ApplyBody(FindingDecision):
 
 
 class DismissBody(FindingDismissal):
+    seconds_to_fix: float | None = None
+
+
+class HideBody(BaseModel):
+    seconds_to_fix: float | None = None
+
+
+class MarkSafeBody(BaseModel):
+    note: str
     seconds_to_fix: float | None = None
 
 
@@ -110,6 +127,7 @@ def to_view(row: Finding, service: Service, trust) -> QueueFinding:
         record_version=service.version,
         trust=TrustOut(**trust.__dict__),
         risk_signals=row.risk_signals or [],
+        risk_score=row.risk_score,
         decided_by=row.decided_by,
         decided_at=row.decided_at,
         seconds_to_fix=row.seconds_to_fix,
@@ -193,6 +211,38 @@ def dismiss(
     """Keep the current value. The record is unchanged; the decision is audited."""
     try:
         decision = dismiss_finding(store, finding_id, user, body.reason, body.seconds_to_fix)
+    except ReviewError as exc:
+        return _error(exc)
+    return _decided(store, decision)
+
+
+@router.post("/findings/{finding_id}/hide", response_model=Decided)
+def hide(
+    finding_id: str,
+    body: HideBody,
+    store: Annotated[PgHsdsStore, Depends(get_store)],
+    user: Annotated[str, Depends(require_token)],
+):
+    """ "Hide from search" -- the default action on a suspicious finding. Keeps the listing
+    out of every public path; the record itself is unchanged."""
+    try:
+        decision = hide_finding(store, finding_id, user, body.seconds_to_fix)
+    except ReviewError as exc:
+        return _error(exc)
+    return _decided(store, decision)
+
+
+@router.post("/findings/{finding_id}/mark-safe", response_model=Decided)
+def mark_safe_endpoint(
+    finding_id: str,
+    body: MarkSafeBody,
+    store: Annotated[PgHsdsStore, Depends(get_store)],
+    user: Annotated[str, Depends(require_token)],
+):
+    """A specialist has reviewed this listing (and its domain) and found nothing wrong.
+    Requires a short note; stops future checks from re-flagging it."""
+    try:
+        decision = mark_safe(store, finding_id, user, body.note, body.seconds_to_fix)
     except ReviewError as exc:
         return _error(exc)
     return _decided(store, decision)

@@ -44,6 +44,7 @@ class LiveWebsiteSource:
         self.min_interval_s = float(os.environ.get("RE_LIVE_FETCH_INTERVAL_S", "2"))
         self._client = client or httpx.Client()
         self._robots: dict[str, RobotFileParser] = {}
+        self._rdap_cache: dict[str, str | None] = {}
         self._last_fetch: dict[str, float] = {}
 
     def close(self) -> None:
@@ -144,3 +145,35 @@ class LiveWebsiteSource:
         if not body.strip():
             return WebsiteResult(None, response.status_code, "No content returned")
         return WebsiteResult(body, response.status_code, None)
+
+    def domain_registered(self, url: str) -> str | None:
+        """ISO registration date of the URL's domain via RDAP (rdap.org's bootstrap, so no
+        per-registry endpoint to maintain), cached per domain for this instance's lifetime.
+        Fails open: any error, timeout, or missing data returns None (unknown -- never a
+        signal on its own; maintenance/risk.py only reads a signal from an actual date)."""
+        domain = urlparse(url).netloc.split(":")[0].lower()
+        if not domain:
+            return None
+        if domain not in self._rdap_cache:
+            self._rdap_cache[domain] = self._fetch_rdap_date(domain)
+        return self._rdap_cache[domain]
+
+    def _fetch_rdap_date(self, domain: str) -> str | None:
+        from maintenance.suspicious_settings import RDAP_TIMEOUT_S
+
+        try:
+            response = self._client.get(
+                f"https://rdap.org/domain/{domain}",
+                headers={"User-Agent": self.user_agent},
+                timeout=RDAP_TIMEOUT_S,
+            )
+            if response.status_code != 200:
+                return None
+            body = response.json()
+        except Exception as exc:  # noqa: BLE001 - any RDAP failure is just "unknown"
+            log.debug("RDAP lookup failed", extra={"domain": domain, "error": str(exc)})
+            return None
+        for event in body.get("events", []):
+            if event.get("eventAction") == "registration" and event.get("eventDate"):
+                return str(event["eventDate"])
+        return None

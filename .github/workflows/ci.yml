@@ -77,8 +77,19 @@ jobs:
       - name: Run tests
         run: uv run pytest
 
+  eval-suspicious:
+    name: Gate 4 — Suspicious-listing rules eval
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install dependencies
+        run: uv sync
+      - name: Precision/recall against data/eval/suspicious_cases.json
+        run: uv run python -m maintenance.eval_suspicious
+
   lint:
-    name: Gate 4 — Lint
+    name: Gate 5 — Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -91,7 +102,7 @@ jobs:
         run: uv run ruff format --check .
 
   ui:
-    name: Gate 5 — UI
+    name: Gate 6 — UI
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -107,7 +118,7 @@ jobs:
       - run: npm test
 
   images:
-    name: Gate 6 — Images and infrastructure
+    name: Gate 7 — Images and infrastructure
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
