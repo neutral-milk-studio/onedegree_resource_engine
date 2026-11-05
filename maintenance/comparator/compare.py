@@ -55,7 +55,7 @@ class FindingDraft:
     error: str | None = None
     confidence: float = 0.9
     model_id: str | None = None
-    risk_signals: list[str] = field(default_factory=list)
+    risk_signals: list[dict] = field(default_factory=list)
     risk_score: int | None = None
 
 

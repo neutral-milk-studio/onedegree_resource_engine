@@ -112,7 +112,7 @@ def test_trust_score_and_badge():
     now = datetime(2026, 11, 4, tzinfo=UTC)
     assert trust_for(None, None, []).badge == "Not checked yet"
     fresh = trust_for("verified", now - timedelta(days=2), [], now)
-    assert fresh.score == 100 and fresh.level == "high" and fresh.badge == "Verified 2 days ago"
+    assert fresh.score == 100 and fresh.level == "high" and fresh.badge == "Verified Nov 2, 2026"
     stale = trust_for("verified", now - timedelta(days=60), [], now)
     assert stale.score < fresh.score
     flagged = trust_for("discrepancy", now, [2], now)

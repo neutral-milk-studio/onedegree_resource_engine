@@ -9,6 +9,7 @@ import {
   formatValue,
   type Decided,
   type QueueCategory,
+  type QueueEvidence,
   type QueueFinding,
   type ReviewQueueApi,
 } from "../api/review";
@@ -209,6 +210,77 @@ function FilterChip({ active, onClick, label, count }: { active: boolean; onClic
   );
 }
 
+/** The suspicious-listing detail: a risk score bar, each signal's weight, reason and quote,
+ * and what our record says next to what the website says. No "scam" or "fraud" wording --
+ * the score only explains itself; a specialist decides. */
+function SuspiciousPanel({ finding, evidence }: { finding: QueueFinding; evidence: QueueEvidence }) {
+  const score = finding.risk_score ?? 0;
+  const signals = finding.risk_signals ?? [];
+  const tier = score >= 70 ? "urgent" : "high";
+  return (
+    <div className="flex flex-col gap-4">
+      <span className="inline-flex w-fit items-center gap-1 rounded-full bg-urgent-soft px-2.5 py-1 text-sm font-semibold text-urgent-ink">
+        ⚠ Flagged for review
+      </span>
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center justify-between text-sm">
+          <span className="font-semibold">Risk score</span>
+          <span className="tabular-nums text-muted">{score} of 100</span>
+        </div>
+        <div className="h-2.5 w-full overflow-hidden rounded-full bg-surface-2" role="img" aria-label={`Risk score ${score} of 100`}>
+          <div className={`h-full rounded-full ${tier === "urgent" ? "bg-urgent" : "bg-high"}`} style={{ width: `${Math.min(100, score)}%` }} />
+        </div>
+        <p className="text-xs text-muted">A score of {40} or more goes to a specialist. The score only explains why — you decide.</p>
+      </div>
+
+      {signals.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <h3 className="text-sm font-semibold">Why it was flagged</h3>
+          <ul className="flex flex-col gap-2">
+            {signals.map((signal) => (
+              <li
+                key={signal.code}
+                className="flex items-start gap-3 rounded-lg border border-line bg-surface-2 px-3 py-2"
+              >
+                {signal.weight > 0 && (
+                  <span className="mt-0.5 shrink-0 rounded-full bg-ink px-2 py-0.5 text-xs font-bold text-surface">
+                    +{signal.weight}
+                  </span>
+                )}
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm font-medium">{signal.message}</span>
+                  {signal.quote && <span className="text-sm italic text-muted">“{signal.quote}”</span>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="rounded-lg bg-good-soft px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-good">Our record says</p>
+          <p className="text-sm text-good">
+            {finding.field_label} — {formatValue(finding.current_value)}
+          </p>
+        </div>
+        <div className="rounded-lg bg-high-soft px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-high-ink">The website says</p>
+          <p className="text-sm text-high-ink">{evidence.snippet ?? "See the page for details."}</p>
+        </div>
+      </div>
+
+      <p className="text-xs text-muted">
+        Source:{" "}
+        <a href={evidence.url} target="_blank" rel="noreferrer">
+          {evidence.url}
+          <span className="visually-hidden"> (opens in a new tab)</span>
+        </a>
+      </p>
+    </div>
+  );
+}
+
 function Detail({
   finding,
   api,
@@ -277,25 +349,7 @@ function Detail({
       </div>
 
       {isSuspicious ? (
-        <div className="flex flex-col gap-2 rounded-lg border border-urgent bg-urgent-soft px-3 py-2 text-sm text-urgent-ink">
-          <p className="font-semibold">
-            Flagged for review{finding.risk_score != null ? ` · risk score ${finding.risk_score}/100` : ""}. This is
-            not a conclusion — a specialist decides.
-          </p>
-          <ul className="list-disc pl-5">
-            {(finding.risk_signals ?? []).map((signal) => (
-              <li key={signal}>{signal}</li>
-            ))}
-          </ul>
-          <p className="text-xs">
-            Seen on{" "}
-            <a href={evidence.url} target="_blank" rel="noreferrer">
-              {evidence.url}
-              <span className="visually-hidden"> (opens in a new tab)</span>
-            </a>
-            : “{evidence.snippet}”
-          </p>
-        </div>
+        <SuspiciousPanel finding={finding} evidence={evidence} />
       ) : evidence.kind === "quote" ? (
         <>
           <h3 className="text-sm font-semibold">{finding.field_label}: record vs. website</h3>
@@ -407,6 +461,11 @@ function Detail({
           </>
         )}
       </div>
+      {isSuspicious && (
+        <p className="rounded-lg bg-good-soft px-3 py-2 text-sm text-good">
+          While it's flagged, this listing is already hidden from search, text messages and the public API.
+        </p>
+      )}
     </article>
   );
 }

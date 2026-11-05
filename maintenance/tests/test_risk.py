@@ -189,8 +189,9 @@ def test_fake_site_scores_above_threshold_and_is_flagged():
     assert score(signals) >= THRESHOLD
     flag = suspicious_finding(doc()["id"], doc(), URL, signals, "offline-rules")
     assert flag is not None and flag.category == "suspicious"
-    assert all("scam" not in message.lower() for message in flag.risk_signals)
-    assert all("fraud" not in message.lower() for message in flag.risk_signals)
+    assert all("scam" not in s["message"].lower() for s in flag.risk_signals)
+    assert all("fraud" not in s["message"].lower() for s in flag.risk_signals)
+    assert all({"code", "weight", "message", "quote"} <= s.keys() for s in flag.risk_signals)
 
 
 def test_control_page_stays_unflagged():
@@ -214,4 +215,4 @@ def test_extra_bedrock_reasons_never_change_the_score():
     )
     assert score(signals) == before  # the score computed before grounding is unchanged
     if flag:
-        assert "An extra grounded reason" in flag.risk_signals
+        assert any(s["message"] == "An extra grounded reason" for s in flag.risk_signals)

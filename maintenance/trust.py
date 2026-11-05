@@ -29,11 +29,10 @@ class Trust:
     checked_at: datetime | None
 
 
-def _ago(when: datetime, now: datetime) -> str:
-    days = (now - when).days
-    if days <= 0:
-        return "today"
-    return "yesterday" if days == 1 else f"{days} days ago"
+def _ago(when: datetime) -> str:
+    """The calendar date a check happened on -- not "today"/"N days ago", which reads as
+    ambiguous whenever the viewer doesn't know what day "now" is (a demo, a screenshot)."""
+    return when.strftime("%b %-d, %Y")
 
 
 def trust_for(
@@ -55,7 +54,7 @@ def trust_for(
     if open_harm_ranks and level == "high":
         level = "medium"  # never show a "trusted" badge while something is open
 
-    ago = _ago(last_checked_at, now)
+    ago = _ago(last_checked_at)
     if open_harm_ranks:
         n = len(open_harm_ranks)
         badge = f"{n} open issue{'s' if n != 1 else ''} · checked {ago}"
