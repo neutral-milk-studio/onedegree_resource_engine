@@ -119,6 +119,12 @@ locals {
     { name = "WEBSITE_BACKEND", value = var.website_backend },
     { name = "SEARCH_BACKEND", value = var.enable_opensearch ? "opensearch" : "memory" },
     { name = "OPENSEARCH_ENDPOINT", value = var.enable_opensearch ? "https://${aws_opensearch_domain.this[0].endpoint}" : "" },
+    # This app's own search backend (search/query/search.py), not the SEARCH_BACKEND/
+    # OPENSEARCH_ENDPOINT pair above (a different, OpenSearch-shaped backend this app
+    # doesn't implement). Semantic search ranks by Bedrock (or, with no model id below,
+    # free offline) text-embedding similarity -- see search/embeddings/embed.py.
+    { name = "RE_SEARCH_BACKEND", value = var.re_search_backend },
+    { name = "BEDROCK_EMBEDDING_MODEL_ID", value = var.bedrock_embedding_model_id },
     { name = "JOB_RUNNER", value = "ecs" },
     { name = "ECS_CLUSTER", value = aws_ecs_cluster.this.name },
     { name = "JOB_TASK_DEFINITION", value = "${local.name}-job" },
