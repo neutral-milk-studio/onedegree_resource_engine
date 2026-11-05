@@ -64,7 +64,7 @@ def create_app(init_database: bool = True) -> FastAPI:
         checks this exact path); identical to /health, used locally."""
         return {"status": "ok"}
 
-    @app.get("/", dependencies=[Depends(require_token)])
+    @app.get("/api/info", dependencies=[Depends(require_token)])
     def api_info() -> dict[str, str]:
         return {
             "version": HSDS_VERSION,
@@ -84,7 +84,30 @@ def create_app(init_database: bool = True) -> FastAPI:
     app.include_router(search.router, dependencies=protected)
     app.include_router(coverage.router, dependencies=protected)
     app.include_router(sms.router)  # its own webhook-token check, not the dashboard's bearer token
+    _mount_ui(app)
     return app
+
+
+def _mount_ui(app: FastAPI) -> None:
+    """Serve the built React UI (ui/dist) from the same origin as the API, when present --
+    the AWS deploy's Docker image builds it in; local API-only dev has no ui/dist, so this
+    is a no-op then. The UI is a hash router (#/overview, #/review, ...), so every page
+    load requests "/" from the server; no SPA catch-all route is needed."""
+    from pathlib import Path
+
+    from fastapi.responses import FileResponse
+    from fastapi.staticfiles import StaticFiles
+
+    dist = Path(__file__).resolve().parents[2] / "ui" / "dist"
+    index_html = dist / "index.html"
+    if not index_html.exists():
+        return
+
+    app.mount("/assets", StaticFiles(directory=dist / "assets"), name="ui-assets")
+
+    @app.get("/", include_in_schema=False)
+    def ui_index() -> FileResponse:
+        return FileResponse(index_html)
 
 
 app = create_app()
