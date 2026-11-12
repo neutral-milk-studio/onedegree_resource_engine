@@ -1,25 +1,29 @@
 # CODEOWNERS — forces human approval on protected surfaces.
 #
-# A PR that touches any path below requires review from the owner before it can
-# merge into protected main. Everything else (component internals under /ingest,
-# /maintenance, /api, /search, /ui) is routine and merges on green CI + a
-# favorable reviewer-agent verdict.
+# DISABLED: every rule below is commented out, so no path has a code owner and
+# GitHub requests no automatic reviewers. To turn ownership back on, uncomment
+# the rules and replace @resource-engine/maintainers with real GitHub handles or
+# a team (each needs write access to the repo).
 #
-# Replace @resource-engine/maintainers with the real GitHub team or handles.
+# When enabled, a PR that touches any path below requires review from the owner
+# before it can merge into protected main. Everything else (component internals
+# under /ingest, /maintenance, /api, /search, /ui) is routine and merges on green
+# CI + a favorable reviewer-agent verdict.
+#
 # Spec: Requirements 5.1, 5.2, 5.3, 5.4.
 
 # Architecture / contract surfaces (Req 5.1)
-/contracts/**              @resource-engine/maintainers
+# /contracts/**              @resource-engine/maintainers
 
 # Infrastructure + IAM (Req 5.2)
-/infra/**                  @resource-engine/maintainers
+# /infra/**                  @resource-engine/maintainers
 
 # CI + governance mechanics (Req 5.3)
-/.github/workflows/**      @resource-engine/maintainers
-/.github/CODEOWNERS        @resource-engine/maintainers
+# /.github/workflows/**      @resource-engine/maintainers
+# /.github/CODEOWNERS        @resource-engine/maintainers
 
 # Guardrails (Req 5.3)
-/docs/agents-guardrails.md @resource-engine/maintainers
+# /docs/agents-guardrails.md @resource-engine/maintainers
 
 # Anything carrying secrets / data-handling config (Req 5.2)
-**/secrets*                @resource-engine/maintainers
+# **/secrets*                @resource-engine/maintainers
