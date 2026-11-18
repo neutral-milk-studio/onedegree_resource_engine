@@ -16,6 +16,8 @@ paths = [
 # Belt-and-suspenders: allow the specific fake values used in docs/examples.
 # .env.example's actual default (RE_BEARER_TOKEN) uses underscores, not hyphens;
 # the README's curl examples quote it verbatim, which is what the entry below allows.
+# Needed even after PRs #11-#18 are reverted: the scan covers full git history,
+# which still contains those README examples.
 regexes = [
   '''local-dev-token''',
   '''local-dev-password''',

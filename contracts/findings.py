@@ -21,9 +21,6 @@ class Category(str, Enum):  # noqa: UP042 - str+Enum is intentional for JSON ser
     ACTIVELY_BAD = "actively_bad"  # dead site / closed org / expired cert — most critical
     CHECK_FAILED = "check_failed"  # could not access / check errored — never a silent skip
     MISSING_INFORMATION = "missing_information"
-    # Two or more scam risk signals (fee before help, new domain, name mismatch, not in a
-    # registry). Always worded "flagged for review", never "proven scam".
-    SUSPICIOUS = "suspicious"
 
 
 class ReviewState(str, Enum):  # noqa: UP042 - str+Enum is intentional for JSON serialization (py3.9+)
@@ -33,8 +30,6 @@ class ReviewState(str, Enum):  # noqa: UP042 - str+Enum is intentional for JSON 
     APPLIED = "applied"
     EDITED = "edited"
     DISMISSED = "dismissed"
-    HIDDEN = "hidden"
-    MARKED_SAFE = "marked_safe"
 
 
 @dataclass
