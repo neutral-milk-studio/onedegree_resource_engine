@@ -20,7 +20,7 @@ variable "app_cpu" { default = 512 }
 variable "app_memory" { default = 1024 }
 variable "db_min_acu" { default = 0.5 }
 variable "db_max_acu" { default = 4 }
-variable "db_engine_version" { default = "16.8" }
+variable "db_engine_version" { default = "16.4" }
 variable "certificate_arn" {
   description = "ACM certificate for HTTPS. Empty = HTTP only (demo)."
   default     = ""
@@ -33,14 +33,6 @@ variable "llm_backend" { default = "bedrock" }
 variable "website_backend" { default = "sample" } # live is not implemented yet
 variable "auth_mode" { default = "local" }        # cognito is provisioned but not yet exercised
 variable "enable_opensearch" { default = false }
-variable "re_search_backend" {
-  description = "search.query.search.get_backend's RE_SEARCH_BACKEND: \"\" (dialect default), \"semantic\", \"postgres\", or \"simple\"."
-  default     = "semantic"
-}
-variable "bedrock_embedding_model_id" {
-  description = "Bedrock Titan embeddings model for semantic search. Empty = the free offline embedder (no Bedrock access needed); set to e.g. \"amazon.titan-embed-text-v2:0\" once that model is enabled in the account for real embeddings."
-  default     = ""
-}
 variable "import_schedule" { default = "cron(0 11 * * ? *)" }      # 04:00 Pacific, daily
 variable "maintenance_schedule" { default = "cron(0 12 * * ? *)" } # after the import
 variable "maintenance_batch" { default = 200 }
